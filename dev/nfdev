@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+#
+# nfdev: run the methylarray developer toolchain inside containers.
+#
+# Developer use only. End users run the pipeline with their own Nextflow
+# installation and do not need this script.
+#
+# Configuration is read from an untracked env file (default: <repo>/.nfdev.env,
+# override with NFDEV_ENV). Variables:
+#   NFDEV_OUT_ROOT   absolute path that receives every output, work directory,
+#                    test result, cache and log (required)
+#   NFDEV_DATA_DIRS  colon-separated absolute paths mounted read-only (optional)
+#   NFDEV_IMAGE      devkit image tag (default: methylarray-devkit:dev)
+#   NFDEV_JAVA_OPTS  JVM options for Nextflow (default: -Xms512m -Xmx4g)
+
+set -euo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${NFDEV_ENV:-${REPO}/.nfdev.env}"
+
+usage() {
+    cat <<EOF
+Usage: dev/nfdev [--engine docker] <command> [args...]
+
+Commands:
+  build              Build the devkit image from dev/docker/devkit
+  shell              Interactive shell in the devkit container
+  nextflow <args>    Run Nextflow (launch directory: \$NFDEV_OUT_ROOT)
+  exec <cmd...>      Run any command in the devkit container (working directory: repo)
+  test [args]        Run nf-test in the repository (work directory: \$NFDEV_OUT_ROOT/tests/nf-test)
+  lint               Run nf-core pipelines lint, nextflow lint and prek
+  metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
+
+Engines:
+  docker             Docker outside of Docker through the host socket (default)
+
+Configuration file: ${ENV_FILE}
+EOF
+}
+
+die() { echo "nfdev: $*" >&2; exit 1; }
+
+[[ -f "${ENV_FILE}" ]] || die "configuration file not found: ${ENV_FILE} (see the header of this script)"
+# shellcheck disable=SC1090
+source "${ENV_FILE}"
+
+: "${NFDEV_OUT_ROOT:?NFDEV_OUT_ROOT must be set in ${ENV_FILE}}"
+NFDEV_DATA_DIRS="${NFDEV_DATA_DIRS:-}"
+NFDEV_IMAGE="${NFDEV_IMAGE:-methylarray-devkit:dev}"
+NFDEV_JAVA_OPTS="${NFDEV_JAVA_OPTS:--Xms512m -Xmx4g}"
+
+[[ "${NFDEV_OUT_ROOT}" = /* ]] || die "NFDEV_OUT_ROOT must be an absolute path"
+[[ -d "${NFDEV_OUT_ROOT}" ]] || die "NFDEV_OUT_ROOT does not exist: ${NFDEV_OUT_ROOT}"
+
+ENGINE="docker"
+if [[ "${1:-}" == "--engine" ]]; then
+    ENGINE="${2:-}"
+    shift 2
+fi
+COMMAND="${1:-}"
+[[ -n "${COMMAND}" ]] || { usage; exit 1; }
+shift
+
+case "${ENGINE}" in
+    docker) ;;
+    *) die "engine '${ENGINE}' is not implemented yet" ;;
+esac
+
+mkdir -p "${NFDEV_OUT_ROOT}/logs" "${NFDEV_OUT_ROOT}/cache/home" "${NFDEV_OUT_ROOT}/cache/nextflow" \
+         "${NFDEV_OUT_ROOT}/tests/nf-test" "${NFDEV_OUT_ROOT}/tests/metro"
+
+LOG="${NFDEV_OUT_ROOT}/logs/nfdev_$(date +%Y%m%d_%H%M%S)_${COMMAND}.log"
+
+# Mounts at identical absolute paths (path parity), so that the host Docker
+# daemon resolves the bind mounts that Nextflow generates for task containers.
+mounts=( -v /var/run/docker.sock:/var/run/docker.sock
+         -v "${REPO}:${REPO}"
+         -v "${NFDEV_OUT_ROOT}:${NFDEV_OUT_ROOT}" )
+if [[ -n "${NFDEV_DATA_DIRS}" ]]; then
+    IFS=':' read -r -a data_dirs <<< "${NFDEV_DATA_DIRS}"
+    for d in "${data_dirs[@]}"; do
+        [[ "${d}" = /* && -d "${d}" ]] || die "data directory must be an existing absolute path: ${d}"
+        mounts+=( -v "${d}:${d}:ro" )
+    done
+fi
+
+tty_flags=()
+[[ -t 0 && -t 1 ]] && tty_flags=( -it )
+
+run_in_devkit() {
+    local workdir="$1"; shift
+    local cmd=( docker run --rm --init "${tty_flags[@]}"
+        --user "$(id -u):$(id -g)"
+        --group-add "$(stat -c %g /var/run/docker.sock)"
+        "${mounts[@]}"
+        --workdir "${workdir}"
+        --env HOME="${NFDEV_OUT_ROOT}/cache/home"
+        --env NXF_HOME="${NFDEV_OUT_ROOT}/cache/nextflow"
+        --env NXF_OPTS="${NFDEV_JAVA_OPTS}"
+        --env NXF_ANSI_LOG=false
+        --env NFT_WORKDIR="${NFDEV_OUT_ROOT}/tests/nf-test"
+        "${NFDEV_IMAGE}" "$@" )
+    printf '%q ' "${cmd[@]}" > "${LOG}"
+    printf '\n\n' >> "${LOG}"
+    "${cmd[@]}" 2>&1 | tee -a "${LOG}"
+    return "${PIPESTATUS[0]}"
+}
+
+case "${COMMAND}" in
+    build)
+        DOCKER_BUILDKIT=0 docker build -t "${NFDEV_IMAGE}" "${REPO}/dev/docker/devkit" 2>&1 | tee "${LOG}"
+        ;;
+    shell)
+        run_in_devkit "${REPO}" bash
+        ;;
+    nextflow)
+        run_in_devkit "${NFDEV_OUT_ROOT}" nextflow "$@"
+        ;;
+    exec)
+        run_in_devkit "${REPO}" "$@"
+        ;;
+    test)
+        run_in_devkit "${REPO}" nf-test test "$@"
+        ;;
+    lint)
+        run_in_devkit "${REPO}" bash -c 'nf-core pipelines lint && nextflow lint . && prek run --all-files'
+        ;;
+    metro)
+        run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd --embed-font --validate \
+            && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_light_1000px.png' --mode light --raster-width 1000 \
+            && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_dark_1000px.png' --mode dark --raster-width 1000"
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        usage
+        die "unknown command: ${COMMAND}"
+        ;;
+esac
