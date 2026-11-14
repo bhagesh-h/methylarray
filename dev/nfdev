@@ -13,6 +13,7 @@
 #   NFDEV_IMAGE      devkit image tag (default: methylarray-devkit:dev)
 #   NFDEV_APPTAINER_IMAGE  Apptainer devkit image tag (default: methylarray-apptainer-kit:dev)
 #   NFDEV_JAVA_OPTS  JVM options for Nextflow (default: -Xms512m -Xmx4g)
+#   NFDEV_DIND_IMAGE Docker-in-Docker daemon image (default: docker:29.9.3-dind)
 
 set -euo pipefail
 
@@ -31,9 +32,11 @@ Commands:
   test [args]        Run nf-test in the repository (work directory: \$NFDEV_OUT_ROOT/tests/nf-test)
   lint               Run nf-core pipelines lint, nextflow lint and prek
   metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
+  dind-stop          Stop and remove the Docker-in-Docker daemon container (dind engine)
 
 Engines:
   docker             Docker outside of Docker through the host socket (default)
+  dind               Docker in Docker: tasks run on a separate daemon in a sidecar container
   apptainer          Apptainer inside a privileged container (developer workstation only);
                      use with -profile apptainer or -profile singularity
   conda              Tasks run in micromamba environments inside the devkit container;
@@ -54,6 +57,9 @@ NFDEV_DATA_DIRS="${NFDEV_DATA_DIRS:-}"
 NFDEV_IMAGE="${NFDEV_IMAGE:-methylarray-devkit:dev}"
 NFDEV_APPTAINER_IMAGE="${NFDEV_APPTAINER_IMAGE:-methylarray-apptainer-kit:dev}"
 NFDEV_JAVA_OPTS="${NFDEV_JAVA_OPTS:--Xms512m -Xmx4g}"
+NFDEV_DIND_IMAGE="${NFDEV_DIND_IMAGE:-docker:29.9.3-dind}"
+DIND_NAME="nfdev-dind"
+DIND_NETWORK="nfdev-net"
 
 [[ "${NFDEV_OUT_ROOT}" = /* ]] || die "NFDEV_OUT_ROOT must be an absolute path"
 [[ -d "${NFDEV_OUT_ROOT}" ]] || die "NFDEV_OUT_ROOT does not exist: ${NFDEV_OUT_ROOT}"
@@ -82,6 +88,14 @@ case "${ENGINE}" in
                       --env APPTAINER_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer"
                       --env NXF_APPTAINER_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer"
                       --env NXF_SINGULARITY_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer" )
+        ;;
+    dind)
+        IMAGE="${NFDEV_IMAGE}"
+        engine_opts=( --network "${DIND_NETWORK}"
+                      --env DOCKER_HOST="tcp://docker:2376"
+                      --env DOCKER_TLS_VERIFY=1
+                      --env DOCKER_CERT_PATH=/certs/client
+                      -v nfdev-dind-certs:/certs:ro )
         ;;
     conda)
         # No container engine: tasks run in micromamba environments created
@@ -112,11 +126,39 @@ if [[ -n "${NFDEV_DATA_DIRS}" ]]; then
     done
 fi
 
+# Start the Docker-in-Docker daemon if it is not running. It mounts the same
+# paths as the devkit container so that task bind mounts resolve inside it.
+# Its TLS certificate is issued for the name "docker", so that is its network alias.
+start_dind() {
+    if [[ "$(docker inspect -f '{{.State.Running}}' "${DIND_NAME}" 2>/dev/null || true)" == "true" ]]; then
+        return 0
+    fi
+    docker network inspect "${DIND_NETWORK}" >/dev/null 2>&1 || docker network create "${DIND_NETWORK}" >/dev/null
+    docker run --detach --name "${DIND_NAME}" --privileged \
+        --network "${DIND_NETWORK}" --network-alias docker \
+        --env DOCKER_TLS_CERTDIR=/certs \
+        -v nfdev-dind-certs:/certs \
+        -v nfdev-dind-storage:/var/lib/docker \
+        "${mounts[@]}" \
+        "${NFDEV_DIND_IMAGE}" >/dev/null
+    local _
+    for _ in $(seq 1 60); do
+        if docker exec "${DIND_NAME}" docker info >/dev/null 2>&1; then
+            # Let the unprivileged devkit user read the client certificates.
+            docker exec "${DIND_NAME}" chown -R "$(id -u):$(id -g)" /certs/client
+            return 0
+        fi
+        sleep 1
+    done
+    die "the Docker-in-Docker daemon did not start; see: docker logs ${DIND_NAME}"
+}
+
 tty_flags=()
 [[ -t 0 && -t 1 ]] && tty_flags=( -it )
 
 run_in_devkit() {
     local workdir="$1"; shift
+    [[ "${ENGINE}" == "dind" ]] && start_dind
     local cmd=( docker run --rm --init "${tty_flags[@]}"
         --user "$(id -u):$(id -g)"
         "${engine_opts[@]}"
@@ -161,6 +203,10 @@ case "${COMMAND}" in
         run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd --embed-font --validate \
             && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_light_1000px.png' --mode light --raster-width 1000 \
             && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_dark_1000px.png' --mode dark --raster-width 1000"
+        ;;
+    dind-stop)
+        docker rm --force "${DIND_NAME}" >/dev/null 2>&1 || true
+        echo "stopped ${DIND_NAME} (the image store volume nfdev-dind-storage is kept)"
         ;;
     -h|--help|help)
         usage
