@@ -11,6 +11,7 @@
 #                    test result, cache and log (required)
 #   NFDEV_DATA_DIRS  colon-separated absolute paths mounted read-only (optional)
 #   NFDEV_IMAGE      devkit image tag (default: methylarray-devkit:dev)
+#   NFDEV_APPTAINER_IMAGE  Apptainer devkit image tag (default: methylarray-apptainer-kit:dev)
 #   NFDEV_JAVA_OPTS  JVM options for Nextflow (default: -Xms512m -Xmx4g)
 
 set -euo pipefail
@@ -33,6 +34,8 @@ Commands:
 
 Engines:
   docker             Docker outside of Docker through the host socket (default)
+  apptainer          Apptainer inside a privileged container (developer workstation only);
+                     use with -profile apptainer or -profile singularity
 
 Configuration file: ${ENV_FILE}
 EOF
@@ -47,6 +50,7 @@ source "${ENV_FILE}"
 : "${NFDEV_OUT_ROOT:?NFDEV_OUT_ROOT must be set in ${ENV_FILE}}"
 NFDEV_DATA_DIRS="${NFDEV_DATA_DIRS:-}"
 NFDEV_IMAGE="${NFDEV_IMAGE:-methylarray-devkit:dev}"
+NFDEV_APPTAINER_IMAGE="${NFDEV_APPTAINER_IMAGE:-methylarray-apptainer-kit:dev}"
 NFDEV_JAVA_OPTS="${NFDEV_JAVA_OPTS:--Xms512m -Xmx4g}"
 
 [[ "${NFDEV_OUT_ROOT}" = /* ]] || die "NFDEV_OUT_ROOT must be an absolute path"
@@ -61,20 +65,34 @@ COMMAND="${1:-}"
 [[ -n "${COMMAND}" ]] || { usage; exit 1; }
 shift
 
+# Engine-specific image and container options.
 case "${ENGINE}" in
-    docker) ;;
+    docker)
+        IMAGE="${NFDEV_IMAGE}"
+        engine_opts=( --group-add "$(stat -c %g /var/run/docker.sock)"
+                      -v /var/run/docker.sock:/var/run/docker.sock )
+        ;;
+    apptainer)
+        # Apptainer needs mount namespaces, which the host only grants to a
+        # privileged container (unprivileged user namespaces are restricted).
+        IMAGE="${NFDEV_APPTAINER_IMAGE}"
+        engine_opts=( --privileged
+                      --env APPTAINER_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer"
+                      --env NXF_APPTAINER_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer"
+                      --env NXF_SINGULARITY_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer" )
+        ;;
     *) die "engine '${ENGINE}' is not implemented yet" ;;
 esac
 
 mkdir -p "${NFDEV_OUT_ROOT}/logs" "${NFDEV_OUT_ROOT}/cache/home" "${NFDEV_OUT_ROOT}/cache/nextflow" \
+         "${NFDEV_OUT_ROOT}/cache/apptainer" \
          "${NFDEV_OUT_ROOT}/tests/nf-test" "${NFDEV_OUT_ROOT}/tests/metro"
 
-LOG="${NFDEV_OUT_ROOT}/logs/nfdev_$(date +%Y%m%d_%H%M%S)_${COMMAND}.log"
+LOG="${NFDEV_OUT_ROOT}/logs/nfdev_$(date +%Y%m%d_%H%M%S)_${ENGINE}_${COMMAND}.log"
 
 # Mounts at identical absolute paths (path parity), so that the host Docker
 # daemon resolves the bind mounts that Nextflow generates for task containers.
-mounts=( -v /var/run/docker.sock:/var/run/docker.sock
-         -v "${REPO}:${REPO}"
+mounts=( -v "${REPO}:${REPO}"
          -v "${NFDEV_OUT_ROOT}:${NFDEV_OUT_ROOT}" )
 if [[ -n "${NFDEV_DATA_DIRS}" ]]; then
     IFS=':' read -r -a data_dirs <<< "${NFDEV_DATA_DIRS}"
@@ -91,7 +109,7 @@ run_in_devkit() {
     local workdir="$1"; shift
     local cmd=( docker run --rm --init "${tty_flags[@]}"
         --user "$(id -u):$(id -g)"
-        --group-add "$(stat -c %g /var/run/docker.sock)"
+        "${engine_opts[@]}"
         "${mounts[@]}"
         --workdir "${workdir}"
         --env HOME="${NFDEV_OUT_ROOT}/cache/home"
@@ -99,7 +117,7 @@ run_in_devkit() {
         --env NXF_OPTS="${NFDEV_JAVA_OPTS}"
         --env NXF_ANSI_LOG=false
         --env NFT_WORKDIR="${NFDEV_OUT_ROOT}/tests/nf-test"
-        "${NFDEV_IMAGE}" "$@" )
+        "${IMAGE}" "$@" )
     printf '%q ' "${cmd[@]}" > "${LOG}"
     printf '\n\n' >> "${LOG}"
     "${cmd[@]}" 2>&1 | tee -a "${LOG}"
@@ -109,6 +127,10 @@ run_in_devkit() {
 case "${COMMAND}" in
     build)
         DOCKER_BUILDKIT=0 docker build -t "${NFDEV_IMAGE}" "${REPO}/dev/docker/devkit" 2>&1 | tee "${LOG}"
+        if [[ "${ENGINE}" == "apptainer" ]]; then
+            DOCKER_BUILDKIT=0 docker build --build-arg DEVKIT_IMAGE="${NFDEV_IMAGE}" \
+                -t "${NFDEV_APPTAINER_IMAGE}" "${REPO}/dev/docker/apptainer-kit" 2>&1 | tee -a "${LOG}"
+        fi
         ;;
     shell)
         run_in_devkit "${REPO}" bash
