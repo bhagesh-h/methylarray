@@ -13,38 +13,9 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { METHYLARRAY  } from './workflows/methylarray'
+include { METHYLARRAY             } from './workflows/methylarray'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_methylarray_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_methylarray_pipeline'
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    NAMED WORKFLOWS FOR PIPELINE
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-
-//
-// WORKFLOW: Run main analysis pipeline depending on type of input
-//
-workflow BHAGESHH_METHYLARRAY {
-
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
-    main:
-
-    //
-    // WORKFLOW: Run pipeline
-    //
-    METHYLARRAY (
-        samplesheet,
-        params.multiqc_config,
-        params.multiqc_logo,
-        params.multiqc_methods_description,
-        params.outdir,
-    )
-    emit:
-    multiqc_report = METHYLARRAY.out.multiqc_report // channel: /path/to/multiqc_report.html
-}
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -72,8 +43,12 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    BHAGESHH_METHYLARRAY (
-        PIPELINE_INITIALISATION.out.samplesheet
+    METHYLARRAY (
+        PIPELINE_INITIALISATION.out.samplesheet,
+        params.multiqc_config,
+        params.multiqc_logo,
+        params.multiqc_methods_description,
+        params.outdir,
     )
     //
     // SUBWORKFLOW: Run completion tasks
@@ -84,7 +59,7 @@ workflow {
         params.plaintext_email,
         params.outdir,
         params.monochrome_logs,
-        BHAGESHH_METHYLARRAY.out.multiqc_report
+        METHYLARRAY.out.multiqc_report
     )
 }
 
