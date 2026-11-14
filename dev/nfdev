@@ -38,6 +38,8 @@ Commands:
                      nf-core pipelines lint and nextflow lint, then run prek in the repository
   metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
   dind-stop          Stop and remove the Docker-in-Docker daemon container (dind engine)
+  clean              Delete work directories, test results and old logs under \$NFDEV_OUT_ROOT;
+                     keep the caches (cache/) and the 10 newest logs
 
 Engines:
   docker             Docker outside of Docker through the host socket (default)
@@ -238,6 +240,13 @@ case "${COMMAND}" in
     dind-stop)
         docker rm --force "${DIND_NAME}" >/dev/null 2>&1 || true
         echo "stopped ${DIND_NAME} (the image store volume nfdev-dind-storage is kept)"
+        ;;
+    clean)
+        [[ "${NFDEV_OUT_ROOT}" == /* && -d "${NFDEV_OUT_ROOT}/cache" ]] || die "NFDEV_OUT_ROOT does not look like an nfdev output root: ${NFDEV_OUT_ROOT}"
+        find "${NFDEV_OUT_ROOT}" -mindepth 1 -maxdepth 1 \( -name 'work*' -o -name '.nextflow' -o -name '.nextflow.log*' -o -name '.nf-test.log' \) -exec rm -rf {} +
+        find "${NFDEV_OUT_ROOT}/tests" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+        find "${NFDEV_OUT_ROOT}/logs" -maxdepth 1 -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | tail -n +11 | cut -d' ' -f2- | xargs -r rm -f
+        du -sh "${NFDEV_OUT_ROOT}"
         ;;
     -h|--help|help)
         usage
