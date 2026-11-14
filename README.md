@@ -4,7 +4,7 @@
 [![GitHub Actions Linting Status](https://github.com/bhagesh-h/methylarray/actions/workflows/linting.yml/badge.svg)](https://github.com/bhagesh-h/methylarray/actions/workflows/linting.yml)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 
-[![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.10.4-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
+[![Nextflow](https://img.shields.io/badge/version-%E2%89%A526.04.2-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
 [![nf-core template version](https://img.shields.io/badge/nf--core_template-4.2.2-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/4.2.2)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
@@ -81,11 +81,11 @@ Select one with `--preprocessing`.
 
 ## Requirements
 
-- [Nextflow](https://www.nextflow.io/docs/latest/install.html) 25.10.4 or later.
+- [Nextflow](https://www.nextflow.io/docs/latest/install.html) 26.04.2 or later (earlier releases can wrongly report remote HTTP or HTTPS input files as missing).
 - One of [Docker](https://docs.docker.com/engine/installation/), [Singularity](https://www.sylabs.io/guides/3.0/user-guide/), [Apptainer](https://apptainer.org/docs/user/latest/), [Podman](https://podman.io/) or [conda](https://conda.io/miniconda.html). Containers are recommended.
 - Memory:
   - per-sample tasks need about 4 GB
-  - whole-cohort steps need about 32 GB for 300 EPIC v2 samples
+  - steps that combine all samples need about 32 GB for a few hundred EPIC v2 arrays
 - Internet access on the first run, to fetch containers and reference resources. Later runs can be offline with `--sesame_cache`.
 
 ## Quick start
@@ -204,7 +204,7 @@ The pipeline is tested with [nf-test](https://www.nf-test.com) at the module, su
 
 ## Data privacy
 
-The pipeline processes data where it runs and does not upload samples, phenotypes or results anywhere. When working with human cohort data, keep IDATs, samplesheets with identifiers, phenotype tables and results out of version control.
+The pipeline processes data where it runs and does not upload samples, phenotypes or results anywhere. When working with human data, keep IDATs, samplesheets with identifiers, phenotype tables and results out of version control.
 
 ## Credits
 
