@@ -8,6 +8,7 @@ params.outdir = null
 params.greeting = 'hello from methylarray'
 
 process HELLO {
+    conda 'conda-forge::coreutils=9.5'
     container 'ubuntu:24.04'
 
     input:
@@ -20,6 +21,7 @@ process HELLO {
     """
     echo '${greeting}' > hello.txt
     echo "container user: \$(id -u):\$(id -g)" >> hello.txt
+    echo "conda environment: \${CONDA_PREFIX:-none}" >> hello.txt
     """
 }
 
