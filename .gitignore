@@ -17,6 +17,10 @@ null/
 .lineage/
 .nf-test/
 .nf-test.log
+.nf-test*.log
+
+# Test samplesheets (public data only) are tracked even though data/ is ignored
+!tests/data/
 
 # Private data must never be committed
 *.idat

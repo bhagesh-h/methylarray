@@ -83,27 +83,15 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
-    // Create channel from input file provided through params.input
+    // Create channel from input file provided through params.input:
+    // one element per array, [ meta, idat_red, idat_grn ]
     //
+    def samplesheet_rows = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
+    validateUniqueIdats(samplesheet_rows)
 
     channel
-        .fromList(samplesheetToList(input, "${projectDir}/assets/schema_input.json"))
-        .map {
-            meta, fastq_1, fastq_2 ->
-                if (!fastq_2) {
-                    return [ meta.id, meta + [ single_end:true ], [ fastq_1 ] ]
-                } else {
-                    return [ meta.id, meta + [ single_end:false ], [ fastq_1, fastq_2 ] ]
-                }
-        }
-        .groupTuple()
-        .map { samplesheet ->
-            validateInputSamplesheet(samplesheet)
-        }
-        .map {
-            meta, fastqs ->
-                return [ meta, fastqs.flatten() ]
-        }
+        .fromList(samplesheet_rows)
+        .map { meta, idat_red, idat_grn -> validateIdatPair(meta, idat_red, idat_grn) }
         .set { ch_samplesheet }
 
     emit:
@@ -163,19 +151,50 @@ workflow PIPELINE_COMPLETION {
 */
 
 //
-// Validate channels from input samplesheet
+// Validate one samplesheet row and add the Sentrix ID, position and row to meta
 //
-def validateInputSamplesheet(input) {
-    def (metas, fastqs) = input[1..2]
-
-    // Check that multiple runs of the same sample are of the same datatype i.e. single-end / paired-end
-    def endedness_ok = metas.collect{ meta -> meta.single_end }.unique().size == 1
-    if (!endedness_ok) {
-        error("Please check input samplesheet -> Multiple runs of a sample must be of the same datatype i.e. single-end or paired-end: ${metas[0].id}")
+def validateIdatPair(meta, idat_red, idat_grn) {
+    // Both files must belong to the same array: identical prefix before _Red/_Grn
+    def red_prefix = idat_red.name.replaceFirst(/_Red\.idat(\.gz)?$/, '')
+    def grn_prefix = idat_grn.name.replaceFirst(/_Grn\.idat(\.gz)?$/, '')
+    if (red_prefix != grn_prefix) {
+        error("Samplesheet: the IDAT files of sample '${meta.id}' do not belong to the same array (${idat_red.name}, ${idat_grn.name})")
     }
 
-    return [ metas[0], fastqs ]
+    // Sentrix ID and position from the standard file name <...>_<sentrix_id>_<position>
+    def tokens = red_prefix.tokenize('_')
+    def file_sentrix_id = (tokens.size() >= 2 && tokens[-2] ==~ /[0-9]{10,14}/) ? tokens[-2] : null
+    def file_position = (tokens.size() >= 1 && tokens[-1] ==~ /R[0-9]{2}C[0-9]{2}/) ? tokens[-1] : null
+    if (meta.sentrix_id && file_sentrix_id && meta.sentrix_id != file_sentrix_id) {
+        error("Samplesheet: sample '${meta.id}' has sentrix_id ${meta.sentrix_id} but its IDAT files name ${file_sentrix_id}")
+    }
+    if (meta.sentrix_position && file_position && meta.sentrix_position != file_position) {
+        error("Samplesheet: sample '${meta.id}' has sentrix_position ${meta.sentrix_position} but its IDAT files name ${file_position}")
+    }
+    def sentrix_id = meta.sentrix_id ?: file_sentrix_id
+    def sentrix_position = meta.sentrix_position ?: file_position
+    def sentrix_row = sentrix_position ? sentrix_position.substring(0, 3) : null
+
+    def new_meta = meta + [
+        sentrix_id: sentrix_id,
+        sentrix_position: sentrix_position,
+        sentrix_row: sentrix_row,
+        exclude: meta.exclude ?: false
+    ]
+    return [ new_meta, idat_red, idat_grn ]
 }
+
+//
+// Each IDAT file may appear in only one samplesheet row
+//
+def validateUniqueIdats(samplesheet) {
+    def files = samplesheet.collectMany { row -> [ row[1].toUriString(), row[2].toUriString() ] }
+    def duplicated = files.countBy { f -> f }.findAll { _f, n -> n > 1 }.keySet()
+    if (duplicated) {
+        error("Samplesheet: these IDAT files appear in more than one row: ${duplicated.join(', ')}")
+    }
+}
+
 //
 // Generate methods description for MultiQC
 //

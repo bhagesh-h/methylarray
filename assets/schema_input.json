@@ -2,32 +2,98 @@
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/bhagesh-h/methylarray/main/assets/schema_input.json",
     "title": "bhagesh-h/methylarray pipeline - params.input schema",
-    "description": "Schema for the file provided with params.input",
+    "description": "Samplesheet with one row per array: the red and green IDAT files and optional technical metadata.",
     "type": "array",
     "items": {
         "type": "object",
         "properties": {
             "sample": {
                 "type": "string",
-                "pattern": "^\\S+$",
-                "errorMessage": "Sample name must be provided and cannot contain spaces",
+                "pattern": "^[A-Za-z0-9._-]+$",
+                "errorMessage": "Sample name must be provided and may only contain letters, digits, '.', '_' and '-'",
                 "meta": ["id"]
             },
-            "fastq_1": {
+            "idat_red": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^\\S+_Red\\.idat(\\.gz)?$",
+                "errorMessage": "Red channel IDAT must be provided, may not contain spaces and must end in '_Red.idat' or '_Red.idat.gz'"
             },
-            "fastq_2": {
+            "idat_grn": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^([\\S\\s]*\\/)?[^\\s\\/]+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "pattern": "^\\S+_Grn\\.idat(\\.gz)?$",
+                "errorMessage": "Green channel IDAT must be provided, may not contain spaces and must end in '_Grn.idat' or '_Grn.idat.gz'"
+            },
+            "sentrix_id": {
+                "type": "string",
+                "pattern": "^[0-9]{10,14}$",
+                "errorMessage": "Sentrix ID (BeadChip barcode) must be 10 to 14 digits",
+                "meta": ["sentrix_id"]
+            },
+            "sentrix_position": {
+                "type": "string",
+                "pattern": "^R[0-9]{2}C[0-9]{2}$",
+                "errorMessage": "Sentrix position must look like R01C01",
+                "meta": ["sentrix_position"]
+            },
+            "plate": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Plate may not contain spaces",
+                "meta": ["plate"]
+            },
+            "well": {
+                "type": "string",
+                "pattern": "^[A-H](0?[1-9]|1[0-2])$",
+                "errorMessage": "Well must be a 96-well plate position such as A1 or H12",
+                "meta": ["well"]
+            },
+            "batch": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Batch may not contain spaces",
+                "meta": ["batch"]
+            },
+            "reported_sex": {
+                "type": "string",
+                "enum": ["M", "F"],
+                "errorMessage": "Reported sex must be 'M' or 'F' (leave empty if unknown)",
+                "meta": ["reported_sex"]
+            },
+            "reported_age": {
+                "type": "number",
+                "minimum": 0,
+                "errorMessage": "Reported age must be a number of years, 0 or more",
+                "meta": ["reported_age"]
+            },
+            "replicate_group": {
+                "type": "string",
+                "pattern": "^\\S+$",
+                "errorMessage": "Replicate group may not contain spaces",
+                "meta": ["replicate_group"]
+            },
+            "exclude": {
+                "type": "boolean",
+                "errorMessage": "Exclude must be 'true' or 'false'",
+                "meta": ["exclude"]
+            },
+            "exclude_reason": {
+                "type": "string",
+                "meta": ["exclude_reason"]
             }
         },
-        "required": ["sample", "fastq_1"]
-    }
+        "required": ["sample", "idat_red", "idat_grn"],
+        "if": {
+            "properties": { "exclude": { "const": true } },
+            "required": ["exclude"]
+        },
+        "then": {
+            "required": ["exclude_reason"],
+            "errorMessage": "An excluded sample must have an exclude_reason"
+        }
+    },
+    "uniqueEntries": ["sample"]
 }
