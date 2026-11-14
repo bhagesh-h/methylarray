@@ -62,6 +62,66 @@
                 }
             }
         },
+        "preprocessing_options": {
+            "title": "Array and preprocessing options",
+            "type": "object",
+            "fa_icon": "fas fa-microchip",
+            "description": "Array platform, preprocessing method and its settings.",
+            "properties": {
+                "platform": {
+                    "type": "string",
+                    "default": "EPICv2",
+                    "enum": ["EPICv2"],
+                    "description": "Array platform of the IDAT files.",
+                    "help_text": "The platform of every array is detected from its IDAT files, and the run stops if it differs from this value. Infinium MethylationEPIC v2.0 (`EPICv2`) is supported.",
+                    "fa_icon": "fas fa-microchip"
+                },
+                "preprocessing": {
+                    "type": "string",
+                    "default": "sesame",
+                    "enum": ["sesame"],
+                    "description": "Preprocessing method.",
+                    "help_text": "`sesame`: SeSAMe per-sample preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays in the run.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "sesame_prep": {
+                    "type": "string",
+                    "default": "QCDPB",
+                    "pattern": "^[A-Za-z0-9]+$",
+                    "description": "SeSAMe preprocessing code passed to `prepSesame`.",
+                    "help_text": "Each letter is one step, applied in order. The default `QCDPB` applies the probe quality mask (Q), infers the colour channel of Infinium I probes (C), corrects non-linear dye bias (D), masks probes that fail pOOBAH detection (P) and applies noob background correction (B). See `sesame::prepSesameList()` for all codes.",
+                    "fa_icon": "fas fa-code"
+                },
+                "min_beads": {
+                    "type": "integer",
+                    "default": 3,
+                    "minimum": 1,
+                    "description": "Minimum number of beads per probe; probes with fewer beads are masked.",
+                    "fa_icon": "fas fa-braille"
+                },
+                "detection_pval": {
+                    "type": "number",
+                    "default": 0.05,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "pOOBAH detection p-value threshold; probes above it are masked.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "sesame_cache": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Directory with the sesameData resources from an earlier run (`references/sesame_cache` when `--save_reference` was set).",
+                    "help_text": "Without this option the pipeline downloads the resources from ExperimentHub at the start of each run. With it, preprocessing runs without network access.",
+                    "fa_icon": "fas fa-database"
+                },
+                "save_reference": {
+                    "type": "boolean",
+                    "description": "Save the downloaded sesameData resources to `<outdir>/references/` for reuse with `--sesame_cache`.",
+                    "fa_icon": "fas fa-save"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -216,6 +276,9 @@
     "allOf": [
         {
             "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/preprocessing_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

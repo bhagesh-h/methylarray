@@ -121,6 +121,42 @@ Columns can come from the samplesheet, the phenotype table or the covariates the
 
 A model stops the run before any task starts when it names a column found in none of these sources, lists its trait among its covariates (directly or through a token), or uses its `block` column as a covariate as well. Without `--models` the pipeline runs preprocessing, QC, cell composition, biomarkers and the exploratory analysis, and no association models.
 
+## Preprocessing
+
+`--preprocessing sesame` (the default) runs SeSAMe on each array on its own, so the result for one array does not depend on the others in the run.
+
+| Parameter          | Default  | Meaning                                                                                                   |
+| ------------------ | -------- | --------------------------------------------------------------------------------------------------------- |
+| `--platform`       | `EPICv2` | Array platform. The platform of every array is detected from its IDATs and must match                     |
+| `--sesame_prep`    | `QCDPB`  | `prepSesame` steps in order: quality mask, channel inference, non-linear dye bias, pOOBAH detection, noob |
+| `--detection_pval` | `0.05`   | pOOBAH threshold; probes above it are set to `NA`                                                         |
+| `--min_beads`      | `3`      | Probes measured by fewer beads are set to `NA`                                                            |
+
+The masked beta values are used for association testing. The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution and epigenetic clocks.
+
+### Offline runs
+
+SeSAMe needs probe manifests, masks and platform signatures from Bioconductor's ExperimentHub (about 45 MB for EPIC v2). By default the first task of each run downloads them. To run without network access, save them once and pass them to later runs:
+
+```bash
+# once, with network access
+nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results --save_reference
+
+# later, offline
+nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results2 --sesame_cache results/references/sesame_cache
+```
+
+### Remote IDAT files
+
+IDAT paths may be HTTPS URLs, for example GEO supplementary files. Some servers, including NCBI GEO, refuse many parallel downloads. If staging fails with HTTP 503, limit the number of parallel transfers in a custom config passed with `-c`:
+
+```groovy
+threadPool.FileTransfer.maxThreads = 4
+filePorter.maxRetries = 10
+```
+
+Nextflow prints an "Unrecognized config option" warning for these two settings, but applies them.
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

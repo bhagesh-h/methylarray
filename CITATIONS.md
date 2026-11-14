@@ -144,6 +144,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Bioconductor infrastructure packages for on-disk assay storage.
 
+- sesameData and ExperimentHub
+
+  > Bioconductor packages that distribute the SeSAMe probe manifests, masks and platform signatures. The pipeline downloads them once per run (or reuses `--sesame_cache`) and records each resource's ExperimentHub ID and MD5 checksum.
+
 ## Cell-type composition
 
 - [EpiDISH](https://doi.org/10.1186/s12859-017-1511-5)

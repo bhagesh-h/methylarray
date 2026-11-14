@@ -1,0 +1,83 @@
+name: sesame_preprocess
+description: Preprocess one Illumina methylation array with SeSAMe (prepSesame, default QCDPB) and write beta values, detection p-values, intensities, QC statistics and control-probe intensities
+keywords:
+  - dna methylation
+  - illumina
+  - methylation array
+  - idat
+  - preprocessing
+  - normalisation
+tools:
+  - sesame:
+      description: "SEnsible Step-wise Analysis of DNA MEthylation BeadChips"
+      homepage: https://bioconductor.org/packages/sesame
+      documentation: https://zwdzwd.github.io/sesame/
+      doi: 10.1093/nar/gky691
+      licence: ["MIT"]
+      identifier: biotools:sesame
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+    - idat_red:
+        type: file
+        description: Red channel IDAT file
+        pattern: "*_Red.idat{,.gz}"
+        ontologies: []
+    - idat_grn:
+        type: file
+        description: Green channel IDAT file with the same prefix as the red file
+        pattern: "*_Grn.idat{,.gz}"
+        ontologies: []
+  - sesame_cache:
+      type: directory
+      description: ExperimentHub cache from SESAME_CACHE
+output:
+  rds:
+    - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+      - "*.sesame.rds":
+          type: file
+          description: R list with probe IDs, masked and unmasked beta values, pOOBAH detection p-values and methylated and unmethylated intensities
+          pattern: "*.sesame.rds"
+          ontologies: []
+  qc:
+    - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+      - "*.qc.tsv":
+          type: file
+          description: One-row table with platform, predicted sex, masking result and the SeSAMe QC statistics
+          pattern: "*.qc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  controls:
+    - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+      - "*.controls.tsv.gz":
+          type: file
+          description: Control-probe intensities in the green and red channel
+          pattern: "*.controls.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"
