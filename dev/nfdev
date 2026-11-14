@@ -14,6 +14,10 @@
 #   NFDEV_APPTAINER_IMAGE  Apptainer devkit image tag (default: methylarray-apptainer-kit:dev)
 #   NFDEV_JAVA_OPTS  JVM options for Nextflow (default: -Xms512m -Xmx4g)
 #   NFDEV_DIND_IMAGE Docker-in-Docker daemon image (default: docker:29.9.3-dind)
+#
+# NXF_VER=<version> in the calling environment runs that Nextflow release instead
+# of the pinned one (as in the CI matrix). Its -dist binary is downloaded once
+# into $NFDEV_OUT_ROOT/cache/nextflow-dist/<version>/ and mounted over the pinned one.
 
 set -euo pipefail
 
@@ -160,6 +164,20 @@ tty_flags=()
 run_in_devkit() {
     local workdir="$1"; shift
     [[ "${ENGINE}" == "dind" ]] && start_dind
+    local version_opts=()
+    if [[ -n "${NXF_VER:-}" ]]; then
+        [[ "${NXF_VER}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-edge)?$ ]] || die "NXF_VER must look like 26.04.2"
+        local dist="${NFDEV_OUT_ROOT}/cache/nextflow-dist/${NXF_VER}/nextflow"
+        if [[ ! -x "${dist}" ]]; then
+            mkdir -p "$(dirname "${dist}")"
+            docker run --rm --user "$(id -u):$(id -g)" -v "$(dirname "${dist}"):/dist" "${NFDEV_IMAGE}" \
+                python -c "import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], '/dist/nextflow.part')" \
+                "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-dist" \
+                || die "could not download Nextflow ${NXF_VER}"
+            chmod +x "${dist}.part" && mv "${dist}.part" "${dist}"
+        fi
+        version_opts=( -v "${dist}:/usr/local/bin/nextflow:ro" )
+    fi
     local cmd=( docker run --rm --init "${tty_flags[@]}"
         --user "$(id -u):$(id -g)"
         "${engine_opts[@]}"
@@ -170,6 +188,7 @@ run_in_devkit() {
         --env NXF_OPTS="${NFDEV_JAVA_OPTS}"
         --env NXF_ANSI_LOG=false
         --env NFT_WORKDIR="${NFDEV_OUT_ROOT}/tests/nf-test"
+        "${version_opts[@]}"
         "${IMAGE}" "$@" )
     printf '%q ' "${cmd[@]}" > "${LOG}"
     printf '\n\n' >> "${LOG}"
