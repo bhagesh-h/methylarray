@@ -30,7 +30,8 @@ Commands:
   nextflow <args>    Run Nextflow (launch directory: \$NFDEV_OUT_ROOT)
   exec <cmd...>      Run any command in the devkit container (working directory: repo)
   test [args]        Run nf-test in the repository (work directory: \$NFDEV_OUT_ROOT/tests/nf-test)
-  lint               Run nf-core pipelines lint, nextflow lint and prek
+  lint               Lint an export of the staged tree (\$NFDEV_OUT_ROOT/tests/lint/<time>) with
+                     nf-core pipelines lint and nextflow lint, then run prek in the repository
   metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
   dind-stop          Stop and remove the Docker-in-Docker daemon container (dind engine)
 
@@ -130,7 +131,7 @@ fi
 # paths as the devkit container so that task bind mounts resolve inside it.
 # Its TLS certificate is issued for the name "docker", so that is its network alias.
 start_dind() {
-    if [[ "$(docker inspect -f '{{.State.Running}}' "${DIND_NAME}" 2>/dev/null || true)" == "true" ]]; then
+    if [[ -n "$(docker ps --quiet --filter "name=^${DIND_NAME}$" --filter status=running)" ]]; then
         return 0
     fi
     docker network inspect "${DIND_NETWORK}" >/dev/null 2>&1 || docker network create "${DIND_NETWORK}" >/dev/null
@@ -197,10 +198,21 @@ case "${COMMAND}" in
         run_in_devkit "${REPO}" nf-test test "$@"
         ;;
     lint)
-        run_in_devkit "${REPO}" bash -c 'nf-core pipelines lint && nextflow lint . && prek run --all-files'
+        # Lint exactly what would be committed: the git index, exported outside
+        # the repository, so untracked local material (such as ref/) is ignored
+        # and no lint artefacts are written into the repository.
+        # The export is committed to a throwaway git repository because some
+        # nf-core lint tests behave differently outside a git checkout (as in CI).
+        lint_dir="${NFDEV_OUT_ROOT}/tests/lint/$(date +%Y%m%d_%H%M%S)"
+        git -C "${REPO}" checkout-index --all --prefix="${lint_dir}/"
+        git -C "${lint_dir}" init --quiet
+        git -C "${lint_dir}" add --all
+        git -C "${lint_dir}" -c user.name=nfdev -c user.email=nfdev@localhost commit --quiet --message "lint snapshot"
+        run_in_devkit "${lint_dir}" bash -c 'nf-core pipelines lint && nextflow lint .'
+        run_in_devkit "${REPO}" prek run --all-files
         ;;
     metro)
-        run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd --embed-font --validate \
+        run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd -o docs/images/metro_map.svg --embed-font --validate \
             && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_light_1000px.png' --mode light --raster-width 1000 \
             && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_dark_1000px.png' --mode dark --raster-width 1000"
         ;;

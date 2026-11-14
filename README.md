@@ -45,12 +45,14 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
    - technical-replicate concordance
 
    Every exclusion is recorded with a reason.
+
 5. Filter probes, in order:
    - detection failure and low bead count
    - cross-hybridising, SNP-affected, `nv`, `rs` and non-CpG probes
    - sex chromosomes (optional)
 
    EPIC v2 replicate probes are then collapsed to one value per CpG. A probe attrition table documents each step.
+
 6. Estimate leukocyte proportions with EpiDISH.
 7. Compute epigenetic clocks (Horvath, Hannum, skin and blood, PhenoAge, PC clocks, DunedinPACE and others) and DNAm scores (CRP, IL-6, smoking, alcohol, BMI), reporting the probe coverage of each on the array.
 8. Explore technical and biological variation:
@@ -69,13 +71,13 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
 Select one with `--preprocessing`.
 
-| Option | Route | When to use it |
-| --- | --- | --- |
+| Option             | Route                                                                                                          | When to use it                                                                                                               |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | `sesame` (default) | SeSAMe per-sample preprocessing: quality masks, channel inference, non-linear dye bias, pOOBAH detection, noob | Recommended for EPIC v2. Each sample is processed on its own, so results do not depend on which other samples are in the run |
-| `minfi` | minfi import, detection p-values, Noob (Funnorm optional) | Comparison with studies processed in minfi |
-| `enmix` | minfi import, ENmix QC, ENmix background with RELIC dye-bias correction, RCP probe-type correction | Strong replicate agreement in published benchmarks |
-| `combined` | minfi import, SeSAMe pOOBAH detection masks, ENmix background with RELIC, RCP | One integrated route that uses the strongest step of each package |
-| `parallel` | Runs `minfi`, `sesame` and `enmix` side by side through the full analysis, then compares them | Sensitivity analysis. Reports concordance of beta values, QC decisions, cell estimates, clocks and association results |
+| `minfi`            | minfi import, detection p-values, Noob (Funnorm optional)                                                      | Comparison with studies processed in minfi                                                                                   |
+| `enmix`            | minfi import, ENmix QC, ENmix background with RELIC dye-bias correction, RCP probe-type correction             | Strong replicate agreement in published benchmarks                                                                           |
+| `combined`         | minfi import, SeSAMe pOOBAH detection masks, ENmix background with RELIC, RCP                                  | One integrated route that uses the strongest step of each package                                                            |
+| `parallel`         | Runs `minfi`, `sesame` and `enmix` side by side through the full analysis, then compares them                  | Sensitivity analysis. Reports concordance of beta values, QC decisions, cell estimates, clocks and association results       |
 
 ## Requirements
 
@@ -124,20 +126,20 @@ S001,/data/idat/200000000001/200000000001_R01C01_Red.idat,/data/idat/20000000000
 S002,/data/idat/200000000001/200000000001_R02C01_Red.idat,/data/idat/200000000001/200000000001_R02C01_Grn.idat,P01,M
 ```
 
-| Column | Required | Description |
-| --- | --- | --- |
-| `sample` | yes | Unique sample identifier |
-| `idat_red` | yes | Red channel IDAT (`_Red.idat` or `_Red.idat.gz`) |
-| `idat_grn` | yes | Green channel IDAT with the same prefix as the red file |
-| `sentrix_id` | no | Chip barcode. Derived from the file name if omitted |
-| `sentrix_position` | no | Position such as `R01C01`. Derived from the file name if omitted |
-| `plate` | no | Processing plate, used as a batch variable |
-| `well` | no | Plate well |
-| `batch` | no | Any further processing batch |
-| `reported_sex` | no | `M` or `F`, compared with the sex predicted from the array |
-| `reported_age` | no | Chronological age, used for clock-based checks |
-| `replicate_group` | no | Shared value for technical replicates |
-| `exclude`, `exclude_reason` | no | Manual exclusion with a recorded reason |
+| Column                      | Required | Description                                                      |
+| --------------------------- | -------- | ---------------------------------------------------------------- |
+| `sample`                    | yes      | Unique sample identifier                                         |
+| `idat_red`                  | yes      | Red channel IDAT (`_Red.idat` or `_Red.idat.gz`)                 |
+| `idat_grn`                  | yes      | Green channel IDAT with the same prefix as the red file          |
+| `sentrix_id`                | no       | Chip barcode. Derived from the file name if omitted              |
+| `sentrix_position`          | no       | Position such as `R01C01`. Derived from the file name if omitted |
+| `plate`                     | no       | Processing plate, used as a batch variable                       |
+| `well`                      | no       | Plate well                                                       |
+| `batch`                     | no       | Any further processing batch                                     |
+| `reported_sex`              | no       | `M` or `F`, compared with the sex predicted from the array       |
+| `reported_age`              | no       | Chronological age, used for clock-based checks                   |
+| `replicate_group`           | no       | Shared value for technical replicates                            |
+| `exclude`, `exclude_reason` | no       | Manual exclusion with a recorded reason                          |
 
 ### Phenotypes
 
