@@ -2,8 +2,9 @@
 
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A525.10.4-23aa62.svg)](https://www.nextflow.io/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?logo=docker)](https://www.docker.com/)
-[![run with conda](https://img.shields.io/badge/run%20with-conda-3EB049?logo=anaconda)](https://docs.conda.io/en/latest/)
+[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg)](https://sylabs.io/docs/)
 [![run with apptainer](https://img.shields.io/badge/run%20with-apptainer-1d355c.svg)](https://apptainer.org/)
+[![run with conda](https://img.shields.io/badge/run%20with-conda-3EB049?logo=anaconda)](https://docs.conda.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Introduction
@@ -19,9 +20,9 @@
 - pathway and chromatin enrichment
 - a MultiQC report and an HTML analysis report
 
-The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and handles the specific features of that array: replicate probes, the GRCh38 manifest, the `nv` and `rs` probe classes, and the updated cross-hybridisation annotation.
+The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and handles the specific features of that array: replicate probes, the GRCh38 manifest, the `nv` and `rs` probe classes, and the updated cross-hybridisation annotation. It is written in Nextflow DSL2 with strict syntax, built from the nf-core template, and every step runs with pinned software through Docker, Singularity, Apptainer, Podman or conda.
 
-It is written in Nextflow DSL2 with strict syntax and built from the nf-core template. Every step runs in a container with pinned software versions. The only host requirement is Docker.
+![methylarray workflow](docs/images/metro_map.svg)
 
 > **Status:** under active development. Version 1.0.0 has not been released. [CHANGELOG.md](CHANGELOG.md) lists what is implemented.
 
@@ -29,17 +30,9 @@ It is written in Nextflow DSL2 with strict syntax and built from the nf-core tem
 
 1. Validate the samplesheet, phenotype table and model definitions against JSON schemas (nf-schema).
 2. Prepare reference resources once and cache them for offline runs: the SeSAMe data cache, the EPIC v2 manifest and probe masks.
-3. Read and preprocess each sample independently with SeSAMe:
-   - bead-count masking
-   - quality masking
-   - Infinium I channel inference
-   - non-linear dye-bias correction
-   - pOOBAH detection masking
-   - noob background correction
-4. Assemble all samples into an HDF5-backed `SummarizedExperiment`.
-5. Run sample QC:
-   - detection rate and signal intensity
-   - Illumina control-probe metrics (ewastools)
+3. Preprocess the arrays with one of five options (see [Preprocessing options](#preprocessing-options)).
+4. Run sample QC:
+   - Illumina control-probe metrics
    - predicted versus reported sex
    - SNP-based identity and duplicate detection
    - contamination score
@@ -47,66 +40,70 @@ It is written in Nextflow DSL2 with strict syntax and built from the nf-core tem
    - technical-replicate concordance
 
    Every exclusion is recorded with a reason.
-6. Filter probes, in order:
-   - detection failure
-   - low bead count
+5. Filter probes, in order:
+   - detection failure and low bead count
    - cross-hybridising, SNP-affected, `nv`, `rs` and non-CpG probes
    - sex chromosomes (optional)
 
    EPIC v2 replicate probes are then collapsed to one value per CpG. A probe attrition table documents each step.
-7. Estimate the proportions of 12 leukocyte subtypes with EpiDISH and the cent12CT reference.
-8. Compute epigenetic clocks (Horvath, Hannum, skin and blood, PhenoAge, PC clocks, DunedinPACE) and DNAm scores (CRP, IL-6, smoking, alcohol, BMI), reporting the probe coverage of each on the array.
-9. Explore technical and biological variation:
-   - principal components and their associations with covariates
+6. Estimate leukocyte proportions with EpiDISH.
+7. Compute epigenetic clocks (Horvath, Hannum, skin and blood, PhenoAge, PC clocks, DunedinPACE and others) and DNAm scores (CRP, IL-6, smoking, alcohol, BMI), reporting the probe coverage of each on the array.
+8. Explore technical and biological variation:
    - control-probe principal components
-   - variance partitioning
+   - principal components and their associations with covariates
    - a design-balance check for every model
-10. Run epigenome-wide association studies:
-    - limma on M-values, with effect sizes reported as differences in beta values
-    - bias and inflation control with bacon
-    - FDR and EPIC-specific significance thresholds
-    - lookup of known associations
-11. Call differentially methylated regions with DMRcate and dmrff, and report regions supported by both methods.
-12. Test for enrichment with missMethyl (GO, KEGG, MSigDB Hallmark) and SeSAMe KnowYourCG.
-13. Build a MultiQC report and an HTML report with an automatically generated methods section.
+9. When a models file is given, run epigenome-wide association studies:
+   - limma on M-values, with effect sizes reported as differences in beta values
+   - bias and inflation control with bacon
+   - DMRs from DMRcate and dmrff, keeping regions supported by both
+   - gene set and CpG-centric enrichment (missMethyl, KnowYourCG)
+10. In parallel mode, compare the preprocessing methods (method concordance).
+11. Build a MultiQC report and an HTML report with an automatically generated methods section.
+
+## Preprocessing options
+
+Select one with `--preprocessing`.
+
+| Option | Route | When to use it |
+| --- | --- | --- |
+| `sesame` (default) | SeSAMe per-sample preprocessing: quality masks, channel inference, non-linear dye bias, pOOBAH detection, noob | Recommended for EPIC v2. Each sample is processed on its own, so results do not depend on which other samples are in the run |
+| `minfi` | minfi import, detection p-values, Noob (Funnorm optional) | Comparison with studies processed in minfi |
+| `enmix` | minfi import, ENmix QC, ENmix background with RELIC dye-bias correction, RCP probe-type correction | Strong replicate agreement in published benchmarks |
+| `combined` | minfi import, SeSAMe pOOBAH detection masks, ENmix background with RELIC, RCP | One integrated route that uses the strongest step of each package |
+| `parallel` | Runs `minfi`, `sesame` and `enmix` side by side through the full analysis, then compares them | Sensitivity analysis. Reports concordance of beta values, QC decisions, cell estimates, clocks and association results |
 
 ## Requirements
 
-- Docker Engine 24 or later. Nextflow, Java and every analysis tool run inside containers, so nothing else is installed on the host.
-- Alternatively, Nextflow 25.10.4 or later with Docker, Podman, Singularity, Apptainer or conda.
+- [Nextflow](https://www.nextflow.io/docs/latest/install.html) 25.10.4 or later.
+- One of [Docker](https://docs.docker.com/engine/installation/), [Singularity](https://www.sylabs.io/guides/3.0/user-guide/), [Apptainer](https://apptainer.org/docs/user/latest/), [Podman](https://podman.io/) or [conda](https://conda.io/miniconda.html). Containers are recommended.
 - Memory:
   - per-sample tasks need about 4 GB
   - whole-cohort steps need about 32 GB for 300 EPIC v2 samples
-- Internet access on the first run, to fetch containers and reference resources. Later runs can be offline.
+- Internet access on the first run, to fetch containers and reference resources. Later runs can be offline with `--sesame_cache`.
 
 ## Quick start
 
-1. Test the installation with the bundled test profile:
+1. Test the pipeline on the bundled test data:
 
    ```bash
-   scripts/nf-docker run -profile test,docker --outdir /absolute/path/to/results
+   nextflow run bhagesh-h/methylarray -profile test,docker --outdir results
    ```
 
-   `scripts/nf-docker` starts the official Nextflow container. It mounts the Docker socket and the required paths at identical locations, then runs the pipeline. Tasks start as sibling containers on the host Docker daemon.
+   Replace `docker` with `singularity`, `apptainer`, `podman` or `conda` to match your system. Institutional profiles from [nf-core/configs](https://github.com/nf-core/configs) also work.
 
 2. Prepare a samplesheet (see [Input](#input)).
 
 3. Run the pipeline:
 
    ```bash
-   scripts/nf-docker run \
+   nextflow run bhagesh-h/methylarray \
+       -r <version> \
        -profile docker \
        --input samplesheet.csv \
        --phenotypes phenotypes.tsv \
        --models models.yaml \
-       --outdir /absolute/path/to/results
+       --outdir results
    ```
-
-If Nextflow is already installed on your system, the equivalent command is:
-
-```bash
-nextflow run bhagesh-h/methylarray -r <version> -profile docker --input samplesheet.csv --outdir results
-```
 
 Pipeline parameters must be passed on the command line or in a `-params-file`. A `-c` config file should only change infrastructure settings such as resources and executors.
 
@@ -163,20 +160,9 @@ Without a models file the pipeline stops after QC, preprocessing, cell compositi
 
 - `--qc_only` stops after sample QC and reporting. Use it to review the QC report and write a sample exclusion file, then pass that file with `--sample_exclusions` in the full run.
 - Add `-resume` to reuse completed tasks after a change or failure.
-- `--sesame_cache` reuses a reference cache from an earlier run, which allows fully offline execution.
+- `--sesame_cache` reuses a reference cache from an earlier run, which allows offline execution.
 - Batch effects are modelled as covariates by default. ComBat is available through `--combat_batch` but only runs for models that pass the design-balance check, because ComBat on unbalanced designs can create false positives.
 - Run `nextflow run bhagesh-h/methylarray --help` for all parameters. The full description of every option is in [docs/usage.md](docs/usage.md), and the parameter schema is [nextflow_schema.json](nextflow_schema.json).
-
-## Execution modes
-
-| Mode | When to use | How it works |
-| --- | --- | --- |
-| Docker outside of Docker (default) | Workstations and servers where you can use Docker | The Nextflow container drives the host Docker daemon through the mounted socket. Each task runs in its own pinned container |
-| Docker in Docker | CI and isolated environments | A separate Docker daemon runs in a sidecar container. The pipeline runs against that daemon only |
-| Conda in Docker | Hosts where the Docker socket cannot be shared | All tasks run inside one container, using pinned conda environments built with micromamba |
-| HPC | Clusters with Singularity or Apptainer | Standard Nextflow installation with `-profile singularity` or `-profile apptainer` and an institutional config |
-
-All paths given to the pipeline must be absolute. In the Docker-based modes, the wrapper mounts them at the same location inside the containers so that task containers resolve them correctly.
 
 ## Outputs
 
@@ -187,15 +173,16 @@ results/
 ├── preprocessing/      HDF5-backed SummarizedExperiment objects and exported matrices
 ├── cell_composition/   cell-type proportions and plots
 ├── biomarkers/         epigenetic clocks and DNAm scores
-├── exploratory/        PCA, variance partitioning, control-probe components, design checks
+├── exploratory/        PCA, control-probe components, design checks
 ├── ewas/               summary statistics, top hits and plots per model, cross-model summary
 ├── dmr/                DMRcate, dmrff and consensus regions per model
 ├── enrichment/         gene set and CpG-centric enrichment per model
+├── comparison/         method concordance (parallel mode)
 ├── multiqc/            MultiQC report
 └── report/             HTML analysis report with methods text
 ```
 
-Every file is described in [docs/output.md](docs/output.md).
+In parallel mode each method writes its own subdirectory under `preprocessing/`, `qc/` and the analysis folders. Every file is described in [docs/output.md](docs/output.md).
 
 ## Testing
 
@@ -210,17 +197,17 @@ The pipeline is tested with [nf-test](https://www.nf-test.com) at the module, su
 
 ## Data privacy
 
-The pipeline processes data locally and does not upload samples, phenotypes or results anywhere. Container builds only use environment files. When working with human cohort data, keep IDATs, samplesheets with identifiers, phenotype tables and results out of version control.
+The pipeline processes data where it runs and does not upload samples, phenotypes or results anywhere. When working with human cohort data, keep IDATs, samplesheets with identifiers, phenotype tables and results out of version control.
 
 ## Credits
 
 methylarray is developed and maintained by [bhagesh-h](https://github.com/bhagesh-h).
 
-The design draws on the nf-core/methylarray development pipeline and its contributors, the Garvan Institute EPIC v2 workflow, and the EPIC v2 preprocessing work of the Kobor lab.
+The design draws on the nf-core/methylarray development pipeline and its contributors, the Garvan Institute EPIC v2 workflow, and the EPIC v2 preprocessing work of the Kobor lab. The workflow diagram is drawn with [nf-metro](https://github.com/seqeralabs/nf-metro) from [assets/metro_map.mmd](assets/metro_map.mmd).
 
 ## Contributions and support
 
-Bug reports and feature requests are welcome through GitHub issues. See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) before opening a pull request.
+Bug reports and feature requests are welcome through GitHub issues. Development happens on the `dev` branch: open pull requests against `dev`, never against `main`. See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) before opening a pull request.
 
 ## Citations
 
