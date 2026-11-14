@@ -322,12 +322,6 @@ This file is the single reference list for the pipeline. The README, the documen
 
 ## Reference studies used to validate results
 
-- [Epigenetic age acceleration in the 300-OB cohort](https://doi.org/10.1186/s13148-026-02263-1)
-
-  > Vasiahina V, dos Santos JC, Ballan M, et al. Epigenetic age acceleration is associated with metabolic syndrome and vascular stiffness in adults with overweight and obesity: an observational cohort study. Clin Epigenetics. 2026 (article in press).
-
-  Published analysis of the same EPIC v2 arrays (minfi, noob). Used as the benchmark when the pipeline is validated on 300-OB.
-
 - [EWAS of body mass index](https://doi.org/10.1038/nature20784)
 
   > Wahl S, Drong A, Lehne B, et al. Epigenome-wide association study of body mass index, and the adverse outcomes of adiposity. Nature. 2017;541:81-86.

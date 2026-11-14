@@ -49,7 +49,7 @@ repos:
         entry: ./.hooks/block_pipeline_outdir.sh
         language: script
       - id: block-private-data
-        name: Block raw array data and spreadsheets (private cohort data must stay outside the repository)
+        name: Block raw array data and spreadsheets (study data must stay outside the repository)
         language: fail
-        entry: "IDAT and spreadsheet files must never be committed. Keep cohort data outside the repository."
+        entry: "IDAT and spreadsheet files must never be committed. Keep study data outside the repository."
         files: '(?i)\.(idat|idat\.gz|xlsx|xls)$'
