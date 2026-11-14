@@ -48,3 +48,8 @@ repos:
         name: Prevent committing output from pipeline test runs to the pipeline code itself
         entry: ./.hooks/block_pipeline_outdir.sh
         language: script
+      - id: block-private-data
+        name: Block raw array data and spreadsheets (private cohort data must stay outside the repository)
+        language: fail
+        entry: "IDAT and spreadsheet files must never be committed. Keep cohort data outside the repository."
+        files: '(?i)\.(idat|idat\.gz|xlsx|xls)$'
