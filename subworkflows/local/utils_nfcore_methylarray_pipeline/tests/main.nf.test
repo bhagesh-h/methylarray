@@ -100,7 +100,7 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.failed },
-                { assert workflow.stderr.any { line -> line.contains('do not belong to the same array') } }
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('do not belong to the same array') } }
             )
         }
     }
@@ -139,7 +139,7 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.failed },
-                { assert workflow.stderr.any { line -> line.contains('appear in more than one row') } }
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('appear in more than one row') } }
             )
         }
     }
@@ -177,7 +177,7 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.failed },
-                { assert workflow.stderr.any { line -> line.contains('but its IDAT files name 207059430159') } }
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('but its IDAT files name 207059430159') } }
             )
         }
     }
@@ -215,7 +215,7 @@ nextflow_workflow {
         then {
             assertAll(
                 { assert workflow.failed },
-                { assert workflow.stderr.any { line -> line.contains('exclude_reason') } }
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('exclude_reason') } }
             )
         }
     }
