@@ -58,6 +58,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Container images built on demand from Conda environment files.
 
+- [nf-metro](https://github.com/seqeralabs/nf-metro)
+
+  > Metro-map rendering of the workflow diagram (`docs/images/metro_map.svg`) from `assets/metro_map.mmd`.
+
 ## Array annotation and probe characterisation
 
 - [EPIC v2 characterisation and enhanced manifest](https://doi.org/10.1186/s12864-024-10027-5)
@@ -200,6 +204,38 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. Bioinformatics. 2024.
 
+- [dnaMethyAge](https://github.com/yiluyucheng/dnaMethyAge)
+
+  > Wang Y, Grant OA, Zhai X, McDonald-Maier KD, Schalkwyk LC. Insights into ageing rates comparison across tissues from recalibrating cerebellum DNA methylation clock. GeroScience. 2024;46:39-56.
+
+  Implementation used for the published clock coefficients (pinned to a commit). It also provides the clocks below.
+
+- Zhang 2019 clock
+
+  > Zhang Q, Vallerga CL, Walker RM, et al. Improved precision of epigenetic clock estimates across tissues and its implication for biological ageing. Genome Med. 2019;11:54.
+
+- cAge
+
+  > Bernabeu E, McCartney DL, Gadd DA, et al. Refining epigenetic prediction of chronological and biological age. Genome Med. 2023;15:12.
+
+- DNAmTL
+
+  > Lu AT, Seeboth A, Tsai PC, et al. DNA methylation-based estimator of telomere length. Aging. 2019;11(16):5895-5923.
+
+- Mortality risk score
+
+  > Zhang Y, Wilson R, Heiss J, et al. DNA methylation signatures in peripheral blood strongly predict all-cause mortality. Nat Commun. 2017;8:14617.
+
+- epiTOC2
+
+  > Teschendorff AE. A comparison of epigenetic mitotic-like clocks for cancer risk prediction. Genome Med. 2020;12:56.
+
+- DNAmIC
+
+  > Fuentealba M, Rouch L, Guyonnet S, et al. A blood-based epigenetic clock for intrinsic capacity predicts mortality and is associated with clinical, immunological and lifestyle factors. Nat Aging. 2025.
+
+  Entries in this file without a DOI link are pending verification of the identifier.
+
 - [Smoking, alcohol and BMI predictors](https://doi.org/10.1186/s13059-018-1514-1)
 
   > McCartney DL, Hillary RF, Stevenson AJ, et al. Epigenetic prediction of complex traits and death. Genome Biol. 2018;19:136.
@@ -285,6 +321,12 @@ This file is the single reference list for the pipeline. The README, the documen
   > CpG-centric enrichment testing distributed with SeSAMe (see the SeSAMe citation).
 
 ## Reference studies used to validate results
+
+- [Epigenetic age acceleration in the 300-OB cohort](https://doi.org/10.1186/s13148-026-02263-1)
+
+  > Vasiahina V, dos Santos JC, Ballan M, et al. Epigenetic age acceleration is associated with metabolic syndrome and vascular stiffness in adults with overweight and obesity: an observational cohort study. Clin Epigenetics. 2026 (article in press).
+
+  Published analysis of the same EPIC v2 arrays (minfi, noob). Used as the benchmark when the pipeline is validated on 300-OB.
 
 - [EWAS of body mass index](https://doi.org/10.1038/nature20784)
 
