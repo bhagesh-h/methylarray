@@ -28,10 +28,12 @@
                 "errorMessage": "Green channel IDAT must be provided, may not contain spaces and must end in '_Grn.idat' or '_Grn.idat.gz'"
             },
             "sentrix_id": {
-                "type": "string",
+                "type": ["string", "integer"],
                 "pattern": "^[0-9]{10,14}$",
                 "errorMessage": "Sentrix ID (BeadChip barcode) must be 10 to 14 digits",
-                "meta": ["sentrix_id"]
+                "meta": ["sentrix_id"],
+                "minimum": 1000000000,
+                "maximum": 99999999999999
             },
             "sentrix_position": {
                 "type": "string",
@@ -40,7 +42,7 @@
                 "meta": ["sentrix_position"]
             },
             "plate": {
-                "type": "string",
+                "type": ["string", "integer"],
                 "pattern": "^\\S+$",
                 "errorMessage": "Plate may not contain spaces",
                 "meta": ["plate"]
@@ -52,7 +54,7 @@
                 "meta": ["well"]
             },
             "batch": {
-                "type": "string",
+                "type": ["string", "integer"],
                 "pattern": "^\\S+$",
                 "errorMessage": "Batch may not contain spaces",
                 "meta": ["batch"]
@@ -70,7 +72,7 @@
                 "meta": ["reported_age"]
             },
             "replicate_group": {
-                "type": "string",
+                "type": ["string", "integer"],
                 "pattern": "^\\S+$",
                 "errorMessage": "Replicate group may not contain spaces",
                 "meta": ["replicate_group"]
@@ -87,7 +89,11 @@
         },
         "required": ["sample", "idat_red", "idat_grn"],
         "if": {
-            "properties": { "exclude": { "const": true } },
+            "properties": {
+                "exclude": {
+                    "const": true
+                }
+            },
             "required": ["exclude"]
         },
         "then": {

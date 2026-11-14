@@ -153,7 +153,17 @@ workflow PIPELINE_COMPLETION {
 //
 // Validate one samplesheet row and add the Sentrix ID, position and row to meta
 //
-def validateIdatPair(meta, idat_red, idat_grn) {
+def validateIdatPair(meta_in, idat_red, idat_grn) {
+    // nf-schema stores missing optional values as []: use null instead, and keep
+    // numeric-looking identifiers (read as integers) as strings
+    def cleaned = meta_in.collectEntries { key, value -> [ key, (value == [] || value == '') ? null : value ] }
+    def meta = cleaned + [
+        sentrix_id: cleaned.sentrix_id?.toString(),
+        plate: cleaned.plate?.toString(),
+        batch: cleaned.batch?.toString(),
+        replicate_group: cleaned.replicate_group?.toString()
+    ]
+
     // Both files must belong to the same array: identical prefix before _Red/_Grn
     def red_prefix = idat_red.name.replaceFirst(/_Red\.idat(\.gz)?$/, '')
     def grn_prefix = idat_grn.name.replaceFirst(/_Grn\.idat(\.gz)?$/, '')
