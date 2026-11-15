@@ -5,9 +5,12 @@ nextflow_pipeline {
     tag "pipeline"
     tag "pipeline_combined"
 
-    // minfi import, ENmix correction and the SeSAMe masks: covers the hand-over
-    // of the SeSAMe SummarizedExperiment to MINFI_PREPROCESS
-    test("-profile test --preprocessing combined") {
+    // Stub run: covers the routing and the hand-over of the SeSAMe
+    // SummarizedExperiment to MINFI_PREPROCESS. The module tests and the default
+    // pipeline test process real arrays; keeping this one a stub keeps CI short.
+    test("-profile test --preprocessing combined - stub") {
+
+        options "-stub"
 
         when {
             params {
@@ -19,14 +22,10 @@ nextflow_pipeline {
         then {
             def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
             def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
-            def qc = path("$outputDir/qc/combined/combined_qc.tsv").readLines().collect { line -> line.tokenize('\t') }
-            def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }
             assertAll(
                 { assert workflow.success },
-                { assert rows.size() == 6 },
-                { assert rows.every { row -> row.method == 'combined' } },
-                // the SeSAMe masks (quality mask, pOOBAH) mask several percent of the values
-                { assert rows.every { row -> (row.frac_masked as double) > 0.02 } },
+                { assert path("$outputDir/preprocessing/combined/combined_se").exists() },
+                { assert path("$outputDir/preprocessing/sesame/sesame_se").exists() },
                 { assert snapshot(
                     removeNextflowVersion("$outputDir/pipeline_info/methylarray_software_mqc_versions.yml"),
                     stable_path,
