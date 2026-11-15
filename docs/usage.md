@@ -1,6 +1,6 @@
 # bhagesh-h/methylarray: Usage
 
-> _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
+This page explains the inputs and the main options of each step. Every parameter, with its default and help text, is listed in [nextflow_schema.json](../nextflow_schema.json) and by `nextflow run bhagesh-h/methylarray --help` (add `--show_hidden` for the hidden ones).
 
 ## Introduction
 
@@ -40,9 +40,9 @@ S002,/data/idat/207059430159/207059430159_R02C01_Red.idat,/data/idat/20705943015
 | `batch`            | no          | Any further processing batch                                                                                     |
 | `reported_sex`     | no          | `M` or `F`. Compared with the sex predicted from the array                                                       |
 | `reported_age`     | no          | Age in years                                                                                                     |
-| `replicate_group`  | no          | Technical replicates share a value; used for replicate concordance                                               |
+| `replicate_group`  | no          | Technical replicates share a value; used by the genotype identity check                                          |
 | `exclude`          | no          | `true` to exclude an array before analysis                                                                       |
-| `exclude_reason`   | conditional | Required when `exclude` is `true`; recorded in the QC report                                                     |
+| `exclude_reason`   | conditional | Required when `exclude` is `true`; recorded in `qc/sample_qc.tsv`                                                |
 
 Each IDAT file may appear in only one row. The pipeline derives `sentrix_row` (such as `R01`) and `sentrix_col` (such as `C01`) from the array position.
 
@@ -107,19 +107,19 @@ A YAML list with one entry per association model. Each model tests one trait aga
 
 Columns can come from the samplesheet, the phenotype table or the covariates the pipeline derives from the methylation data:
 
-| Name or token   | Meaning                                                      |
-| --------------- | ------------------------------------------------------------ |
-| `predicted_sex` | Sex predicted from the sex chromosomes                       |
-| `dnam_smoking`  | DNA methylation smoking score (McCartney et al. 2018)        |
-| `cc_<celltype>` | Estimated proportion of one cell type, for example `cc_Mono` |
-| `ctrlpc<k>`     | Principal component `k` of the control-probe intensities     |
-| `@cells`        | The configured cell-composition covariates                   |
-| `@ctrlpcs`      | The selected control-probe principal components              |
-| `@technical`    | `plate` and `sentrix_row`                                    |
-| `@sex`          | `predicted_sex`                                              |
-| `@smoking`      | `dnam_smoking`                                               |
+| Name or token   | Meaning                                                                                               |
+| --------------- | ----------------------------------------------------------------------------------------------------- |
+| `predicted_sex` | Sex predicted by the preprocessing route                                                              |
+| `dnam_smoking`  | DNA methylation smoking score (McCartney et al. 2018)                                                 |
+| `cc_<lineage>`  | Estimated fraction of one cell lineage: `cc_B`, `cc_CD4T`, `cc_CD8T`, `cc_NK`, `cc_Mono` or `cc_Gran` |
+| `ctrlpc<k>`     | Principal component `k` of the control-probe intensities                                              |
+| `@cells`        | `cc_CD4T`, `cc_CD8T`, `cc_B`, `cc_NK` and `cc_Mono` (granulocytes are the reference)                  |
+| `@ctrlpcs`      | The kept control-probe principal components (`--n_ctrl_pcs`)                                          |
+| `@technical`    | `plate` and `sentrix_row`                                                                             |
+| `@sex`          | `predicted_sex`                                                                                       |
+| `@smoking`      | `dnam_smoking`                                                                                        |
 
-A model stops the run before any task starts when it names a column found in none of these sources, lists its trait among its covariates (directly or through a token), or uses its `block` column as a covariate as well. Without `--models` the pipeline runs preprocessing, QC, cell composition, biomarkers and the exploratory analysis, and no association models.
+A model stops the run before any task starts when it names a column found in none of these sources, lists its trait among its covariates (directly or through a token), or uses its `block` column as a covariate as well. Without `--models` the pipeline runs preprocessing, QC, probe filtering, cell composition, clocks, DNA methylation scores and the exploratory analysis, and no association models.
 
 ## Preprocessing
 
@@ -132,30 +132,49 @@ Select the method with `--preprocessing`. Every method writes the same Summarize
 | `enmix`           | minfi import, ENmix out-of-band background with RELIC dye-bias correction, optional quantile normalisation (`--enmix_quantile`), RCP probe-type correction | ENmix detection p-value, bead count                  |
 | `combined`        | the `enmix` steps, with the SeSAMe result computed on the same arrays                                                                                      | SeSAMe quality mask and pOOBAH detection, bead count |
 
-SeSAMe processes each array on its own, so its results do not change when arrays are added to or removed from a run. The other methods read all arrays together. minfi detection p-values mask far fewer values than SeSAMe, which also removes probes with known design problems; the `combined` method keeps the ENmix correction and applies the SeSAMe masks.
+SeSAMe processes each array on its own, so its results do not change when arrays are added to or removed from a run. The minfi-based methods (`minfi`, `enmix`, `combined`) read and correct the arrays in chunks of equal size, each with at least `--minfi_chunk_size` arrays (hidden, default 40; a smaller run is one chunk), which limits memory use; Noob, SWAN, detection p-values and the ENmix background, RELIC and RCP steps work array by array, so the chunk size does not change the result. Funnorm, quantile normalisation and the ENmix quantile step need all arrays together and run in a second pass. minfi detection p-values mask far fewer values than SeSAMe, which also removes probes with known design problems; the `combined` method keeps the ENmix correction and applies the SeSAMe masks.
 
-| Parameter          | Default  | Meaning                                                                                                   |
-| ------------------ | -------- | --------------------------------------------------------------------------------------------------------- |
-| `--platform`       | `EPICv2` | Array platform. The platform of every array is detected from its IDATs and must match                     |
-| `--sesame_prep`    | `QCDPB`  | `prepSesame` steps in order: quality mask, channel inference, non-linear dye bias, pOOBAH detection, noob |
-| `--minfi_norm`     | `noob`   | Normalisation of the `minfi` method: `noob`, `funnorm`, `quantile` or `swan`                              |
-| `--enmix_quantile` | `false`  | Add ENmix quantile normalisation to the `enmix` and `combined` methods                                    |
-| `--detection_pval` | `0.05`   | Detection p-value threshold; values above it are set to `NA`                                              |
-| `--min_beads`      | `3`      | Values measured by fewer beads are set to `NA`                                                            |
+| Parameter            | Default  | Meaning                                                                                                               |
+| -------------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `--platform`         | `EPICv2` | Array platform. The platform of every array is detected from its IDATs and must match                                 |
+| `--sesame_prep`      | `QCDPB`  | `prepSesame` steps in order: quality mask, channel inference, non-linear dye bias, pOOBAH detection, noob             |
+| `--minfi_norm`       | `noob`   | Normalisation of the `minfi` method: `noob`, `funnorm`, `quantile` or `swan`                                          |
+| `--enmix_quantile`   | `false`  | Add ENmix quantile normalisation to the `enmix` and `combined` methods                                                |
+| `--detection_pval`   | `0.05`   | Detection p-value threshold; values above it are set to `NA`                                                          |
+| `--min_beads`        | `3`      | Values measured by fewer beads are set to `NA`                                                                        |
+| `--minfi_chunk_size` | `40`     | Hidden. Minimum number of arrays read and corrected together by the minfi-based methods; lower values use less memory |
 
-The masked beta values are used for association testing. The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution and epigenetic clocks. No array or probe is removed during preprocessing; ENmix quality flags are reported in the QC table (`enmix_low_quality`) instead of being applied.
+The masked beta values are used for association testing, clocks and DNA methylation scores. The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution. No array or probe is removed during preprocessing; ENmix quality flags are reported in the QC table (`enmix_low_quality`) instead of being applied.
 
 ### Offline runs
 
-The `sesame` and `combined` methods need probe manifests, masks and platform signatures from Bioconductor's ExperimentHub (about 45 MB for EPIC v2). By default the first task of each run downloads them. The `minfi` and `enmix` methods use the manifest and annotation packages in their container and need no download. Probe filtering reads the probe manifest and mask from the network. To run without network access, save them once and pass them to later runs:
+Besides the containers, a run downloads these resources:
+
+| Resource                                                      | Used by                        | For offline runs                                                                               |
+| ------------------------------------------------------------- | ------------------------------ | ---------------------------------------------------------------------------------------------- |
+| sesameData resources from ExperimentHub (about 45 MB)         | `sesame` and `combined` routes | `--save_reference` once, then `--sesame_cache <outdir>/references/sesame_cache`                |
+| Peters et al. 2024 EPIC v2 manifest (about 300 MB), Zhou mask | probe annotation               | `--save_reference` once, then `--probe_annotation <outdir>/references/probe_annotation.tsv.gz` |
+| ewastools source package                                      | sample QC                      | download once, pass the local path to `--ewastools_source`                                     |
+| dnaMethyAge and DunedinPACE source packages                   | clocks                         | download once, pass the local paths to `--dnamethyage_source` and `--dunedinpace_source`       |
+| dmrff source package                                          | regions                        | download once, pass the local path to `--dmrff_source`                                         |
+| MSigDB GMT files                                              | enrichment                     | download once, pass the local paths to `--gene_set_gmts`                                       |
+| KEGG pathways                                                 | enrichment                     | not cached: without network access KEGG is recorded as not run                                 |
+
+The `minfi` and `enmix` routes use the manifest and annotation packages in their container and need no download. For example:
 
 ```bash
 # once, with network access
 nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results --save_reference
 
-# later, offline
-nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results2 --sesame_cache results/references/sesame_cache --probe_annotation results/references/probe_annotation.tsv.gz
+# later, offline (the source packages and GMT files downloaded to /refs beforehand)
+nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results2 \
+    --probe_annotation results/references/probe_annotation.tsv.gz \
+    --ewastools_source /refs/ewastools.tar.gz \
+    --dnamethyage_source /refs/dnaMethyAge.tar.gz \
+    --dunedinpace_source /refs/DunedinPACE.tar.gz
 ```
+
+Set `NXF_OFFLINE=true` so that Nextflow does not try to load the institutional configs from GitHub.
 
 ### Remote IDAT files
 
@@ -173,7 +192,7 @@ Nextflow prints an "Unrecognized config option" warning for these two settings, 
 After preprocessing, every array gets a QC status (`PASS`, `FLAG`, `FAIL` or `EXCLUDED`) with the reasons, in `qc/sample_qc.tsv`. No array is removed without a recorded reason. The checks:
 
 - **Detection**: the fraction of probes with a detection p-value above `--detection_pval`. More than `--max_undetected_fraction` (default 10%) fails the array.
-- **Sex**: the sex predicted by the preprocessing method and by ewastools from the normalised X and Y intensities, against `reported_sex`. If every prediction contradicts the reported sex, the array fails, since this usually means a sample swap. If the predictions disagree, or the X and Y intensities fall between the male and female clusters (possible sex chromosome aneuploidy or contamination), the array is flagged. The ewastools prediction needs at least one reported female and one reported male.
+- **Sex**: the sex predicted by the preprocessing method and by ewastools from the normalised X and Y intensities, against `reported_sex`. If every prediction contradicts the reported sex, the array fails, since this usually means a sample swap. If the predictions disagree, or the ewastools X and Y intensities fall outside both the male and the female cluster (possible sex chromosome aneuploidy or contamination), the array is flagged. The ewastools prediction needs at least one reported female and one reported male.
 - **Control probes**: the 21 Illumina BeadArray Controls Reporter metrics (bisulfite conversion, extension, hybridisation, staining, specificity, target removal, non-polymorphic) against Illumina's thresholds. Arrays below a threshold are flagged, not failed: the thresholds are guidance for troubleshooting the assay, and arrays with good data can miss a single background ratio.
 - **Contamination**: the ewastools SNP outlier score, the average log odds that the SNP probe beta values fit none of the three genotypes. Arrays above `--snp_outlier_threshold` (default -4, as recommended by the ewastools authors) fail.
 - **Identity**: SNP genotypes of all arrays below the contamination threshold are compared. Arrays of one `replicate_group` with different genotypes, and arrays of different donors with the same genotypes (agreement above 0.9), are flagged.
@@ -203,7 +222,7 @@ The arrays with QC status `PASS` or `FLAG` go on to probe filtering. Every remov
 
 The probe annotation comes from two pinned sources: the Peters et al. 2024 extended EPIC v2 manifest (`--probe_manifest_source`, about 300 MB) and the Zhou lab InfiniumAnnotation mask (`--probe_mask_source`). Choose the SNP population that matches the study: the `common_*` masks use global allele frequencies. Values that failed detection or the bead count in only a few arrays stay in the data as `NA`.
 
-Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are counted in the attrition table, not removed.
+Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are report-only: they are annotated and counted in the attrition table (`report_only_*` rows), never removed.
 
 ## Cell composition
 
@@ -215,7 +234,7 @@ Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked bet
 
 | Parameter                  | Default                  | Meaning                                                   |
 | -------------------------- | ------------------------ | --------------------------------------------------------- |
-| `--clocks`                 | 16 clocks (see schema)   | Comma-separated dnaMethyAge clock names and `DunedinPACE` |
+| `--clocks`                 | 15 clocks (see schema)   | Comma-separated dnaMethyAge clock names and `DunedinPACE` |
 | `--dunedinpace_min_probes` | `0.8`                    | Minimum share of DunedinPACE CpGs in the data             |
 | `--skip_clocks`            | `false`                  | Skip the clocks                                           |
 | `--dnamethyage_source`     | dnaMethyAge 0.2.0 source | dnaMethyAge source package (URL or local path)            |
@@ -289,7 +308,7 @@ Note that the pipeline will create the following files in your working directory
 ```bash
 work                # Directory containing the nextflow working files
 <OUTDIR>            # Finished results in specified location (defined with --outdir)
-.nextflow_log       # Log file from Nextflow
+.nextflow.log       # Log file from Nextflow
 # Other nextflow hidden files, eg. history of pipeline runs and old logs.
 ```
 
@@ -314,11 +333,11 @@ outdir: './results/'
 <...>
 ```
 
-You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
+You can also write such a file interactively with `nf-core pipelines launch bhagesh-h/methylarray`.
 
 ### Updating the pipeline
 
-When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
+When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available, even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
 nextflow pull bhagesh-h/methylarray
@@ -328,7 +347,7 @@ nextflow pull bhagesh-h/methylarray
 
 It is a good idea to specify the pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
 
-First, go to the [bhagesh-h/methylarray releases page](https://github.com/bhagesh-h/methylarray/releases) and find the latest pipeline version - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`. Of course, you can switch to another version by changing the number after the `-r` flag.
+First, go to the [bhagesh-h/methylarray releases page](https://github.com/bhagesh-h/methylarray/releases) and find the latest pipeline version, numeric only (for example `1.3.1`). Then specify it with `-r` (one hyphen), for example `-r 1.3.1`. Until the first release, use `-r dev` or a commit ID.
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future. For example, at the bottom of the MultiQC reports.
 
@@ -346,21 +365,23 @@ To further assist in reproducibility, you can use share and reuse [parameter fil
 
 Use this parameter to choose a configuration profile. Profiles can give configuration presets for different compute environments.
 
-Several generic profiles are bundled with the pipeline which instruct the pipeline to use software packaged using different methods (Docker, Singularity, Podman, Shifter, Charliecloud, Apptainer, Conda) - see below.
+Several generic profiles are bundled with the pipeline which instruct the pipeline to use software packaged using different methods (Docker, Singularity, Podman, Shifter, Charliecloud, Apptainer, Conda), see below.
 
 > [!IMPORTANT]
 > We highly recommend the use of Docker or Singularity containers for full pipeline reproducibility, however when this is not possible, Conda is also supported.
 
 The pipeline also dynamically loads configurations from [https://github.com/nf-core/configs](https://github.com/nf-core/configs) when it runs, making multiple config profiles for various institutional clusters available at run time. For more information and to check if your system is supported, please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation).
 
-Note that multiple profiles can be loaded, for example: `-profile test,docker` - the order of arguments is important!
+Note that multiple profiles can be loaded, for example `-profile test,docker`. The order of arguments is important.
 They are loaded in sequence, so later profiles can overwrite earlier profiles.
 
 If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended, since it can lead to different results on different machines dependent on the computer environment.
 
 - `test`
-  - A profile with a complete configuration for automated testing
-  - Includes links to test data so needs no other parameters
+  - Six public EPIC v2 blood arrays from GEO GSE286313, read over HTTPS, with resources capped at 4 CPUs and 15 GB
+  - Needs no other parameters except `--outdir`
+- `test_full`
+  - A larger set of arrays from the same GEO series
 - `docker`
   - A generic configuration profile to be used with [Docker](https://docker.com/)
 - `singularity`
@@ -374,7 +395,7 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 - `apptainer`
   - A generic configuration profile to be used with [Apptainer](https://apptainer.org/)
 - `wave`
-  - A generic configuration profile to enable [Wave](https://seqera.io/wave/) containers. Use together with one of the above (requires Nextflow `24.03.0-edge` or later).
+  - A generic configuration profile to enable [Wave](https://seqera.io/wave/) containers. Use together with one of the above.
 - `conda`
   - A generic configuration profile to be used with [Conda](https://conda.io/docs/). Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity, Podman, Shifter, Charliecloud, or Apptainer.
 
@@ -392,13 +413,13 @@ Specify the path to a specific config file (this is a core Nextflow command). Se
 
 ### Resource requests
 
-Whilst the default requirements set within the pipeline will hopefully work for most people and with most input data, you may find that you want to customise the compute resources that the pipeline requests. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the pipeline steps, if the job exits with any of the error codes specified [here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher resources request (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
+The default requirements may not suit every machine or data set. Steps that read all arrays together (preprocessing, ewastools QC, probe filtering, clocks, GEO export) use the `process_high` label, which requests 12 CPUs and 72 GB of memory; on a smaller machine, set `process.resourceLimits` in a config passed with `-c`. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the pipeline steps, if the job exits with any of the error codes specified [here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher resources request (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
 
 To change the resource requests, please see the [max resources](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#set-max-resources) and [customise process resources](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#customize-process-resources) section of the nf-core website.
 
 ### Custom Containers
 
-In some cases, you may wish to change the container or conda environment used by a pipeline steps for a particular tool. By default, nf-core pipelines use containers and software from the [biocontainers](https://biocontainers.pro/) or [bioconda](https://bioconda.github.io/) projects. However, in some cases the pipeline specified version maybe out of date.
+In some cases, you may wish to change the container or conda environment used by a pipeline step. Each module of this pipeline pins its conda packages (from conda-forge and Bioconda) in an `environment.yml`. Its container image is built from that file, either by Wave in the Seqera Containers registry (`community.wave.seqera.io`) or, for environments that Wave could not build, as a Docker Hub image referenced by digest.
 
 To use a different container from the default container or conda environment specified in a pipeline, please see the [updating tool versions](https://nf-co.re/docs/running/configuration/nextflow-for-your-system#update-tool-versions) section of the nf-core website.
 
@@ -428,7 +449,7 @@ Some HPC setups also allow you to run nextflow within a cluster job submitted yo
 ## Nextflow memory requirements
 
 In some cases, the Nextflow Java virtual machines can start to request a large amount of memory.
-We recommend adding the following line to your environment to limit this (typically in `~/.bashrc` or `~./bash_profile`):
+We recommend adding the following line to your environment to limit this (typically in `~/.bashrc` or `~/.bash_profile`):
 
 ```bash
 NXF_OPTS='-Xms1g -Xmx4g'

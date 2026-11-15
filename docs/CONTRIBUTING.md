@@ -19,12 +19,12 @@ This page describes the recommended nf-core way to contribute to both bhagesh-h/
 
 To contribute code to any nf-core pipeline:
 
-- [ ] Ensure you have Nextflow, nf-core tools, and nf-test installed. See the [nf-core/tools repository](https://github.com/nf-core/tools) for instructions.
+- [ ] Ensure you have Nextflow (26.04.2 or later), nf-core tools, and nf-test installed. See the [nf-core/tools repository](https://github.com/nf-core/tools) for instructions, or use the Docker-only setup of the [developer guide](developer.md).
 - [ ] Check whether a GitHub [issue](https://github.com/bhagesh-h/methylarray/issues) about your idea already exists. If an issue does not exist, create one so that others are aware you are working on it.
 - [ ] [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [bhagesh-h/methylarray repository](https://github.com/bhagesh-h/methylarray) to your GitHub account.
 - [ ] Create a branch on your forked repository and make your changes following [pipeline conventions](#pipeline-contribution-conventions) (if applicable).
 - [ ] To fix major bugs, name your branch `patch` and follow the [patch release](#patch-release) process.
-- [ ] Update relevant documentation within the `docs/` folder, use nf-core/tools to update `nextflow_schema.json`, and update `CITATIONS.md`.
+- [ ] Update relevant documentation within the `docs/` folder, `nextflow_schema.json`, `CHANGELOG.md` and `CITATIONS.md`.
 - [ ] Run and/or update tests. See [Testing](#testing) for more information.
 - [ ] [Lint](#lint-tests) your code with nf-core/tools.
 - [ ] Submit a pull request (PR) against the `dev` branch and request a review.
@@ -43,18 +43,22 @@ To get started, open the repository in [Codespaces](https://github.com/bhagesh-h
 
 ### Testing
 
-Once you have made your changes, run the pipeline with nf-test to test them locally.
+Once you have made your changes, run the tests with nf-test locally.
 For additional information, use the `--verbose` flag to view the Nextflow console log output.
 
 ```bash
-nf-test test --tag test --profile +docker --verbose
+# the tests that need no download (stubs, fixtures, input validation)
+nf-test test --tag fast --profile +docker --verbose
+
+# the pipeline test on the six public test arrays
+nf-test test tests/default.nf.test --profile +docker --verbose
 ```
 
-If you have added new functionality, ensure you update the test assertions in the `.nf.test` files in the `tests/` directory.
-Update the snapshots with the following command:
+If you have added new functionality, ensure you update the test assertions in the `.nf.test` files.
+Update the snapshots with the following command, and review the diff before committing:
 
 ```bash
-nf-test test --tag test --profile +docker --verbose --update-snapshots
+nf-test test tests/default.nf.test --profile +docker --verbose --update-snapshot
 ```
 
 When you create a pull request with changes, GitHub Actions will run automatic tests.
@@ -79,7 +83,7 @@ For more information about linting tests, see [nf-core/tools API documentation](
 Each nf-core pipeline should be set up with a minimal set of test data.
 GitHub Actions runs the pipeline on this data to ensure it runs through and exits successfully.
 If there are any failures then the automated tests fail.
-These tests are run with the latest available version of Nextflow and the minimum required version specified in the pipeline code.
+Pull requests into `dev` run the `fast` tests with Docker and the minimum required Nextflow version. Pull requests into `main` and releases run every test with Docker, conda and Singularity, on the minimum required and the latest Nextflow version.
 
 ### Patch release
 
@@ -100,16 +104,16 @@ To contribute a new step to the pipeline, follow the general nf-core coding proc
 Please also refer to the [pipeline-specific contribution guidelines](#pipeline-specific-contribution-guidelines):
 
 - [ ] Define the corresponding [input channel](#channel-naming-schemes) into your new process from the expected previous process channel.
-- [ ] Install a module with nf-core/tools, or write a local module (see [default processes resource requirements](#default-processes-resource-requirements)), and add it to the target `<workflow>.nf`.
-- [ ] Define the output channel if needed. Mix the version output channel into `ch_versions` and relevant files into `ch_multiqc`.
+- [ ] Install a module with nf-core/tools, or write a local module (see [default processes resource requirements](#default-processes-resource-requirements)), and call it from a subworkflow in `subworkflows/local/`.
+- [ ] Define the output channel if needed. Emit `versions.yml` on the `versions` topic and mix relevant files into `ch_multiqc_files`.
 - [ ] Add new or updated parameters to `nextflow.config` with a [default value](#default-parameter-values).
 - [ ] Add new or updated parameters and relevant help text to `nextflow_schema.json` with [nf-core/tools](#default-parameter-values).
-- [ ] Add validation for relevant parameters to the pipeline utilisation section of `utils_nfcore_\_pipeline/main.nf` subworkflow.
+- [ ] Add validation for relevant parameters to the `PIPELINE_INITIALISATION` workflow in `subworkflows/local/utils_nfcore_methylarray_pipeline/main.nf`.
 - [ ] Perform local tests to validate that the new code works as expected.
   - [ ] If applicable, add a new test in the `tests` directory.
-- [ ] Update `usage.md`, `output.md`, and `citation.md` as appropriate.
+- [ ] Update `docs/usage.md`, `docs/output.md`, `CHANGELOG.md` and `CITATIONS.md` as appropriate.
 - [ ] [Lint](#lint-tests) the code with nf-core/tools.
-- [ ] Update any diagrams or pipeline images as necessary.
+- [ ] Update the workflow diagram (`assets/metro_map.mmd`, rendered to `docs/images/metro_map.svg`) as necessary.
 - [ ] Update MultiQC config `assets/multiqc_config.yml` so relevant suffixes, file name cleanup, and module plots are in the appropriate order.
 - [ ] If applicable, create a [MultiQC](https://seqera.io/multiqc/) module.
 - [ ] Add a description of the output files and, if relevant, images from the MultiQC report to `docs/output.md`.
