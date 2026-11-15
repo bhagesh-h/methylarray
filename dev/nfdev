@@ -111,6 +111,11 @@ case "${ENGINE}" in
         IMAGE="${NFDEV_IMAGE}"
         engine_opts=( --env NXF_CONDA_CACHEDIR="${NFDEV_OUT_ROOT}/cache/conda/envs"
                       --env CONDA_PKGS_DIRS="${NFDEV_OUT_ROOT}/cache/conda/pkgs" )
+        # The devkit ships micromamba, not conda: tell Nextflow through the
+        # NXF_HOME config, so that the pipeline's own conda profile stays unchanged
+        mkdir -p "${NFDEV_OUT_ROOT}/cache/nextflow"
+        grep -qs '^conda.useMicromamba' "${NFDEV_OUT_ROOT}/cache/nextflow/config" \
+            || echo 'conda.useMicromamba = true' >> "${NFDEV_OUT_ROOT}/cache/nextflow/config"
         ;;
     *) die "engine '${ENGINE}' is not implemented yet" ;;
 esac
