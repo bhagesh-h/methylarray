@@ -1,0 +1,82 @@
+name: probes_annotate
+description: Builds one EPIC v2 probe annotation table from the Peters et al. 2024 extended manifest and the Zhou lab InfiniumAnnotation mask - position, design, replicate probes, cross-hybridisation, manifest mismatches, legacy IDs, general and mapping masks and SNP masks by population
+keywords:
+  - dna methylation
+  - methylation array
+  - epic v2
+  - probe annotation
+  - probe masking
+tools:
+  - epicv2manifest:
+      description: "Illumina Infinium MethylationEPIC v2.0 extended manifest from Peters et al. 2024"
+      homepage: https://bioconductor.org/packages/EPICv2manifest
+      documentation: https://bioconductor.org/packages/EPICv2manifest
+      doi: 10.1186/s12864-024-10027-5
+      licence: ["Artistic-2.0"]
+      identifier: ""
+  - infiniumannotation:
+      description: "Probe annotation and masks for Infinium methylation arrays (Zhou lab)"
+      homepage: https://zwdzwd.github.io/InfiniumAnnotation
+      documentation: https://github.com/zhou-lab/InfiniumAnnotationV1
+      doi: 10.1093/nar/gkw967
+      licence: ["unspecified"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the platform as id
+          e.g. [ id:'EPICv2' ]
+    - manifest:
+        type: file
+        description: Peters et al. 2024 manifest, the .Rda file of AnnotationHub resource AH116484 with a data.frame named EPICv2manifest
+        pattern: "*.Rda"
+        ontologies: []
+    - probe_mask:
+        type: file
+        description: Zhou lab EPIC v2 mask table (EPICv2.hg38.mask.tsv.gz)
+        pattern: "*.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  annotation:
+    - - meta:
+          type: map
+          description: Groovy Map with the platform as id
+      - "${prefix}.tsv.gz":
+          type: file
+          description: One row per probe with position, design, replicate group, cross-hybridisation, mismatch, legacy IDs, gene context and mask flags
+          pattern: "*.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map with the platform as id
+      - "${prefix}_summary.tsv":
+          type: file
+          description: Number of probes per type and per flag
+          pattern: "*_summary.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  resources:
+    - - meta:
+          type: map
+          description: Groovy Map with the platform as id
+      - "${prefix}_resources.tsv":
+          type: file
+          description: Source files and their MD5 checksums
+          pattern: "*_resources.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

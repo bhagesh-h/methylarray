@@ -46,12 +46,13 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
    Every exclusion is recorded with a reason.
 
-5. Filter probes, in order:
+5. Filter probes on the arrays that passed QC, in order:
+   - `rs`, `nv` and non-CpG probes, and probes without an hg38 position
+   - sex chromosomes (kept with `--keep_sex_chr`)
    - detection failure and low bead count
-   - cross-hybridising, SNP-affected, `nv`, `rs` and non-CpG probes
-   - sex chromosomes (optional)
+   - SNP-affected probes (population-specific masks), the Zhou general mask and cross-hybridising probes (Peters et al. 2024)
 
-   EPIC v2 replicate probes are then collapsed to one value per CpG. A probe attrition table documents each step.
+   Manifest position mismatches and poorly titrating probes are reported but kept. EPIC v2 replicate probes are then collapsed to one value per CpG. A probe attrition table documents each step.
 
 6. Estimate leukocyte proportions with EpiDISH.
 7. Compute epigenetic clocks (Horvath, Hannum, skin and blood, PhenoAge, PC clocks, DunedinPACE and others) and DNAm scores (CRP, IL-6, smoking, alcohol, BMI), reporting the probe coverage of each on the array.
@@ -71,13 +72,13 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
 Select one with `--preprocessing`.
 
-| Option             | Route                                                                                                          | When to use it                                                                                                               |
-| ------------------ | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `sesame` (default) | SeSAMe per-sample preprocessing: quality masks, channel inference, non-linear dye bias, pOOBAH detection, noob | Recommended for EPIC v2. Each sample is processed on its own, so results do not depend on which other samples are in the run |
-| `minfi`            | minfi import, detection p-values, Noob (Funnorm optional)                                                      | Comparison with studies processed in minfi                                                                                   |
-| `enmix`            | minfi import, ENmix QC, ENmix background with RELIC dye-bias correction, RCP probe-type correction             | Strong replicate agreement in published benchmarks                                                                           |
-| `combined`         | minfi import, SeSAMe pOOBAH detection masks, ENmix background with RELIC, RCP                                  | One integrated route that uses the strongest step of each package                                                            |
-| `parallel`         | Runs `minfi`, `sesame` and `enmix` side by side through the full analysis, then compares them                  | Sensitivity analysis. Reports concordance of beta values, QC decisions, cell estimates, clocks and association results       |
+| Option            | Route                                                                                                          | When to use it                                                                                                         |
+| ----------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `minfi` (default) | minfi import, detection p-values, Noob (Funnorm, quantile or SWAN optional)                                    | Established, widely used route; comparable with most published array studies                                           |
+| `sesame`          | SeSAMe per-sample preprocessing: quality masks, channel inference, non-linear dye bias, pOOBAH detection, noob | Each sample is processed on its own, so results do not depend on which other samples are in the run                    |
+| `enmix`           | minfi import, ENmix QC, ENmix background with RELIC dye-bias correction, RCP probe-type correction             | Strong replicate agreement in published benchmarks                                                                     |
+| `combined`        | minfi import, SeSAMe pOOBAH detection masks, ENmix background with RELIC, RCP                                  | One integrated route that uses the strongest step of each package                                                      |
+| `parallel`        | Runs `minfi`, `sesame` and `enmix` side by side through the full analysis, then compares them                  | Sensitivity analysis. Reports concordance of beta values, QC decisions, cell estimates, clocks and association results |
 
 ## Requirements
 

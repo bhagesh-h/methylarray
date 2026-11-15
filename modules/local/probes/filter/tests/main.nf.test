@@ -1,0 +1,117 @@
+nextflow_process {
+
+    name "Test Process PROBES_FILTER"
+    script "../main.nf"
+    process "PROBES_FILTER"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "probes"
+    tag "probes/filter"
+
+    // A made-up SummarizedExperiment (make_fixture.R): 16 probes, each built to
+    // hit one filter rule, and four arrays of which S4 failed sample QC
+
+    test("every filter rule, replicate probes collapsed") {
+
+        when {
+            params {
+                replicate_probe_strategy = 'mean'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def attrition = path(process.out.attrition[0][1]).readLines().drop(1).collectEntries { line ->
+                def f = line.split('\t'); [ f[0], [ removed: f[1] as int, remaining: f[2] as int, n: f[3] as int ] ]
+            }
+            def exclusions = path(process.out.exclusions[0][1]).linesGzip.drop(1).collectEntries { line ->
+                def f = line.split('\t'); [ f[0], [ first: f[1], reasons: f[2] ] ]
+            }
+            assertAll(
+                { assert process.success },
+                // one probe per rule; S4 (failed QC) does not count for the detection rule
+                { assert attrition.collectEntries { step, row -> [ step, row.removed ] } == [
+                    start: 0, probe_type: 1, non_cg: 1, no_position: 1, sex_chromosome: 2, detection: 1,
+                    bead_or_quality_mask: 1, snp: 1, zhou_general_mask: 1, cross_hybridisation: 1,
+                    report_only_mismatch_pos: 0, report_only_zhou_uncorr_titration: 0 ] },
+                { assert attrition.cross_hybridisation.remaining == 6 },
+                // report-only flag counted among the kept probes
+                { assert attrition.report_only_mismatch_pos.n == 1 },
+                // a probe with two reasons is removed at the first and lists both
+                { assert exclusions['cg00000015_TC11'] == [ first: 'sex_chromosome', reasons: 'sex_chromosome;detection' ] },
+                // the population-specific SNP mask is not applied with common_1pt, the BLAT-only probe is kept with wgbs
+                { assert !exclusions.containsKey('cg00000014_TC11') && !exclusions.containsKey('cg00000012_TC11') },
+                { assert !exclusions.containsKey('cg00000001_TC11') },
+                // the replicate pair cg00000002 is collapsed to one CpG
+                { assert path(process.out.multiqc[0][1]).text.contains('16 probes at the start, 6 kept; 5 CpGs after collapsing') },
+                { assert path(process.out.se[0][1]).list().collect { f -> f.fileName.toString() }.sort() == ['assays.h5', 'se.rds'] },
+                { assert snapshot(process.out.attrition, process.out.exclusions, process.out.multiqc, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("replicate probes kept") {
+
+        when {
+            params {
+                replicate_probe_strategy = 'none'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.attrition).match() }
+            )
+        }
+    }
+
+    test("every filter rule - stub") {
+
+        options "-stub"
+
+        when {
+            params {
+                replicate_probe_strategy = 'mean'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

@@ -1,105 +1,59 @@
 %%metro title: methylarray
 %%metro style: nfcore
-%%metro output: ../docs/images/metro_map.svg
 %%metro file: samplesheet_in | CSV | Samplesheet
 %%metro files: idat_in | IDAT
 %%metro file: models_in | YAML | Models
 %%metro file: matrices_out | HDF5 | Betas
 %%metro file: ewas_out | TSV | EWAS
-%%metro file: report_out | HTML | Reports
+%%metro file: report_out | HTML | Report
 %%metro off_track: idat_in, models_in, matrices_out, ewas_out
-%%metro line: sesame | SeSAMe (default) | #009E73
-%%metro line: minfi | minfi | #0072B2
-%%metro line: combined | minfi + SeSAMe + ENmix | #CC79A7
+%%metro line: minfi | minfi (default) | #0072B2
+%%metro line: sesame | SeSAMe | #009E73
 %%metro line: enmix | ENmix | #E69F00
-%%metro marker: concordance | square, open
-%%metro marker_legend: square, open | Parallel mode only
+%%metro line: combined | minfi + SeSAMe + ENmix | #CC79A7
 %%metro legend: bl
-%%metro font_scale: 1.25
-%%metro section_x_gap: 30
-%%metro section_y_gap: 40
-%%metro grid: inputs | 0,0
-%%metro grid: preprocessing | 1,0
-%%metro grid: sample_qc | 2,0
-%%metro grid: probe_filter | 3,0
-%%metro grid: reporting | 0,1
-%%metro grid: association | 1,1
-%%metro grid: exploratory | 2,1
-%%metro grid: biology | 3,1
+%%metro font_scale: 1.8
+%%metro section_x_gap: 20
+%%metro section_y_gap: 30
+%%metro grid: preprocessing | 0,0
+%%metro grid: qc | 1,0
+%%metro grid: biology | 2,0
+%%metro grid: report | 1,1
+%%metro grid: association | 2,1
 
 graph LR
-    subgraph inputs [Input]
+    subgraph preprocessing [Preprocessing]
         samplesheet_in[ ]
         idat_in[ ]
-        validate[Validate]
-        refcache[References]
+        sesame[SeSAMe]
+        minfi[minfi]
+        enmix[ENmix]
 
-        samplesheet_in -->|sesame,minfi,combined,enmix| validate
-        idat_in -->|sesame,minfi,combined,enmix| validate
-        validate -->|sesame,minfi,combined,enmix| refcache
+        samplesheet_in -->|minfi,enmix,combined| minfi
+        idat_in -->|minfi,enmix,combined| minfi
+        samplesheet_in -->|sesame| sesame
+        idat_in -->|sesame| sesame
+        minfi -->|enmix,combined| enmix
     end
 
-    subgraph preprocessing [Preprocessing]
-        sesame_read[SeSAMe read]
-        minfi_read[minfi read]
-        sesame_prep[QCDPB]
-        minfi_detp[detectionP]
-        poobah[pOOBAH]
-        enmix_qc[QCinfo]
-        minfi_norm[Noob]
-        enmix_norm[RELIC]
-        rcp[RCP]
-
-        sesame_read -->|sesame| sesame_prep
-        minfi_read -->|minfi| minfi_detp
-        minfi_detp -->|minfi| minfi_norm
-        minfi_read -->|combined| poobah
-        poobah -->|combined| enmix_norm
-        minfi_read -->|enmix| enmix_qc
-        enmix_qc -->|enmix| enmix_norm
-        enmix_norm -->|combined,enmix| rcp
-    end
-
-    subgraph sample_qc [Sample QC]
-        controls[Controls]
-        sexcheck[Sex]
-        identity[Genotypes]
-        qc_status[QC status]
-
-        controls -->|sesame,minfi,combined,enmix| sexcheck
-        sexcheck -->|sesame,minfi,combined,enmix| identity
-        identity -->|sesame,minfi,combined,enmix| qc_status
-    end
-
-    subgraph probe_filter [Probe filtering]
-        detection_filter[Detection]
-        probe_masks[Masks]
-        collapse[Collapse]
+    subgraph qc [QC and probe filtering]
+        ewastools[ewastools]
+        manifest[EPICv2manifest]
+        masks[InfiniumAnnotation]
         matrices_out[ ]
 
-        detection_filter -->|sesame,minfi,combined,enmix| probe_masks
-        probe_masks -->|sesame,minfi,combined,enmix| collapse
-        collapse -->|sesame,minfi,combined,enmix| matrices_out
+        ewastools -->|minfi,sesame,enmix,combined| manifest
+        manifest -->|minfi,sesame,enmix,combined| masks
+        masks -->|minfi,sesame,enmix,combined| matrices_out
     end
 
     subgraph biology [Cells and clocks]
-        %%metro direction: RL
         epidish[EpiDISH]
-        clocks[Clocks]
-        scores[Scores]
+        clocks[dnaMethyAge]
+        pace[DunedinPACE]
 
-        epidish -->|sesame,minfi,combined,enmix| clocks
-        clocks -->|sesame,minfi,combined,enmix| scores
-    end
-
-    subgraph exploratory [Exploration]
-        %%metro direction: RL
-        ctrl_pcs[Control PCs]
-        pca[PCA]
-        design[Design check]
-
-        ctrl_pcs -->|sesame,minfi,combined,enmix| pca
-        pca -->|sesame,minfi,combined,enmix| design
+        epidish -->|minfi,sesame,enmix,combined| clocks
+        clocks -->|minfi,sesame,enmix,combined| pace
     end
 
     subgraph association [Association]
@@ -110,37 +64,31 @@ graph LR
         ewas_out[ ]
         dmrcate[DMRcate]
         dmrff[dmrff]
-        consensus[DMRs]
-        enrich[Enrichment]
+        missmethyl[missMethyl]
 
-        models_in -->|sesame,minfi,combined,enmix| limma
-        limma -->|sesame,minfi,combined,enmix| bacon
-        bacon -->|sesame,minfi,combined,enmix| ewas_out
-        bacon -->|sesame,minfi,combined,enmix| dmrcate
-        bacon -->|sesame,minfi,combined,enmix| dmrff
-        dmrcate -->|sesame,minfi,combined,enmix| consensus
-        dmrff -->|sesame,minfi,combined,enmix| consensus
-        consensus -->|sesame,minfi,combined,enmix| enrich
+        models_in -->|minfi,sesame,enmix,combined| limma
+        limma -->|minfi,sesame,enmix,combined| bacon
+        bacon -->|minfi,sesame,enmix,combined| ewas_out
+        bacon -->|minfi,sesame,enmix,combined| dmrcate
+        bacon -->|minfi,sesame,enmix,combined| dmrff
+        dmrcate -->|minfi,sesame,enmix,combined| missmethyl
+        dmrff -->|minfi,sesame,enmix,combined| missmethyl
     end
 
-    subgraph reporting [Report]
+    subgraph report [Report]
         %%metro direction: RL
-        concordance[Concordance]
         multiqc[MultiQC]
+        quarto[Quarto]
         report_out[ ]
 
-        concordance -->|sesame,minfi,combined,enmix| multiqc
-        multiqc -->|sesame,minfi,combined,enmix| report_out
+        multiqc -->|minfi,sesame,enmix,combined| quarto
+        quarto -->|minfi,sesame,enmix,combined| report_out
     end
 
     %% Inter-section edges
-    refcache -->|sesame| sesame_read
-    refcache -->|minfi,combined,enmix| minfi_read
-    sesame_prep -->|sesame| controls
-    minfi_norm -->|minfi| controls
-    rcp -->|combined,enmix| controls
-    qc_status -->|sesame,minfi,combined,enmix| detection_filter
-    collapse -->|sesame,minfi,combined,enmix| epidish
-    scores -->|sesame,minfi,combined,enmix| ctrl_pcs
-    design -->|sesame,minfi,combined,enmix| limma
-    enrich -->|sesame,minfi,combined,enmix| concordance
+    minfi -->|minfi| ewastools
+    sesame -->|sesame| ewastools
+    enmix -->|enmix,combined| ewastools
+    masks -->|minfi,sesame,enmix,combined| epidish
+    pace -->|minfi,sesame,enmix,combined| limma
+    missmethyl -->|minfi,sesame,enmix,combined| multiqc

@@ -125,12 +125,12 @@ A model stops the run before any task starts when it names a column found in non
 
 Select the method with `--preprocessing`. Every method writes the same SummarizedExperiment (see [docs/output.md](output.md)), so later steps do not depend on the choice.
 
-| Method             | Steps                                                                                                                                                      | Masking                                              |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| `sesame` (default) | SeSAMe `prepSesame` per array (`--sesame_prep`, default `QCDPB`)                                                                                           | SeSAMe quality mask, pOOBAH detection, bead count    |
-| `minfi`            | minfi import, `preprocessNoob` or `--minfi_norm funnorm`, `quantile` or `swan`                                                                             | minfi detection p-value, bead count                  |
-| `enmix`            | minfi import, ENmix out-of-band background with RELIC dye-bias correction, optional quantile normalisation (`--enmix_quantile`), RCP probe-type correction | ENmix detection p-value, bead count                  |
-| `combined`         | the `enmix` steps, with the SeSAMe result computed on the same arrays                                                                                      | SeSAMe quality mask and pOOBAH detection, bead count |
+| Method            | Steps                                                                                                                                                      | Masking                                              |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `minfi` (default) | minfi import, `preprocessNoob` or `--minfi_norm funnorm`, `quantile` or `swan`                                                                             | minfi detection p-value, bead count                  |
+| `sesame`          | SeSAMe `prepSesame` per array (`--sesame_prep`, default `QCDPB`)                                                                                           | SeSAMe quality mask, pOOBAH detection, bead count    |
+| `enmix`           | minfi import, ENmix out-of-band background with RELIC dye-bias correction, optional quantile normalisation (`--enmix_quantile`), RCP probe-type correction | ENmix detection p-value, bead count                  |
+| `combined`        | the `enmix` steps, with the SeSAMe result computed on the same arrays                                                                                      | SeSAMe quality mask and pOOBAH detection, bead count |
 
 SeSAMe processes each array on its own, so its results do not change when arrays are added to or removed from a run. The other methods read all arrays together. minfi detection p-values mask far fewer values than SeSAMe, which also removes probes with known design problems; the `combined` method keeps the ENmix correction and applies the SeSAMe masks.
 
@@ -147,14 +147,14 @@ The masked beta values are used for association testing. The unmasked beta value
 
 ### Offline runs
 
-The `sesame` and `combined` methods need probe manifests, masks and platform signatures from Bioconductor's ExperimentHub (about 45 MB for EPIC v2). By default the first task of each run downloads them. The `minfi` and `enmix` methods use the manifest and annotation packages in their container and need no download. To run without network access, save them once and pass them to later runs:
+The `sesame` and `combined` methods need probe manifests, masks and platform signatures from Bioconductor's ExperimentHub (about 45 MB for EPIC v2). By default the first task of each run downloads them. The `minfi` and `enmix` methods use the manifest and annotation packages in their container and need no download. Probe filtering reads the probe manifest and mask from the network. To run without network access, save them once and pass them to later runs:
 
 ```bash
 # once, with network access
 nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results --save_reference
 
 # later, offline
-nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results2 --sesame_cache results/references/sesame_cache
+nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results2 --sesame_cache results/references/sesame_cache --probe_annotation results/references/probe_annotation.tsv.gz
 ```
 
 ### Remote IDAT files
@@ -186,6 +186,24 @@ After preprocessing, every array gets a QC status (`PASS`, `FLAG`, `FAIL` or `EX
 | `--ewastools_source`        | ewastools 1.8.2 source | ewastools source package (URL or local path), installed by the QC task |
 
 ewastools is not available from conda or CRAN. The QC task installs it from its source package (a fixed GitHub commit) into the task directory, so it works with every profile. For runs without network access, download the file given by `--ewastools_source` once and pass its local path.
+
+## Probe filtering
+
+The arrays with QC status `PASS` or `FLAG` go on to probe filtering. Every removed probe is listed with its reasons in `probe_filter/` (see [docs/output.md](output.md#probe-filtering)).
+
+| Parameter                    | Default      | Meaning                                                                                                     |
+| ---------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
+| `--probe_fail_fraction`      | `0.1`        | Remove probes with a detection p-value above `--detection_pval` in more than this fraction of arrays        |
+| `--bead_fail_fraction`       | `0.05`       | Remove probes masked for another reason (bead count, quality mask) in more than this fraction of arrays     |
+| `--snp_mask`                 | `common_1pt` | SNP mask: `common_1pt`, `common_5pt`, `afr`, `amr`, `eas`, `eur`, `sas` or `none`                           |
+| `--crosshyb_filter`          | `wgbs`       | Cross-hybridising probes to remove: `wgbs` (WGBS evidence), `blat` (any predicted off-target hit) or `none` |
+| `--keep_sex_chr`             | `false`      | Keep chrX and chrY probes                                                                                   |
+| `--replicate_probe_strategy` | `mean`       | `mean`: one row per CpG, the mean of its replicate probes; `none`: one row per probe                        |
+| `--probe_annotation`         |              | Saved `probe_annotation.tsv.gz`, used instead of building it                                                |
+
+The probe annotation comes from two pinned sources: the Peters et al. 2024 extended EPIC v2 manifest (`--probe_manifest_source`, about 300 MB) and the Zhou lab InfiniumAnnotation mask (`--probe_mask_source`). Choose the SNP population that matches the study: the `common_*` masks use global allele frequencies. Values that failed detection or the bead count in only a few arrays stay in the data as `NA`.
+
+Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are counted in the attrition table, not removed.
 
 ## Running the pipeline
 

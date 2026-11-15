@@ -78,10 +78,10 @@
                 },
                 "preprocessing": {
                     "type": "string",
-                    "default": "sesame",
+                    "default": "minfi",
                     "enum": ["sesame", "minfi", "enmix", "combined"],
                     "description": "Preprocessing method.",
-                    "help_text": "`sesame` (default): SeSAMe per-array preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays. `minfi`: minfi import, detection p-values and Noob (or `--minfi_norm`). `enmix`: minfi import, ENmix out-of-band background with RELIC dye-bias correction and RCP probe-type correction. `combined`: the `enmix` route with the SeSAMe quality and pOOBAH masks applied last.",
+                    "help_text": "`minfi` (default): minfi import, detection p-values and Noob (or `--minfi_norm`). `sesame`: SeSAMe per-array preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays. `enmix`: minfi import, ENmix out-of-band background with RELIC dye-bias correction and RCP probe-type correction. `combined`: the `enmix` route with the SeSAMe quality and pOOBAH masks applied last.",
                     "fa_icon": "fas fa-cogs"
                 },
                 "sesame_prep": {
@@ -169,6 +169,82 @@
                     "description": "Arrays with an ewastools SNP outlier score above this value fail QC as possibly contaminated.",
                     "help_text": "The score is the average log odds that the SNP probe beta values belong to none of the three genotype clusters. The ewastools authors recommend -4. Only arrays below the threshold enter the identity check.",
                     "fa_icon": "fas fa-vial"
+                }
+            }
+        },
+        "probe_filter_options": {
+            "title": "Probe filtering options",
+            "type": "object",
+            "fa_icon": "fas fa-filter",
+            "description": "Probe annotation sources and the probe exclusions applied before analysis.",
+            "properties": {
+                "probe_annotation": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.tsv\\.gz$",
+                    "description": "Saved probe annotation table (`probe_annotation.tsv.gz` from `--save_reference`), used instead of building it.",
+                    "help_text": "Building the table reads the Peters et al. 2024 manifest and the Zhou lab mask. Save it once with `--save_reference` and pass it here to skip that step.",
+                    "fa_icon": "fas fa-table"
+                },
+                "probe_manifest_source": {
+                    "type": "string",
+                    "default": "https://annotationhub.bioconductor.org/fetch/123230",
+                    "description": "Peters et al. 2024 extended EPIC v2 manifest (`.Rda` file of the Bioconductor EPICv2manifest resource AH116484; URL or path).",
+                    "help_text": "Provides positions, replicate probes and the best replicate, cross-hybridisation flags, manifest mismatches and the EPIC v1 and 450K IDs. The file is about 300 MB. For runs without network access, download it once or reuse a saved table with `--probe_annotation`.",
+                    "fa_icon": "fas fa-book"
+                },
+                "probe_mask_source": {
+                    "type": "string",
+                    "default": "https://raw.githubusercontent.com/zhou-lab/InfiniumAnnotationV1/175566c157b8cb902ba6d9d7525547fca41adbe5/Anno/EPICv2/EPICv2.hg38.mask.tsv.gz",
+                    "description": "Zhou lab InfiniumAnnotation EPIC v2 mask table (URL or path).",
+                    "help_text": "Provides the general mask, mapping and non-unique probes, and SNP masks by population. The default is the hg38 mask at a fixed commit.",
+                    "fa_icon": "fas fa-mask"
+                },
+                "probe_fail_fraction": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Probes with a detection p-value above `--detection_pval` in more than this fraction of arrays are removed.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "bead_fail_fraction": {
+                    "type": "number",
+                    "default": 0.05,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Probes masked for another reason (bead count, quality mask) in more than this fraction of arrays are removed.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "crosshyb_filter": {
+                    "type": "string",
+                    "default": "wgbs",
+                    "enum": ["wgbs", "blat", "none"],
+                    "description": "Cross-hybridising probes to remove.",
+                    "help_text": "`wgbs`: probes with WGBS evidence of preferential off-target binding (Peters et al. 2024, `CH_WGBS_evidence`, about 11,900 probes). `blat`: every probe with a predicted off-target BLAT hit (`CH_BLAT`, about 30,600 probes). `none`: keep them. The uncollapsed output keeps these probes, so that DMR callers can remap them to their off-target locus.",
+                    "fa_icon": "fas fa-random"
+                },
+                "snp_mask": {
+                    "type": "string",
+                    "default": "common_1pt",
+                    "enum": ["common_1pt", "common_5pt", "afr", "amr", "eas", "eur", "sas", "none"],
+                    "description": "SNP mask to remove: probes with a SNP in the probe body, at the CpG or at the extension base.",
+                    "help_text": "Zhou lab masks from the 1000 Genomes allele frequencies. `common_1pt` and `common_5pt`: SNPs with a global minor allele frequency of at least 1% or 5%. `afr`, `amr`, `eas`, `eur`, `sas`: SNPs with a frequency of at least 1% in that population; choose the population of the study.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "keep_sex_chr": {
+                    "type": "boolean",
+                    "description": "Keep probes on chrX and chrY (removed by default for autosomal analyses).",
+                    "fa_icon": "fas fa-venus-mars"
+                },
+                "replicate_probe_strategy": {
+                    "type": "string",
+                    "default": "mean",
+                    "enum": ["mean", "none"],
+                    "description": "How replicate probes of one CpG are combined in the analysis matrix.",
+                    "help_text": "`mean`: the mean beta value of the replicate probes, so each CpG appears once with its `cg########` ID. `none`: keep every probe. The uncollapsed output always has one row per probe.",
+                    "fa_icon": "fas fa-compress"
                 }
             }
         },
@@ -332,6 +408,9 @@
         },
         {
             "$ref": "#/$defs/sample_qc_options"
+        },
+        {
+            "$ref": "#/$defs/probe_filter_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

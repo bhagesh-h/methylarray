@@ -377,7 +377,13 @@ def toolCitationText() {
     def sample_qc = params.skip_ewastools
         ? "Arrays with more than ${String.format("%.1f", (params.max_undetected_fraction as double) * 100)}% undetected probes or a predicted sex that contradicted the reported sex failed quality control."
         : "Control-probe metrics, normalised X and Y intensities and SNP probe genotypes were computed with ewastools (Heiss and Just 2018). Arrays with more than ${String.format("%.1f", (params.max_undetected_fraction as double) * 100)}% undetected probes, a predicted sex that contradicted the reported sex or a SNP outlier score above ${params.snp_outlier_threshold} failed quality control; arrays with control metrics below Illumina's thresholds or genotype conflicts with the expected donors were flagged."
-    return [ preprocessing[params.preprocessing] ?: '', sample_qc, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+    def crosshyb = [ wgbs: "cross-hybridising probes with WGBS evidence of off-target binding (Peters et al. 2024)", blat: "probes with a predicted off-target BLAT hit (Peters et al. 2024)", none: null ][params.crosshyb_filter]
+    def snp = params.snp_mask == 'none' ? null : "probes with a SNP (${params.snp_mask.startsWith('common') ? 'global minor allele frequency of at least ' + params.snp_mask.replace('common_', '').replace('pt', '%') : 'allele frequency of at least 1% in the ' + params.snp_mask.toUpperCase() + ' population'}) in the probe body, at the CpG or at the extension base"
+    def removed = [ "non-CG and genotyping probes", "probes without an hg38 position", params.keep_sex_chr ? null : "probes on the sex chromosomes",
+        "probes that failed detection in more than ${String.format('%.0f', (params.probe_fail_fraction as double) * 100)}% or other masks in more than ${String.format('%.0f', (params.bead_fail_fraction as double) * 100)}% of arrays",
+        snp, "probes in the general mask of Zhou et al. (2017)", crosshyb ].findAll { item -> item }
+    def probe_filter = "Probes were annotated with the extended EPIC v2 manifest (Peters et al. 2024) and the InfiniumAnnotation masks (Zhou et al. 2017). The following were removed: ${removed.join('; ')}.${params.replicate_probe_strategy == 'mean' ? ' Replicate probes were averaged per CpG.' : ''} Association tests use M-values."
+    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
 }
 
 //
@@ -400,6 +406,8 @@ def toolBibliographyText() {
         relic: referenceHtml('Xu, Z., Langie, S. A., De Boever, P., Taylor, J. A., & Niu, L.', 2017, 'RELIC: a novel dye-bias correction method for Illumina Methylation BeadChip', 'BMC Genomics, 18, 4', '10.1186/s12864-016-3426-3'),
         rcp: referenceHtml('Niu, L., Xu, Z., & Taylor, J. A.', 2016, 'RCP: a novel probe design bias correction method for Illumina Methylation BeadChip', 'Bioinformatics, 32(17), 2659-2663', '10.1093/bioinformatics/btw285'),
         ewastools: referenceHtml('Heiss, J. A., & Just, A. C.', 2018, 'Identifying mislabeled and contaminated DNA methylation microarray data: an extended quality control toolset with examples from GEO', 'Clinical Epigenetics, 10, 73', '10.1186/s13148-018-0504-1'),
+        peters2024: referenceHtml('Peters, T. J., Meyer, B., Ryan, L., et al.', 2024, 'Characterisation and reproducibility of the HumanMethylationEPIC v2.0 BeadChip for DNA methylation profiling', 'BMC Genomics, 25, 251', '10.1186/s12864-024-10027-5'),
+        zhou2017: referenceHtml('Zhou, W., Laird, P. W., & Shen, H.', 2017, 'Comprehensive characterization, annotation and innovative use of Infinium DNA methylation BeadChip probes', 'Nucleic Acids Research, 45(4), e22', '10.1093/nar/gkw967'),
         multiqc: referenceHtml('Ewels, P., Magnusson, M., Lundin, S., & Käller, M.', 2016, 'MultiQC: summarize analysis results for multiple tools and samples in a single report', 'Bioinformatics, 32(19), 3047-3048', '10.1093/bioinformatics/btw354')
     ]
     def minfi_norm_refs = [ noob: ['noob'], funnorm: ['funnorm'], quantile: ['quantile'], swan: ['swan', 'noob'] ]
@@ -410,7 +418,7 @@ def toolBibliographyText() {
         combined: ['minfi', 'enmix', 'relic', 'rcp', 'sesame']
     ][params.preprocessing] ?: []
     def qc_keys = params.skip_ewastools ? [] : ['ewastools']
-    return (keys + qc_keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
+    return (keys + qc_keys + ['peters2024', 'zhou2017', 'multiqc']).unique().collect { key -> refs[key] }.join(' ')
 }
 
 def methodsDescriptionText(mqc_methods_yaml) {

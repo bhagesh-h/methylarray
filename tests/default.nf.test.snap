@@ -6,21 +6,22 @@
                     "ewastools": "1.8.2",
                     "illuminaio": "0.52.0"
                 },
+                "MINFI_PREPROCESS": {
+                    "ENmix": "1.46.2",
+                    "HDF5Array": "1.38.0",
+                    "SummarizedExperiment": "1.40.0",
+                    "minfi": "1.56.0"
+                },
+                "PROBES_ANNOTATE": {
+                    "data.table": "1.18.6.1"
+                },
+                "PROBES_FILTER": {
+                    "HDF5Array": "1.38.0",
+                    "SummarizedExperiment": "1.40.0",
+                    "data.table": "1.18.6.1"
+                },
                 "SAMPLEQC_SUMMARY": {
                     "R": "4.5.3"
-                },
-                "SESAME_BUILDSE": {
-                    "HDF5Array": "1.38.0",
-                    "SummarizedExperiment": "1.40.0"
-                },
-                "SESAME_CACHE": {
-                    "ExperimentHub": "3.0.0",
-                    "sesame": "1.28.1",
-                    "sesameData": "1.28.0"
-                },
-                "SESAME_PREPROCESS": {
-                    "sesame": "1.28.1",
-                    "sesameData": "1.28.0"
                 },
                 "Workflow": {
                     "bhagesh-h/methylarray": "v1.0.0dev"
@@ -35,50 +36,69 @@
                 "multiqc/multiqc_data/multiqc_citations.txt",
                 "multiqc/multiqc_data/multiqc_data.json",
                 "multiqc/multiqc_data/multiqc_general_stats.txt",
+                "multiqc/multiqc_data/multiqc_probe_attrition_plot.txt",
                 "multiqc/multiqc_data/multiqc_sample_qc_sex_plot.txt",
                 "multiqc/multiqc_data/multiqc_sample_qc_status.txt",
                 "multiqc/multiqc_data/multiqc_software_versions.txt",
                 "multiqc/multiqc_data/multiqc_sources.txt",
                 "multiqc/multiqc_plots",
                 "multiqc/multiqc_plots/pdf",
+                "multiqc/multiqc_plots/pdf/probe_attrition_plot-cnt.pdf",
+                "multiqc/multiqc_plots/pdf/probe_attrition_plot-pct.pdf",
                 "multiqc/multiqc_plots/pdf/sample_qc_sex_plot.pdf",
                 "multiqc/multiqc_plots/pdf/sample_qc_status.pdf",
                 "multiqc/multiqc_plots/png",
+                "multiqc/multiqc_plots/png/probe_attrition_plot-cnt.png",
+                "multiqc/multiqc_plots/png/probe_attrition_plot-pct.png",
                 "multiqc/multiqc_plots/png/sample_qc_sex_plot.png",
                 "multiqc/multiqc_plots/png/sample_qc_status.png",
                 "multiqc/multiqc_plots/svg",
+                "multiqc/multiqc_plots/svg/probe_attrition_plot-cnt.svg",
+                "multiqc/multiqc_plots/svg/probe_attrition_plot-pct.svg",
                 "multiqc/multiqc_plots/svg/sample_qc_sex_plot.svg",
                 "multiqc/multiqc_plots/svg/sample_qc_status.svg",
                 "multiqc/multiqc_report.html",
                 "pipeline_info",
                 "pipeline_info/methylarray_software_mqc_versions.yml",
                 "preprocessing",
-                "preprocessing/sesame",
-                "preprocessing/sesame/sesame_se",
-                "preprocessing/sesame/sesame_se/assays.h5",
-                "preprocessing/sesame/sesame_se/se.rds",
+                "preprocessing/minfi",
+                "preprocessing/minfi/minfi_se",
+                "preprocessing/minfi/minfi_se/assays.h5",
+                "preprocessing/minfi/minfi_se/se.rds",
+                "probe_filter",
+                "probe_filter/minfi_filtered_attrition.tsv",
+                "probe_filter/minfi_filtered_exclusions.tsv.gz",
+                "probe_filter/minfi_filtered_se",
+                "probe_filter/minfi_filtered_se/assays.h5",
+                "probe_filter/minfi_filtered_se/se.rds",
+                "probe_filter/minfi_filtered_uncollapsed_se",
+                "probe_filter/minfi_filtered_uncollapsed_se/assays.h5",
+                "probe_filter/minfi_filtered_uncollapsed_se/se.rds",
                 "qc",
                 "qc/ewastools",
                 "qc/ewastools/ewastools_qc.tsv",
                 "qc/ewastools/ewastools_snp_conflicts.tsv",
+                "qc/minfi",
+                "qc/minfi/minfi_qc.tsv",
                 "qc/sample_qc.tsv",
-                "qc/sample_qc_retained.txt",
-                "qc/sesame",
-                "qc/sesame/sesame_qc.tsv"
+                "qc/sample_qc_retained.txt"
             ],
             [
                 "multiqc_citations.txt:md5,4c806e63a283ec1b7e78cdae3a923d4f",
-                "multiqc_general_stats.txt:md5,95779f1461d57854b2b94cdd328989f6",
+                "multiqc_general_stats.txt:md5,4d2448c93dd797b6dcd62dd199ef2ad6",
+                "multiqc_probe_attrition_plot.txt:md5,0cafd1689ba4efd85f7715d0448dd4a3",
                 "multiqc_sample_qc_sex_plot.txt:md5,3958dad932ec2f8d973b220a49899fb8",
                 "multiqc_sample_qc_status.txt:md5,87e94e0e4d0f878e26dbc3685ee8e709",
+                "minfi_filtered_attrition.tsv:md5,5001bc7629080f75f0c8f29cd3233af3",
+                "minfi_filtered_exclusions.tsv.gz:md5,5595758de46b72cae1ffda0f68bb4b0f",
                 "ewastools_qc.tsv:md5,7eec938cabfa17df8a44463234980ef5",
                 "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0",
-                "sample_qc.tsv:md5,6fbe498cfcade37b79241ecc7729df38",
-                "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065",
-                "sesame_qc.tsv:md5,8c384c44edc19a2bc6c504e45900861e"
+                "minfi_qc.tsv:md5,5b4178bf2ae144d985670226da6a324d",
+                "sample_qc.tsv:md5,23922bf7593f73c79f1bf6f2acc7c387",
+                "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-15T09:50:42.754252213",
+        "timestamp": "2026-11-15T11:23:14.673373876",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

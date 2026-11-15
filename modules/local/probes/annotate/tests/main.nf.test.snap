@@ -1,0 +1,95 @@
+{
+    "EPICv2 - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "EPICv2"
+                        },
+                        "probe_annotation.tsv.gz:md5,a5abb8958ffceb6fd85df54eac07553a"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "EPICv2"
+                        },
+                        "probe_annotation_summary.tsv:md5,697c32809323ca49332ee10ffda5e836"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "EPICv2"
+                        },
+                        "probe_annotation_resources.tsv:md5,59b4ad22846c464dd0211521f05998bf"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,b5da3478abdf24b02e7ccd6d657b6aaf"
+                ],
+                "annotation": [
+                    [
+                        {
+                            "id": "EPICv2"
+                        },
+                        "probe_annotation.tsv.gz:md5,a5abb8958ffceb6fd85df54eac07553a"
+                    ]
+                ],
+                "resources": [
+                    [
+                        {
+                            "id": "EPICv2"
+                        },
+                        "probe_annotation_resources.tsv:md5,59b4ad22846c464dd0211521f05998bf"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "EPICv2"
+                        },
+                        "probe_annotation_summary.tsv:md5,697c32809323ca49332ee10ffda5e836"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,b5da3478abdf24b02e7ccd6d657b6aaf"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T11:05:56.485252341",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "EPICv2 - Peters manifest and Zhou mask": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "EPICv2"
+                    },
+                    "probe_annotation_summary.tsv:md5,0993ed01e6e31a243bafd8e824d11812"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "EPICv2"
+                    },
+                    "probe_annotation_resources.tsv:md5,4e3fb757347294c6096d5c62378ba0ba"
+                ]
+            ],
+            [
+                "versions.yml:md5,c789827cb3c8b03f1ceabbf09fe99dfd"
+            ]
+        ],
+        "timestamp": "2026-11-15T11:07:52.790904549",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

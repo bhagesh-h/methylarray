@@ -19,8 +19,14 @@ nextflow_pipeline {
             def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
             def qc = path("$outputDir/qc/sample_qc.tsv").readLines().collect { line -> line.split('\t', -1) as List }
             def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }.collectEntries { row -> [row.sample, row] }
+            def attrition = path("$outputDir/probe_filter/minfi_filtered_attrition.tsv").readLines().drop(1).collectEntries { line ->
+                def f = line.split('\t'); [ f[0], f[2] as int ]
+            }
             assert workflow.success
             assertAll(
+                // probe filtering on the six test arrays: every EPIC v2 probe of the minfi route in, 858,273 kept
+                { assert attrition.start == 936990 },
+                { assert attrition.cross_hybridisation == 858273 },
                 // six arrays, predicted sex matches the reported sex for all of them
                 { assert rows.size() == 6 },
                 { assert rows.values().every { row -> row.sex_check == 'match' } },

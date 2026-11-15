@@ -12,6 +12,14 @@
                     "SummarizedExperiment": "stub",
                     "minfi": "stub"
                 },
+                "PROBES_ANNOTATE": {
+                    "data.table": "stub"
+                },
+                "PROBES_FILTER": {
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "data.table": "stub"
+                },
                 "SAMPLEQC_SUMMARY": {
                     "R": "stub"
                 },
@@ -50,6 +58,15 @@
                 "preprocessing/sesame/sesame_se",
                 "preprocessing/sesame/sesame_se/assays.h5",
                 "preprocessing/sesame/sesame_se/se.rds",
+                "probe_filter",
+                "probe_filter/combined_filtered_attrition.tsv",
+                "probe_filter/combined_filtered_exclusions.tsv.gz",
+                "probe_filter/combined_filtered_se",
+                "probe_filter/combined_filtered_se/assays.h5",
+                "probe_filter/combined_filtered_se/se.rds",
+                "probe_filter/combined_filtered_uncollapsed_se",
+                "probe_filter/combined_filtered_uncollapsed_se/assays.h5",
+                "probe_filter/combined_filtered_uncollapsed_se/se.rds",
                 "qc",
                 "qc/combined",
                 "qc/combined/combined_qc.tsv",
@@ -64,6 +81,8 @@
             [
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "combined_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31",
+                "combined_filtered_exclusions.tsv.gz:md5,c6cc1cc059afd2343a237bf1880d2041",
                 "combined_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
                 "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
                 "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0",
@@ -72,7 +91,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T09:47:09.487082921",
+        "timestamp": "2026-11-15T11:17:58.021485777",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
