@@ -160,6 +160,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Lehne B, Drong AW, Loh M, et al. A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies. Genome Biol. 2015;16:37.
 
+- [isva (random matrix theory estimate of the number of components)](https://doi.org/10.1093/bioinformatics/btr171)
+
+  > Teschendorff AE, Zhuang J, Widschwendter M. Independent surrogate variable analysis to deconvolve confounding factors in large-scale microarray profiling studies. Bioinformatics. 2011;27(11):1496-1505.
+
 - SummarizedExperiment and HDF5Array
 
   > Bioconductor infrastructure packages for on-disk assay storage.

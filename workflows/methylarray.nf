@@ -10,6 +10,7 @@ include { SAMPLE_QC              } from '../subworkflows/local/sample_qc'
 include { PROBE_FILTER           } from '../subworkflows/local/probe_filter'
 include { CELL_COMPOSITION       } from '../subworkflows/local/cell_composition'
 include { CLOCKS                 } from '../subworkflows/local/clocks'
+include { EXPLORATION            } from '../subworkflows/local/exploration'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -25,6 +26,7 @@ workflow METHYLARRAY {
 
     take:
     ch_samplesheet // channel: samplesheet read in from --input
+    ch_phenotypes  // channel: phenotype table, or []
     multiqc_config
     multiqc_logo
     multiqc_methods_description
@@ -94,6 +96,12 @@ workflow METHYLARRAY {
             params.dnamethyage_source, params.dunedinpace_source)
         ch_multiqc_files = ch_multiqc_files.mix(CLOCKS.out.multiqc.map { _meta, table -> table })
     }
+
+    //
+    // SUBWORKFLOW: Exploratory analysis (control-probe PCs, PCA associations)
+    //
+    EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
+    ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
 
     //
     // Collate and save software versions

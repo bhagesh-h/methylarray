@@ -223,6 +223,13 @@ Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked bet
 
 PCGrimAge needs the reported age and sex (`reported_age`, `reported_sex` in the samplesheet); arrays without them get NA. Age acceleration is computed when at least six arrays have a reported age. GrimAge, GrimAge2 and FitAge need licensed coefficients and are not available. BernabeuE2023c (cAge) is not in the default list: dnaMethyAge 0.2.0 fails for it when an array's estimate is below 20 years. A clock that fails gives NA, with the error in the notes of `clocks/clocks_coverage.tsv`. Intrinsic age acceleration needs at least five residual degrees of freedom after adjusting for age and six cell fractions, so at least 14 arrays with ages. Neither dnaMethyAge nor DunedinPACE is on conda or CRAN: the clock task installs them from their source packages at fixed GitHub commits. For runs without network access, download the two files once and pass their local paths.
 
+## Exploratory analysis
+
+The arrays that passed QC are summarised with two principal component analyses:
+
+- Control-probe PCs (Lehne et al. 2015): the non-negative control probes of both channels, read by ewastools, describe technical variation such as bisulfite conversion, staining and hybridisation. `--n_ctrl_pcs` (default `auto`: the smallest number explaining at least 90% of their variance, at most 20) are kept as covariates.
+- PCA of the `--n_variable_cpgs` (default 50,000) most variable CpGs of the filtered data (M-values). `--n_pcs` (default `auto`: the random matrix theory estimate of `isva::EstDimRMT`, at most 20) components are tested for association with plate, batch, Sentrix ID and row, detected fraction, control-probe PCs, predicted sex, age, cell lineages and every phenotype column. A strong association of a top component with plate or Sentrix row points to a batch effect that the models should include.
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

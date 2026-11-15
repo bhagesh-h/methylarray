@@ -47,6 +47,7 @@ workflow {
     //
     METHYLARRAY (
         PIPELINE_INITIALISATION.out.samplesheet,
+        PIPELINE_INITIALISATION.out.phenotypes,
         params.multiqc_config,
         params.multiqc_logo,
         params.multiqc_methods_description,

@@ -76,6 +76,18 @@ failed_controls <- apply(below, 1, function(row) paste(metric_names[row], collap
 metric_table <- as.data.frame(lapply(metrics, function(metric) signif(as.numeric(metric), 4)))
 names(metric_table) <- paste0("ctrl_", gsub("[^a-z0-9]+", "_", tolower(metric_names)))
 
+# Control-probe intensities of both channels, for the control-probe PCs (one row
+# per probe and channel, one column per array)
+control_info <- raw[["controls"]]
+control_table <- data.table(
+    channel = rep(c("green", "red"), each = nrow(control_info)),
+    group = rep(control_info[["group"]], 2),
+    name = rep(control_info[["name"]], 2),
+    as.data.table(rbind(raw[["ctrlG"]], raw[["ctrlR"]]))
+)
+setnames(control_table, 4:ncol(control_table), samples[["sample"]])
+fwrite(control_table, paste0(prefix, "_controls.tsv.gz"), sep = "\\t")
+
 # Sex: normalised X and Y intensities; predict_sex needs reported males and females
 xy <- check_sex(correct_dye_bias(raw))
 male <- which(samples[["reported_sex"]] %in% "M")

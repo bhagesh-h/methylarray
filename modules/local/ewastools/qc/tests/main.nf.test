@@ -50,6 +50,8 @@ nextflow_process {
                 { assert rows.collect { row -> row.inferred_donor }.unique().size() == 2 },
                 { assert rows.every { row -> row.identity_conflict == 'FALSE' } },
                 { assert path(process.out.conflicts[0][1]).readLines().size() == 1 },
+                // the 635 EPIC v2 control probes in both channels, plus the header
+                { assert path(process.out.controls[0][1]).linesGzip.size() == 1271 },
                 { assert snapshot(process.out.qc, process.out.conflicts, process.out.versions).match() }
             )
         }

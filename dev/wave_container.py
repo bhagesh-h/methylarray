@@ -17,17 +17,27 @@ import json
 import re
 import sys
 import time
+import urllib.error
 import urllib.request
 from pathlib import Path
 
 WAVE = "https://wave.seqera.io"
 
 
-def request(url, payload=None):
+def request(url, payload=None, attempts=10):
+    """Call the Wave API; on HTTP 429 (rate limit) wait and try again."""
     data = json.dumps(payload).encode() if payload is not None else None
-    req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=60) as response:
-        return json.load(response)
+    for attempt in range(attempts):
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req, timeout=60) as response:
+                return json.load(response)
+        except urllib.error.HTTPError as error:
+            if error.code != 429 or attempt == attempts - 1:
+                raise
+            wait = int(error.headers.get("Retry-After") or 60)
+            print(f"rate limited by Wave, waiting {wait} s", flush=True)
+            time.sleep(wait)
 
 
 def submit(environment, image_format):
@@ -49,7 +59,7 @@ def wait(build_id):
         status = request(f"{WAVE}/v1alpha1/builds/{build_id}/status")
         if status.get("status") == "COMPLETED":
             return status.get("succeeded", False)
-        time.sleep(20)
+        time.sleep(30)
 
 
 def main():

@@ -19,6 +19,7 @@ workflow SAMPLE_QC {
 
     def ch_ewastools_qc = channel.value([])
     def ch_snp_conflicts = channel.value([])
+    def ch_controls = channel.value([])
     if (ewastools_source) {
         def ch_idats = ch_arrays
             .map { _meta, idat_red, idat_grn -> [ idat_red, idat_grn ] }
@@ -32,6 +33,7 @@ workflow SAMPLE_QC {
         )
         ch_ewastools_qc = EWASTOOLS_QC.out.qc.map { _meta, qc -> qc }
         ch_snp_conflicts = EWASTOOLS_QC.out.conflicts.map { _meta, conflicts -> conflicts }
+        ch_controls = EWASTOOLS_QC.out.controls.map { _meta, controls -> controls }
     }
 
     // Every samplesheet row, so that excluded arrays are listed too
@@ -55,4 +57,5 @@ workflow SAMPLE_QC {
     qc       = SAMPLEQC_SUMMARY.out.qc       // channel: [ meta, sample_qc.tsv ]
     retained = SAMPLEQC_SUMMARY.out.retained // channel: [ meta, sample_qc_retained.txt ]
     multiqc  = SAMPLEQC_SUMMARY.out.multiqc  // channel: [ meta, [ MultiQC custom content ] ]
+    controls = ch_controls                   // channel: control-probe intensities, or [] without ewastools
 }

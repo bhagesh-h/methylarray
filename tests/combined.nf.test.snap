@@ -18,6 +18,11 @@
                     "ewastools": "stub",
                     "illuminaio": "stub"
                 },
+                "EXPLORATION_PCA": {
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "isva": "stub"
+                },
                 "MINFI_PREPROCESS": {
                     "ENmix": "stub",
                     "HDF5Array": "stub",
@@ -59,6 +64,13 @@
                 "clocks",
                 "clocks/clocks.tsv",
                 "clocks/clocks_coverage.tsv",
+                "exploration",
+                "exploration/pca_associations.tsv",
+                "exploration/pca_ctrl_pca_variance.tsv",
+                "exploration/pca_ctrl_pcs.tsv",
+                "exploration/pca_scores.tsv",
+                "exploration/pca_scree_mqc.tsv",
+                "exploration/pca_variance.tsv",
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/.stub",
@@ -89,6 +101,7 @@
                 "qc/combined",
                 "qc/combined/combined_qc.tsv",
                 "qc/ewastools",
+                "qc/ewastools/ewastools_controls.tsv.gz",
                 "qc/ewastools/ewastools_qc.tsv",
                 "qc/ewastools/ewastools_snp_conflicts.tsv",
                 "qc/sample_qc.tsv",
@@ -101,11 +114,18 @@
                 "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5",
                 "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4",
                 "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9",
+                "pca_associations.tsv:md5,ad9be22e4e7a74c14b6bad99b7365e2b",
+                "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94",
+                "pca_ctrl_pcs.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
+                "pca_scores.tsv:md5,fc4f6d4673bc687f89061fe547ffe151",
+                "pca_scree_mqc.tsv:md5,95b63210791ceb7b8bcac1b23ce1873f",
+                "pca_variance.tsv:md5,220c70d77202755b60bb0c397eef2b37",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "combined_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31",
                 "combined_filtered_exclusions.tsv.gz:md5,c6cc1cc059afd2343a237bf1880d2041",
                 "combined_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
+                "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
                 "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0",
                 "sample_qc.tsv:md5,2f0638a9c17a82d2a7dd883687300b81",
@@ -113,7 +133,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T13:29:44.153204998",
+        "timestamp": "2026-11-15T14:14:56.671732761",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
