@@ -5,7 +5,7 @@ process EXPLORATION_PCA {
     conda "${moduleDir}/environment.yml"
     // Built with containers/conda.Dockerfile from environment.yml (dev/nfdev image), because
     // Wave rate-limited the Singularity build: bhagesh/methylarray-exploration:1.0.0
-    container 'docker.io/bhagesh/methylarray-exploration:1.0.0'
+    container 'docker.io/bhagesh/methylarray-exploration@sha256:caf0bd980d570c61b20e9925303ad719b3dd33a83ff95047419d44b11eb3fde4'
 
     input:
     tuple val(meta), path(se), path(samples), path(sample_qc), path(controls), path(cell_fractions), path(phenotypes)
