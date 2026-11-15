@@ -174,7 +174,7 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Teschendorff AE, Breeze CE, Zheng SC, Beck S. A comparison of reference-based algorithms for correcting cell-type heterogeneity in Epigenome-Wide Association Studies. BMC Bioinformatics. 2017;18:105.
 
-- 12-cell-type blood reference (cent12CT)
+- [12-cell-type blood reference (cent12CT)](https://doi.org/10.1186/s13073-023-01211-5)
 
   > Luo Q, Dwaraka VB, Chen Q, et al. A meta-analysis of immune-cell fractions at high resolution reveals novel associations with common phenotypes and health outcomes. Genome Med. 2023;15:59.
 

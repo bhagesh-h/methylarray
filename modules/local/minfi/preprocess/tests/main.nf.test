@@ -92,6 +92,8 @@ nextflow_process {
 
     test("minfi route - stub") {
 
+        tag "fast"
+
         options "-stub"
 
         when {

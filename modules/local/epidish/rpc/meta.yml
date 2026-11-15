@@ -1,0 +1,66 @@
+name: epidish_rpc
+description: Blood cell-type fractions with EpiDISH robust partial correlations, 12-type (cent12CT) and 7-type (centDHSbloodDMC) references, with reference CpGs matched through EPIC v1 and 450K IDs
+keywords:
+  - dna methylation
+  - methylation array
+  - cell-type deconvolution
+  - blood
+tools:
+  - epidish:
+      description: "Epigenetic Dissection of Intra-Sample Heterogeneity: reference-based cell-type deconvolution"
+      homepage: https://bioconductor.org/packages/EpiDISH
+      documentation: https://bioconductor.org/packages/EpiDISH
+      doi: 10.1186/s12859-017-1511-5
+      licence: ["GPL-2.0-only"]
+      identifier: biotools:epidish
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the preprocessing method as id
+          e.g. [ id:'minfi' ]
+    - se:
+        type: directory
+        description: Filtered SummarizedExperiment with one row per CpG (assay beta_unmasked; rowData epicv1_id and hm450_id)
+output:
+  fractions:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}.tsv":
+          type: file
+          description: Per array the six lineage fractions (lineage_*), the 12 cent12CT fractions (cent12_*), the seven centDHSbloodDMC fractions (dhs7_*) and the sums
+          pattern: "*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  coverage:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_reference_coverage.tsv":
+          type: file
+          description: Per reference the CpGs found (and found only by EPIC v1 or 450K ID), the coverage, imputed values and status
+          pattern: "*_reference_coverage.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_mqc.tsv":
+          type: file
+          description: MultiQC stacked bar plot of the lineage fractions
+          pattern: "*_mqc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

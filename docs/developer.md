@@ -283,6 +283,7 @@ nextflow_process {
     }
 
     test("two EPIC v2 arrays - stub") {
+        tag "fast"
         options "-stub"
         when {
             process {
@@ -305,6 +306,7 @@ Guidelines:
 
 - Assert the biology, not only the snapshot: predicted sex of the two test arrays (one female, one male), sample order, expected flags. A snapshot alone also passes when a wrong result is stable.
 - Snapshot only files with stable content. Binary or time-stamped files (HDF5, RDS, HTML) go into `tests/.nftignore` for pipeline tests, or are checked by name for module tests.
+- Tag every test that needs no download (stub tests, tests on small fixtures in the `tests/` folder, input validation) with `tag "fast"` inside its `test()` block. Pull requests into `dev` run only these tests in CI; run the real-data tests locally on Docker, Apptainer and conda before pushing.
 - Keep real-data tests to two arrays. New pipeline-level tests are stub runs (`options "-stub"`), so CI stays short.
 - Module-specific configuration (for example `ext.args`) goes into `tests/nextflow.config` next to the test, loaded with `config "./nextflow.config"`.
 
@@ -319,8 +321,8 @@ dev/nfdev test modules/local/ewastools/qc/tests/main.nf.test --profile +docker
 # Everything a change can affect, compared with dev
 dev/nfdev test --changed-since origin/dev --profile +docker
 
-# By tag
-dev/nfdev test --tag sesame --profile +docker
+# By tag, for example the tests CI runs on pull requests into dev
+dev/nfdev test --tag fast --profile +docker
 
 # Pipeline test
 dev/nfdev test tests/default.nf.test --profile +docker
@@ -355,7 +357,7 @@ dev/nfdev lint
 - Push the branch and open one pull request into `dev`. CI then runs:
   - `nf-core` lint and prek (`linting.yml`);
   - nf-test (`nf-test.yml`) for the tests affected by the change, in up to 7 shards. Changes to `nextflow.config`, `nextflow_schema.json`, `conf/test.config` or the CI files run every test.
-- Pull requests into `dev` test with Docker and Nextflow 26.04.2. Pull requests into `main` and releases also test conda, Singularity and the latest Nextflow.
+- Pull requests into `dev` run the `fast` tests with Docker and Nextflow 26.04.2. Pull requests into `main`, releases and manual runs run every test, with Docker, conda, Singularity and the latest Nextflow.
 - The maintainer reviews and merges. GitHub issues track bioinformatics steps and major features; reference them in the pull request and close them with the commit IDs after the merge.
 
 ## Cleaning up
