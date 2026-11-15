@@ -6,7 +6,7 @@ This guide covers how to develop and test the pipeline on a workstation where on
 
 - Linux with Docker (the developer machine needs nothing else; Nextflow, nf-core tools, nf-test, prek and Apptainer run inside containers).
 - About 30 GB of free memory and 50 GB of free disk for the `test` profile and the module tests.
-- Network access to GitHub, NCBI GEO (test IDATs), Bioconductor ExperimentHub (SeSAMe resources) and `community.wave.seqera.io` (task images).
+- Network access to GitHub, NCBI GEO (test IDATs), Bioconductor AnnotationHub and ExperimentHub (probe manifest, SeSAMe resources), the Broad Institute MSigDB server (GMT files), the KEGG REST service, Docker Hub and `community.wave.seqera.io` (task images).
 
 ## Setup
 
@@ -82,29 +82,33 @@ Use one shared work directory and `-resume`, so staged IDATs and finished tasks 
 ```bash
 OUT=/absolute/path/to/methylarray-dev   # NFDEV_OUT_ROOT
 dev/nfdev nextflow run "$PWD" -profile test,docker \
-    --outdir "$OUT/results/sesame" -w "$OUT/work" -resume
+    --outdir "$OUT/results/minfi" -w "$OUT/work" -resume
 ```
 
-Change the route with `--preprocessing minfi|enmix|combined` and a separate `--outdir`. Use `--engine apptainer` with `-profile test,apptainer`, or `--engine conda` with `-profile test,conda`, to check the other engines. Run `dev/nfdev clean` when a feature is finished.
+The default route is `minfi`. Change it with `--preprocessing sesame|enmix|combined` and a separate `--outdir`. The `test` profile has no models; add `--models "$PWD/tests/data/models_test.yml"` to check the association steps (the six test arrays only test the wiring, not the statistics). Use `--engine apptainer` with `-profile test,apptainer`, or `--engine conda` with `-profile test,conda`, to check the other engines. Run `dev/nfdev clean` when a feature is finished.
 
 ## Repository layout
 
-| Path                                                    | Content                                                                                                  |
-| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `main.nf`                                               | Entry point: initialisation, `METHYLARRAY`, completion                                                   |
-| `workflows/methylarray.nf`                              | The main workflow: routes the arrays through preprocessing and QC, collects MultiQC files                |
-| `subworkflows/local/<name>/main.nf`                     | Pipeline steps built from several modules (`preprocess_sesame`, `preprocess_minfi`, `sample_qc`)         |
-| `subworkflows/local/utils_nfcore_methylarray_pipeline/` | Input validation (samplesheet, phenotypes, models), the shared `sampleTable` helper and the methods text |
-| `modules/local/<tool>/<subtool>/`                       | One process per folder (see below)                                                                       |
-| `modules/nf-core/`, `subworkflows/nf-core/`             | Installed from nf-core with `nf-core modules install`; never edited by hand                              |
-| `conf/base.config`                                      | Resource labels (`process_single`, `process_low`, `process_medium`, `process_high`)                      |
-| `conf/modules.config`                                   | Per-process `ext.args` and `publishDir`                                                                  |
-| `conf/test.config`, `conf/test_full.config`             | The `test` and `test_full` profiles                                                                      |
-| `nextflow.config`, `nextflow_schema.json`               | Parameters with defaults, and their schema (help text, types, ranges)                                    |
-| `assets/schema_*.json`                                  | Schemas of the samplesheet, phenotype table and model file                                               |
-| `tests/`                                                | Pipeline-level nf-test files, snapshots, `.nftignore` and the test samplesheets                          |
-| `dev/`                                                  | `nfdev`, the devkit Dockerfiles, `wave_container.py` and the hello-world test pipeline                   |
-| `docs/`                                                 | `usage.md`, `output.md`, this guide                                                                      |
+| Path                                                    | Content                                                                                                                                                                                 |
+| ------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `main.nf`                                               | Entry point: initialisation, `METHYLARRAY`, completion                                                                                                                                  |
+| `workflows/methylarray.nf`                              | The main workflow: calls every step in order, collects MultiQC and report files                                                                                                         |
+| `subworkflows/local/<name>/main.nf`                     | One subworkflow per step: `preprocess_minfi`, `preprocess_sesame`, `sample_qc`, `probe_filter`, `cell_composition`, `clocks`, `dnam_scores`, `exploration`, `ewas`, `dmr`, `enrichment` |
+| `subworkflows/local/utils_nfcore_methylarray_pipeline/` | Input validation (samplesheet, phenotypes, models), the shared `sampleTable` helper and the methods text                                                                                |
+| `modules/local/<tool>/<subtool>/`                       | One process per folder (see below)                                                                                                                                                      |
+| `modules/nf-core/`, `subworkflows/nf-core/`             | Installed from nf-core with `nf-core modules install`; never edited by hand                                                                                                             |
+| `conf/base.config`                                      | Resource labels (`process_single`, `process_low`, `process_medium`, `process_high`)                                                                                                     |
+| `conf/modules.config`                                   | Per-process `ext.args` and `publishDir`                                                                                                                                                 |
+| `conf/test.config`, `conf/test_full.config`             | The `test` and `test_full` profiles                                                                                                                                                     |
+| `nextflow.config`, `nextflow_schema.json`               | Parameters with defaults, and their schema (help text, types, ranges)                                                                                                                   |
+| `assets/schema_*.json`                                  | Schemas of the samplesheet, phenotype table and model file                                                                                                                              |
+| `assets/dnam_scores/`                                   | CpG weights of the DNA methylation scores, with their sources                                                                                                                           |
+| `assets/report/methylarray_report.qmd`                  | The Quarto source of the HTML analysis report                                                                                                                                           |
+| `assets/metro_map.mmd`                                  | Source of the workflow diagram `docs/images/metro_map.svg`                                                                                                                              |
+| `containers/`                                           | Dockerfiles for module images that are not built by Wave                                                                                                                                |
+| `tests/`                                                | Pipeline-level nf-test files, snapshots, `.nftignore`, the test samplesheets and the test models file                                                                                   |
+| `dev/`                                                  | `nfdev`, the devkit Dockerfiles, `wave_container.py` and the hello-world test pipeline                                                                                                  |
+| `docs/`                                                 | `usage.md`, `output.md`, this guide, `CONTRIBUTING.md` and the lint exceptions                                                                                                          |
 
 ## Writing a local module
 
@@ -198,13 +202,13 @@ Bioconductor packages that call preprocessCore (SeSAMe dye-bias correction) also
 
 ### Containers
 
-Task images are built from `environment.yml` by Wave and stored in the public Seqera Containers registry. Nobody builds or pushes images by hand:
+Task images are built from `environment.yml`. The first choice is Wave, which stores them in the public Seqera Containers registry, so no image has to be built or pushed by hand:
 
 ```bash
 dev/nfdev container modules/local/tool/subtool --write
 ```
 
-The command requests a Docker image and a Singularity image, waits for both (a few minutes for a new environment, instantly for a known one) and writes the `container` directive into `main.nf`. Run it again whenever `environment.yml` changes. Wave stops builds after about 15 minutes. The one environment that exceeds this is `MINFI_PREPROCESS`: the EPIC v2 manifest and annotation data packages alone take about 9 minutes to install. Its image is therefore built from `containers/minfi/Dockerfile`, pushed once to Docker Hub as `bhagesh/methylarray-minfi` and referenced by digest (Apptainer and Singularity convert the Docker image). Rebuild and push it only when that module's `environment.yml` changes:
+The command requests a Docker image and a Singularity image, waits for both (a few minutes for a new environment, instantly for a known one) and writes the `container` directive into `main.nf`. Run it again whenever `environment.yml` changes. Wave stops builds after about 15 minutes. `MINFI_PREPROCESS` exceeds this: the EPIC v2 manifest and annotation data packages alone take about 9 minutes to install. Its image (also used by `EXPORT_GEO`) is therefore built from `containers/minfi/Dockerfile`, pushed once to Docker Hub as `bhagesh/methylarray-minfi` and referenced by digest (Apptainer and Singularity convert the Docker image). Rebuild and push it only when that module's `environment.yml` changes:
 
 ```bash
 docker build -f containers/minfi/Dockerfile -t bhagesh/methylarray-minfi:<minfi version> .
@@ -212,7 +216,7 @@ docker push bhagesh/methylarray-minfi:<minfi version>
 docker images --digests bhagesh/methylarray-minfi   # the digest to pin in main.nf
 ```
 
-When Wave cannot build an image (an environment over its build time limit, or Wave rate-limiting anonymous requests), build it locally from the same `environment.yml` and push it to Docker Hub:
+When Wave cannot build an image (an environment over its build time limit, or Wave rate-limiting anonymous requests), build it locally from the same `environment.yml` and push it to Docker Hub. This is the case for the exploration, EWAS, DMR and report modules (rate limit) and the enrichment module (missMethyl pulls in every Illumina annotation package, beyond the build time limit); `EXPORT_GEO` reuses the minfi image:
 
 ```bash
 dev/nfdev image modules/local/exploration/pca bhagesh/methylarray-exploration:1.0.0
@@ -368,7 +372,7 @@ dev/nfdev lint
 - Push the branch and open one pull request into `dev`. CI then runs:
   - `nf-core` lint and prek (`linting.yml`);
   - nf-test (`nf-test.yml`) for the tests affected by the change, in up to 7 shards. Changes to `nextflow.config`, `nextflow_schema.json`, `conf/test.config` or the CI files run every test.
-- Pull requests into `dev` run the `fast` tests with Docker and Nextflow 26.04.2. Pull requests into `main`, releases and manual runs run every test, with Docker, conda, Singularity and the latest Nextflow.
+- Pull requests into `dev` run the `fast` tests with Docker and Nextflow 26.04.2. Pull requests into `main` and releases run every test with Docker, conda and Singularity, on Nextflow 26.04.2 and the latest release. Manual runs run every test with Docker and Nextflow 26.04.2.
 - The maintainer reviews and merges. GitHub issues track bioinformatics steps and major features; reference them in the pull request and close them with the commit IDs after the merge.
 
 ## Cleaning up

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
+This document describes the output produced by the pipeline. The MultiQC report and the HTML analysis report summarise the results at the end of the run.
 
 The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
 
@@ -27,11 +27,11 @@ The directories listed below will be created in the results directory after the 
 
 ### Preprocessing
 
-- `preprocessing/<method>/<method>_se/`, where `<method>` is the value of `--preprocessing`
+- `preprocessing/<method>/<method>_se/`, where `<method>` is the value of `--preprocessing` (`minfi` by default)
   - `assays.h5`: the assays, stored on disk.
   - `se.rds`: the SummarizedExperiment that refers to `assays.h5` by a relative path.
 
-With `--preprocessing combined`, `preprocessing/sesame/` also holds the SeSAMe result whose masks were applied.
+With `--preprocessing combined`, `preprocessing/sesame/` also holds the SeSAMe result whose masks were applied, and `qc/sesame/` its QC table.
 
 Load the directory in R, wherever it has been copied to:
 
@@ -41,23 +41,24 @@ se <- HDF5Array::loadHDF5SummarizedExperiment("preprocessing/minfi/minfi_se")
 
 Rows are probes (EPIC v2 probe IDs such as `cg00000029_TC21`; `rowData(se)$cpg_id` holds the CpG name without the suffix) and columns are arrays, sorted by sample name. Arrays marked `exclude` in the samplesheet are not included. Assays:
 
-| Assay            | Content                                                                                                                                        |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `beta`           | Beta values after preprocessing; values failing detection or the bead count (and the SeSAMe quality mask for `sesame` and `combined`) are `NA` |
-| `beta_unmasked`  | The same beta values without masking, for methods that need complete data                                                                      |
-| `detp`           | Detection p-values: minfi `detectionP` for `minfi`, ENmix `QCinfo` for `enmix`, SeSAMe pOOBAH for `sesame` and `combined`                      |
-| `meth`, `unmeth` | Methylated and unmethylated intensities after preprocessing                                                                                    |
+| Assay            | Content                                                                                                                                                                                                                       |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `beta`           | Beta values after preprocessing; values failing detection or the bead count (and the SeSAMe quality mask for `sesame` and `combined`) are `NA`                                                                                |
+| `beta_unmasked`  | The same beta values without masking, for methods that need complete data                                                                                                                                                     |
+| `detp`           | Detection p-values: minfi `detectionP` for `minfi`, ENmix `QCinfo` for `enmix`, SeSAMe pOOBAH for `sesame` and `combined`                                                                                                     |
+| `meth`, `unmeth` | Methylated and unmethylated intensities: after `prepSesame` for `sesame`, after Noob for every `--minfi_norm`, after ENmix background and RELIC correction (before quantile normalisation and RCP) for `enmix` and `combined` |
 
 `colData(se)` holds the samplesheet metadata and the QC statistics described below. `metadata(se)` records the platform, the preprocessing method, its settings and the software versions.
 
 ### Preprocessing QC
 
 - `qc/<method>/<method>_qc.tsv`: one row per array with the samplesheet metadata (`sample`, Sentrix ID, position, row and column, plate, well, batch, reported sex and age, replicate group) followed by:
-  - `platform`, `prep`: detected platform and the `prepSesame` code used
+  - `platform`: the array platform
+  - for `sesame`: `prep`, the `prepSesame` code used; for `minfi`, `enmix` and `combined`: `method` and `normalisation`
   - `predicted_sex`: sex predicted by SeSAMe `inferSex`, or with the minfi `getSex` rule
   - `num_masked`, `frac_masked`: probes set to `NA` in `beta`
   - for `sesame`: the SeSAMe QC statistics from `sesameQC_calcStats` on the raw signal: detection (`frac_dt`, by probe type), intensity (`mean_intensity`, in-band and out-of-band means), channel and dye bias (`RGratio`, `RGdistort`, Infinium I channel switches) and the beta distribution (`mean_beta`, `frac_meth`, `frac_unmeth`, `frac_na`)
-  - for `minfi`, `enmix` and `combined`: `normalisation`, `x_med` and `y_med` (median chrX and chrY copy number used for the sex call), `median_log2_meth` and `median_log2_unmeth` (minfi `getQC`), `frac_detected`, `num_low_beads`, `bisulfite_intensity` and `enmix_low_quality` (ENmix `QCinfo` flag, reported only)
+  - for `minfi`, `enmix` and `combined`: `x_med` and `y_med` (median chrX and chrY copy number used for the sex call), `median_log2_meth` and `median_log2_unmeth` (minfi `getQC`), `frac_detected`, `num_low_beads`, `bisulfite_intensity` and `enmix_low_quality` (ENmix `QCinfo` flag, reported only)
 
 ### Sample QC
 
@@ -73,6 +74,7 @@ Rows are probes (EPIC v2 probe IDs such as `cg00000029_TC21`; `rowData(se)$cpg_i
 - `qc/sample_qc_retained.txt`: the arrays with status `PASS` or `FLAG`, one per line. Later steps use these arrays.
 - `qc/ewastools/` (not with `--skip_ewastools`)
   - `ewastools_qc.tsv`: per array, the 21 Illumina BeadArray Controls Reporter metrics (`ctrl_*`), the metrics below Illumina's thresholds (`failed_controls`), X and Y intensities, the ewastools sex prediction, the SNP outlier score, the number of SNP probes, the inferred donor and whether the array is part of an identity conflict.
+  - `ewastools_controls.tsv.gz`: raw intensities of every control probe in both channels: one row per probe and channel (`channel`, `group`, `name`), one column per array. The non-negative controls are the input of the control-probe PCs (see [Exploratory analysis](#exploratory-analysis)).
   - `ewastools_snp_conflicts.tsv`: pairs of arrays whose genotypes contradict the samplesheet: arrays from the same `replicate_group` with different genotypes, or arrays from different donors with the same genotypes. Each pair has its genotype agreement (0 to 1); pairs in the same `group` form one connected conflict.
 
 How the status is set:
@@ -88,11 +90,11 @@ How the status is set:
 
 - `probe_filter/`
   - `<method>_filtered_se/`: the arrays with QC status `PASS` or `FLAG` and the probes that passed every filter, as an HDF5-backed SummarizedExperiment. With the default `--replicate_probe_strategy mean`, rows are CpGs (`cg########`, the mean of the replicate probes; `rowData` column `n_probes`). Assays: `beta` (failed values `NA`), `mvalue` (log2 of beta / (1 - beta), with beta clipped to [1e-4, 1 - 1e-4]) and `beta_unmasked`. `rowData` has the position, design, gene and CpG island context and the EPIC v1 and 450K IDs.
-  - `<method>_filtered_uncollapsed_se/`: one row per probe, with the cross-hybridising probes kept so that DMR callers can remap them to their off-target locus. Assays `beta` and `beta_unmasked`.
+  - `<method>_filtered_uncollapsed_se/`: one row per probe, after every filter except cross-hybridisation, so that DMR callers that remap cross-hybridising probes to their off-target locus can use them. Assays `beta` and `beta_unmasked`. The pipeline's own steps use the CpG-level data above.
   - `<method>_filtered_attrition.tsv`: probes removed at each step (`removed`), probes left (`remaining`), and probes carrying each reason in any order (`n_with_reason`). The `report_only_*` rows count flagged probes that were kept.
   - `<method>_filtered_exclusions.tsv.gz`: every removed probe with the step that removed it (`first_reason`), all reasons that apply, and its undetected and masked fractions.
 
-The filters, in order: rs, nv and control probes; non-CG probes; probes without an hg38 position; chrX and chrY (kept with `--keep_sex_chr`); detection failure in more than `--probe_fail_fraction` of arrays; other masked values (bead count, quality mask) in more than `--bead_fail_fraction` of arrays; the SNP mask of `--snp_mask`; the Zhou general mask; cross-hybridisation (`--crosshyb_filter`). Manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poor titration (Zhou) are counted but never removed.
+The filters, in order: rs, nv and control probes; non-CG probes; probes without an hg38 position; chrX and chrY (kept with `--keep_sex_chr`); detection failure in more than `--probe_fail_fraction` of arrays; other masked values (bead count, quality mask) in more than `--bead_fail_fraction` of arrays; the SNP mask of `--snp_mask`; the Zhou general mask; cross-hybridisation (`--crosshyb_filter`). Manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poor titration (Zhou) are report-only: counted in the `report_only_*` rows of the attrition table, never removed.
 
 ### Cell composition
 
@@ -119,6 +121,7 @@ Not with `--skip_clocks`.
 - `exploration/pca_scores.tsv`: the tested principal components (`--n_pcs`) of the most variable CpGs per array.
 - `exploration/pca_variance.tsv`: share of variance per component, the cumulative share, and whether the component was tested.
 - `exploration/pca_outliers.tsv`: per array the robust Mahalanobis distance on PC1 and PC2 (each centred on its median and scaled by its MAD) and `pca_outlier` (`TRUE` above the chi-square 0.999 quantile with 2 degrees of freedom). Report only: flagged arrays stay in the analysis. Needs at least 5 arrays.
+- `exploration/pca_scree_mqc.tsv`: the variance per component in the MultiQC custom-content format.
 - `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
 
 The MultiQC report shows the associations as a heatmap of -log10 P, the variance per component, and PC1 against PC2 coloured by predicted sex.
@@ -137,7 +140,7 @@ Only with `--models`.
 
 ### Differentially methylated regions
 
-Only with `--models`, for the tested models without `skip_dmr`, and not with `--skip_dmr`.
+Only with `--models`, and not with `--skip_dmr`. Every model gets a folder; for a model that was not tested or has `skip_dmr: true` the tables are empty and the summary says why.
 
 - `dmr/<model>/`
   - `dmr_<model>_dmrcate.tsv`: DMRcate regions per contrast: position, number of CpGs, minimum smoothed FDR, Stouffer, harmonic mean FDR and Fisher P, maximum and mean delta-beta, and the genes of the CpGs in the region.
@@ -147,7 +150,7 @@ Only with `--models`, for the tested models without `skip_dmr`, and not with `--
 
 ### Gene set enrichment
 
-Only with `--models`, for the tested models without `skip_enrichment`, and not with `--skip_enrichment`.
+Only with `--models`, and not with `--skip_enrichment`. Every model gets a folder; for a model that was not tested or has `skip_enrichment: true` the table is empty and the summary says why.
 
 - `enrichment/<model>/enrichment_<model>.tsv`: one row per collection, contrast and gene set: `collection` (`GO`, `KEGG`, or the GMT file name such as `h.all.v2025.1.Hs`), `set` (GO or KEGG identifier, or gene set name), `term`, `ontology` (GO only: BP, CC, MF), `n` (genes in the set), `de` (genes with a significant CpG, weighted for CpGs in several genes), `p_value` and `fdr`, sorted by P.
 - `enrichment/<model>/enrichment_<model>_summary.json`: significant and tested CpGs per contrast, whether enrichment ran, and why a collection did not run (for example KEGG without network access).
@@ -174,8 +177,8 @@ Columns are named after the samplesheet sample names. Rename them before submiss
 - `references/` (only with `--save_reference`)
   - `probe_annotation.tsv.gz`: one row per probe with the Peters et al. 2024 manifest columns and the Zhou mask flags used by the probe filter. Pass it to `--probe_annotation` to skip building it.
   - `probe_annotation_summary.tsv`, `probe_annotation_resources.tsv`: probes per flag, and the source files with their MD5 checksums.
-  - `sesame_cache/`: ExperimentHub cache with the sesameData resources for the platform. Pass it to `--sesame_cache` to run without network access.
-  - `sesame_resources.tsv`: title, ExperimentHub ID, cached file and MD5 checksum of each resource.
+  - `sesame_cache/` (`sesame` and `combined` routes): ExperimentHub cache with the sesameData resources for the platform. Pass it to `--sesame_cache` to run without network access.
+  - `sesame_resources.tsv` (`sesame` and `combined` routes): title, ExperimentHub ID, cached file and MD5 checksum of each resource.
 
 ### Analysis report
 
@@ -192,13 +195,14 @@ Not with `--skip_report`.
 
 [MultiQC](http://multiqc.info) is a visualization tool that generates a single HTML report summarising all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.
 
-The general statistics table shows, for every array, the QC status, the sex check, the SNP outlier score, the percentage of detected and masked probes, the mean intensity, the red/green ratio and the predicted sex. The Sample QC status table lists the reasons for every `FLAG` and `FAIL`, and the Sex check plot shows the X and Y intensities coloured by reported sex. The report also lists the software versions of every step and a methods description with references. For more information about how to use MultiQC reports, see <http://multiqc.info>.
+The general statistics table shows, for every array, the QC status, the sex check, the SNP outlier score (with ewastools), and from the preprocessing route the percentage of detected and masked probes and the predicted sex, with the median log2 methylated intensity (minfi-based routes) or the mean intensity and red/green ratio (`sesame`). The Sample QC status table lists the reasons for every `FLAG` and `FAIL`, and the Sex check plot shows the X and Y intensities coloured by reported sex. Further sections follow the pipeline order: probe attrition, cell composition, clocks, DNA methylation scores, the PCA associations, variance and PC1 against PC2 (with the PCA outliers named), and the association summary. The report also lists the software versions of every step and a methods description with references. For more information about how to use MultiQC reports, see <http://multiqc.info>.
 
 ### Pipeline information
 
 - `pipeline_info/`
-  - Reports generated by Nextflow: `execution_report.html`, `execution_timeline.html`, `execution_trace.txt` and `pipeline_dag.dot`/`pipeline_dag.svg`.
-  - Reports generated by the pipeline: `pipeline_report.html`, `pipeline_report.txt` and `software_versions.yml`. The `pipeline_report*` files will only be present if the `--email` / `--email_on_fail` parameter's are used when running the pipeline.
-  - Parameters used by the pipeline run: `params.json`.
+  - Nextflow reports: `execution_report_<timestamp>.html`, `execution_timeline_<timestamp>.html`, `execution_trace_<timestamp>.txt` and `pipeline_dag_<timestamp>.html`.
+  - Pipeline reports: `pipeline_report.html` and `pipeline_report.txt`, only when `--email` or `--email_on_fail` is set.
+  - Software versions of every task: `methylarray_software_mqc_versions.yml`.
+  - Parameters of the run: `params_<timestamp>.json`.
 
-[Nextflow](https://docs.seqera.io/platform-cloud/reports/overview) provides excellent functionality for generating various reports relevant to the running and execution of the pipeline. This will allow you to troubleshoot errors with the running of the pipeline, and also provide you with other information such as launch commands, run times and resource usage.
+The Nextflow reports help to troubleshoot a run and record the launch command, run times and resource usage of every task.

@@ -109,15 +109,15 @@
                     "type": "integer",
                     "default": 3,
                     "minimum": 1,
-                    "description": "Minimum number of beads per probe; probes with fewer beads are masked.",
+                    "description": "Minimum number of beads; values measured by fewer beads are masked.",
                     "fa_icon": "fas fa-braille"
                 },
                 "minfi_chunk_size": {
                     "type": "integer",
                     "default": 40,
                     "minimum": 2,
-                    "description": "Arrays read and corrected together by the minfi-based routes.",
-                    "help_text": "Lower values use less memory. Funnorm, quantile normalisation and the ENmix quantile step still read all arrays at once.",
+                    "description": "Minimum number of arrays read and corrected together by the minfi-based routes (`minfi`, `enmix`, `combined`).",
+                    "help_text": "Lower values use less memory. Noob, SWAN, detection p-values and the ENmix background, RELIC and RCP steps work array by array, so the result does not depend on the chunk size. Funnorm, quantile normalisation and the ENmix quantile step still read all arrays at once.",
                     "fa_icon": "fas fa-layer-group",
                     "hidden": true
                 },
@@ -126,7 +126,8 @@
                     "default": 0.05,
                     "exclusiveMinimum": 0,
                     "maximum": 1,
-                    "description": "pOOBAH detection p-value threshold; probes above it are masked.",
+                    "description": "Detection p-value threshold; values above it are masked.",
+                    "help_text": "The detection p-value comes from minfi `detectionP` for the `minfi` route, ENmix `QCinfo` for `enmix` and SeSAMe pOOBAH for `sesame` and `combined`. Masked values are `NA` in the `beta` assay and kept in `beta_unmasked`.",
                     "fa_icon": "fas fa-filter"
                 },
                 "sesame_cache": {
@@ -134,12 +135,12 @@
                     "format": "directory-path",
                     "exists": true,
                     "description": "Directory with the sesameData resources from an earlier run (`references/sesame_cache` when `--save_reference` was set).",
-                    "help_text": "Without this option the pipeline downloads the resources from ExperimentHub at the start of each run. With it, preprocessing runs without network access.",
+                    "help_text": "Used by the `sesame` and `combined` routes. Without this option they download the resources from ExperimentHub at the start of each run. With it, SeSAMe preprocessing runs without network access.",
                     "fa_icon": "fas fa-database"
                 },
                 "save_reference": {
                     "type": "boolean",
-                    "description": "Save the downloaded sesameData resources to `<outdir>/references/` for reuse with `--sesame_cache`.",
+                    "description": "Save the reference resources to `<outdir>/references/`: the probe annotation table (reuse with `--probe_annotation`) and, for the `sesame` and `combined` routes, the sesameData cache (reuse with `--sesame_cache`).",
                     "fa_icon": "fas fa-save"
                 }
             }
@@ -169,7 +170,7 @@
                     "minimum": 0,
                     "maximum": 1,
                     "description": "Arrays with a larger fraction of undetected probes fail QC.",
-                    "help_text": "A probe is undetected when its detection p-value (pOOBAH for `sesame`, minfi or SeSAMe detection p-values for the other routes) is above `--detection_pval`.",
+                    "help_text": "A probe is undetected when its detection p-value (minfi `detectionP` for `minfi`, ENmix `QCinfo` for `enmix`, SeSAMe pOOBAH for `sesame` and `combined`) is above `--detection_pval`.",
                     "fa_icon": "fas fa-percent"
                 },
                 "snp_outlier_threshold": {
@@ -200,14 +201,14 @@
                     "type": "string",
                     "default": "https://annotationhub.bioconductor.org/fetch/123230",
                     "description": "Peters et al. 2024 extended EPIC v2 manifest (`.Rda` file of the Bioconductor EPICv2manifest resource AH116484; URL or path).",
-                    "help_text": "Provides positions, replicate probes and the best replicate, cross-hybridisation flags, manifest mismatches and the EPIC v1 and 450K IDs. The file is about 300 MB. For runs without network access, download it once or reuse a saved table with `--probe_annotation`.",
+                    "help_text": "Provides positions, replicate probes and the best replicate, cross-hybridisation flags, manifest position mismatches (`MismatchPos`, report-only) and the EPIC v1 and 450K IDs. The file is about 300 MB. For runs without network access, download it once or reuse a saved table with `--probe_annotation`.",
                     "fa_icon": "fas fa-book"
                 },
                 "probe_mask_source": {
                     "type": "string",
                     "default": "https://raw.githubusercontent.com/zhou-lab/InfiniumAnnotationV1/175566c157b8cb902ba6d9d7525547fca41adbe5/Anno/EPICv2/EPICv2.hg38.mask.tsv.gz",
                     "description": "Zhou lab InfiniumAnnotation EPIC v2 mask table (URL or path).",
-                    "help_text": "Provides the general mask, mapping and non-unique probes, and SNP masks by population. The default is the hg38 mask at a fixed commit.",
+                    "help_text": "Provides the general mask (removed by the probe filter), SNP masks by population, and the mapping, non-unique and poor-titration flags. Poor titration is report-only. The default is the hg38 mask at a fixed commit.",
                     "fa_icon": "fas fa-mask"
                 },
                 "probe_fail_fraction": {
@@ -231,7 +232,7 @@
                     "default": "wgbs",
                     "enum": ["wgbs", "blat", "none"],
                     "description": "Cross-hybridising probes to remove.",
-                    "help_text": "`wgbs`: probes with WGBS evidence of preferential off-target binding (Peters et al. 2024, `CH_WGBS_evidence`, about 11,900 probes). `blat`: every probe with a predicted off-target BLAT hit (`CH_BLAT`, about 30,600 probes). `none`: keep them. The uncollapsed output keeps these probes, so that DMR callers can remap them to their off-target locus.",
+                    "help_text": "`wgbs`: probes with WGBS evidence of preferential off-target binding (Peters et al. 2024, `CH_WGBS_evidence`, about 11,900 probes). `blat`: every probe with a predicted off-target BLAT hit (`CH_BLAT`, about 30,600 probes). `none`: keep them. The uncollapsed output (`probe_filter/*_uncollapsed_se`) keeps these probes for DMR callers that remap them to their off-target locus; the pipeline's own steps use the CpG-level data.",
                     "fa_icon": "fas fa-random"
                 },
                 "snp_mask": {
@@ -585,7 +586,7 @@
                 },
                 "multiqc_methods_description": {
                     "type": "string",
-                    "description": "Custom MultiQC yaml file containing HTML including a methods description.",
+                    "description": "Custom MultiQC YAML file with an HTML methods description, used instead of `assets/methods_description_template.yml`.",
                     "fa_icon": "fas fa-cog"
                 },
                 "validate_params": {
@@ -622,12 +623,12 @@
                 },
                 "skip_report": {
                     "type": "boolean",
-                    "description": "Skip the HTML analysis report (report/methylarray_report.html).",
+                    "description": "Skip the HTML analysis report (`report/methylarray_report.html`).",
                     "fa_icon": "fas fa-forward"
                 },
                 "export_geo": {
                     "type": "boolean",
-                    "description": "Write GEO submission files for the arrays that passed sample QC (geo/).",
+                    "description": "Write GEO submission files for the arrays that passed sample QC (`geo/`).",
                     "help_text": "A processed matrix (normalised beta values without detection masking, with detection p-values), a matrix of the unnormalised methylated and unmethylated signal intensities read from the IDAT files, and a sample table with the IDAT file names. Columns are named after the samplesheet sample names: rename them before submission if they identify participants.",
                     "fa_icon": "fas fa-file-export"
                 }
