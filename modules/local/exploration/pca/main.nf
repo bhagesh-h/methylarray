@@ -16,6 +16,7 @@ process EXPLORATION_PCA {
     tuple val(meta), path("${prefix}_scores.tsv")            , emit: scores
     tuple val(meta), path("${prefix}_variance.tsv")          , emit: variance
     tuple val(meta), path("${prefix}_associations.tsv")      , emit: associations
+    tuple val(meta), path("${prefix}_outliers.tsv")          , emit: outliers
     tuple val(meta), path("${prefix}_*_mqc.*")               , emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
@@ -31,6 +32,7 @@ process EXPLORATION_PCA {
     printf 'sample\\tPC1\\n' > ${prefix}_scores.tsv
     printf 'pc\\tvariance_explained\\tcumulative\\ttested\\n' > ${prefix}_variance.tsv
     printf 'variable\\tgroup\\tpc\\ttest\\tn\\tr_squared\\tp_value\\n' > ${prefix}_associations.tsv
+    printf 'sample\\trobust_distance\\tpca_outlier\\n' > ${prefix}_outliers.tsv
     printf 'PC\\tvariance\\n' > ${prefix}_scree_mqc.tsv
     printf '"%s":\\n    isva: stub\\n    SummarizedExperiment: stub\\n    HDF5Array: stub\\n' "${task.process}" > versions.yml
     """

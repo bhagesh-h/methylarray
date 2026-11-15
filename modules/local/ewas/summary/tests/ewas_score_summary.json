@@ -1,1 +1,27 @@
-{ "model": "score", "status": "stub" }
+{
+    "model": "score",
+    "trait": "score",
+    "trait_type": "continuous",
+    "n": 40,
+    "n_dropped": 0,
+    "covariates": ["age", "predicted_sex"],
+    "covariates_used": ["age", "predicted_sex"],
+    "contrasts": {
+        "score": {
+            "n_cpgs": 2000,
+            "lambda": 0.998,
+            "lambda_bacon": 1.001,
+            "bacon_inflation": 0.9952,
+            "bacon_bias": 0.0031,
+            "hits_fdr": 0,
+            "hits_epigenome_wide": 0,
+            "hits_suggestive": 0,
+            "hits_fdr_bacon": 0,
+            "hits_epigenome_wide_bacon": 0,
+            "top_cpg": "cg00001234",
+            "top_p": 2.1e-4,
+            "top_delta_beta": 0.0123
+        }
+    },
+    "status": "tested"
+}

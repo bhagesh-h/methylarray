@@ -230,6 +230,8 @@ The arrays that passed QC are summarised with two principal component analyses:
 - Control-probe PCs (Lehne et al. 2015): the non-negative control probes of both channels, read by ewastools, describe technical variation such as bisulfite conversion, staining and hybridisation. `--n_ctrl_pcs` (default `auto`: the smallest number explaining at least 90% of their variance, at most 20) are kept as covariates.
 - PCA of the `--n_variable_cpgs` (default 50,000) most variable CpGs of the filtered data (M-values). `--n_pcs` (default `auto`: the random matrix theory estimate of `isva::EstDimRMT`, at most 20) components are tested for association with plate, batch, Sentrix ID and row, detected fraction, control-probe PCs, predicted sex, age, cell lineages and every phenotype column. A strong association of a top component with plate or Sentrix row points to a batch effect that the models should include.
 
+Arrays far from the others on PC1 and PC2 are flagged in `pca_outliers.tsv` and the report (robust Mahalanobis distance above the chi-square 0.999 quantile). They are not removed: check them against the sample QC and exclude them in the samplesheet (`exclude`) if needed.
+
 ## Association models
 
 Each model of `--models` is tested at every CpG of the filtered data with limma: a linear model on M-values with the trait and the covariates, moderated with `eBayes(trend = TRUE, robust = TRUE)`, and `duplicateCorrelation` when `block` is set. The same model on beta values gives the effect as a difference in beta (`delta_beta`). Test statistics are corrected for bias and inflation with bacon, and the genomic lambda is reported before and after.
@@ -238,6 +240,7 @@ Each model of `--models` is tested at every CpG of the filtered data with limma:
 - Arrays with a missing trait or covariate are left out of that model and listed with their reason. A model with fewer complete cases than its `min_n` is reported as not tested.
 - Before testing, the trait is checked for association with plate and Sentrix row, and every covariate for collinearity (VIF). Confounding is flagged in `ewas_<model>_design_check.tsv`.
 - Thresholds: FDR < 0.05, `--p_epigenome_wide` (default 9e-8, the EPIC threshold of Mansell et al. 2019) and `--p_suggestive` (default 1e-5).
+- Several models: the summary adds a study-wide threshold, `--p_epigenome_wide` divided by the effective number of independent tests across the tested models and contrasts (Meff, Galwey 2009). Meff comes from the correlation of their t statistics over the CpGs, which under the null follows the correlation of the traits; it lies between 1 and the number of tests.
 
 ## Differentially methylated regions
 
@@ -266,6 +269,10 @@ For every tested model, the CpGs at FDR < 0.05 are tested for enrichment against
 ## DNA methylation scores
 
 Scores are weighted sums of the beta values of published CpG sets, computed like the clocks on the detection-masked beta values of the arrays that passed QC: smoking, alcohol and BMI (McCartney et al. 2018; 233, 450 and 1,109 CpGs) and IL-6 (Stevenson et al. 2021; 35 CpGs). The weights are stored in `assets/dnam_scores` with their sources and licences. Select scores with `--dnam_scores` or skip them with `--skip_dnam_scores`. The smoking score (`dnam_smoking`) is the `@smoking` model covariate.
+
+## GEO submission files
+
+`--export_geo` writes the processed and raw-intensity matrices that GEO asks for with a methylation array submission, for the arrays that passed sample QC (`geo/`): normalised beta values with detection p-values, and the unnormalised methylated and unmethylated signal read from the IDAT files. Columns carry the samplesheet sample names; rename them before submission if they identify participants. Submit the IDAT files as the raw data and complete the GEO metadata sheet from `geo_samples.tsv`. The export reads every IDAT file again and needs memory similar to the minfi preprocessing.
 
 ## Running the pipeline
 

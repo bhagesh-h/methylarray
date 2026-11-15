@@ -38,7 +38,10 @@ workflow EWAS {
             }
     )
 
-    EWAS_SUMMARY(EWAS_LIMMA.out.summary.map { _meta, summary -> summary }.collect())
+    EWAS_SUMMARY(
+        EWAS_LIMMA.out.summary.map { _meta, summary -> summary }.collect(),
+        EWAS_LIMMA.out.stats.map { _meta, stats -> stats }.collect()
+    )
 
     emit:
     stats    = EWAS_LIMMA.out.stats    // channel: [ meta, full statistics per model ]

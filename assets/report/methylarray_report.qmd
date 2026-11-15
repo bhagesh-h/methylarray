@@ -126,13 +126,23 @@ if (nrow(associations) > 0) {
         scale_fill_gradient(low = "white", high = "#c44e52", limits = c(0, 10)) +
         labs(x = NULL, y = NULL, fill = "-log10 P", title = "Association of the principal components with technical and biological variables"))
 }
+if (has("^pca_outliers\\.tsv$")) {
+    outliers <- read(find("^pca_outliers\\.tsv$"))
+    flagged <- outliers[pca_outlier %in% TRUE]
+    cat("\n\nOutliers on PC1 and PC2 (robust Mahalanobis distance above the chi-square 0.999 quantile; reported, not removed): ",
+        if (nrow(flagged) > 0) paste(flagged[["sample"]], collapse = ", ") else "none", ".\n\n", sep = "")
+}
 ```
 
 ```{r ewas-summary, results = "asis", eval = has("^ewas_summary\\.tsv$")}
 heading("Association models")
 ewas <- read(find("^ewas_summary\\.tsv$"))
-columns <- intersect(c("model", "contrast", "status", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_epigenome_wide", "hits_suggestive", "top_cpg", "top_p"), names(ewas))
+columns <- intersect(c("model", "contrast", "status", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_epigenome_wide", "hits_suggestive", "hits_study_wide", "top_cpg", "top_p"), names(ewas))
 print(kable(ewas[, ..columns]))
+if ("meff" %in% names(ewas) && any(!is.na(ewas[["meff"]]))) {
+    cat("\n\nEffective number of independent tests across the models (Meff, Galwey 2009): ", ewas[["meff"]][!is.na(ewas[["meff"]])][1],
+        "; study-wide threshold P < ", ewas[["p_study_wide"]][!is.na(ewas[["p_study_wide"]])][1], " (hits_study_wide).\n\n", sep = "")
+}
 ```
 
 ```{r ewas-models, results = "asis", eval = has("^ewas_.*_stats\\.tsv\\.gz$")}

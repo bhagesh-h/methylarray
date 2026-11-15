@@ -44,6 +44,10 @@
                     "SummarizedExperiment": "stub",
                     "isva": "stub"
                 },
+                "EXPORT_GEO": {
+                    "data.table": "stub",
+                    "minfi": "stub"
+                },
                 "MINFI_PREPROCESS": {
                     "ENmix": "stub",
                     "HDF5Array": "stub",
@@ -111,9 +115,14 @@
                 "exploration/pca_associations.tsv",
                 "exploration/pca_ctrl_pca_variance.tsv",
                 "exploration/pca_ctrl_pcs.tsv",
+                "exploration/pca_outliers.tsv",
                 "exploration/pca_scores.tsv",
                 "exploration/pca_scree_mqc.tsv",
                 "exploration/pca_variance.tsv",
+                "geo",
+                "geo/geo_processed_matrix.tsv.gz",
+                "geo/geo_samples.tsv",
+                "geo/geo_signal_intensities.tsv.gz",
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/.stub",
@@ -177,9 +186,13 @@
                 "pca_associations.tsv:md5,ad9be22e4e7a74c14b6bad99b7365e2b",
                 "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94",
                 "pca_ctrl_pcs.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
+                "pca_outliers.tsv:md5,9a7a9681db36858bd2bcd7ca0392825d",
                 "pca_scores.tsv:md5,fc4f6d4673bc687f89061fe547ffe151",
                 "pca_scree_mqc.tsv:md5,95b63210791ceb7b8bcac1b23ce1873f",
                 "pca_variance.tsv:md5,220c70d77202755b60bb0c397eef2b37",
+                "geo_processed_matrix.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
+                "geo_samples.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
+                "geo_signal_intensities.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "combined_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31",
@@ -193,7 +206,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T18:17:31.193711601",
+        "timestamp": "2026-11-15T18:39:03.426297147",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

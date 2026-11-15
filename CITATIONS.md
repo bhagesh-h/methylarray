@@ -312,6 +312,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Mansell G, Gorrie-Stone TJ, Bao Y, et al. Guidance for DNA methylation studies: statistical insights from the Illumina EPIC array. BMC Genomics. 2019;20:366.
 
+- [Effective number of tests](https://doi.org/10.1002/gepi.20408)
+
+  > Galwey NW. A new measure of the effective number of tests, a practical tool for comparing families of non-independent significance tests. Genet Epidemiol. 2009;33(7):559-568.
+
 - [450K significance threshold](https://doi.org/10.1002/gepi.22086)
 
   > Saffari A, Silver MJ, Zavattari P, et al. Estimation of a significance threshold for epigenome-wide association studies. Genet Epidemiol. 2018;42(1):20-33.
