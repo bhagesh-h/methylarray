@@ -1,0 +1,74 @@
+{
+    "-profile test --preprocessing combined": {
+        "content": [
+            {
+                "MINFI_PREPROCESS": {
+                    "ENmix": "1.46.2",
+                    "HDF5Array": "1.38.0",
+                    "SummarizedExperiment": "1.40.0",
+                    "minfi": "1.56.0"
+                },
+                "SESAME_BUILDSE": {
+                    "HDF5Array": "1.38.0",
+                    "SummarizedExperiment": "1.40.0"
+                },
+                "SESAME_CACHE": {
+                    "ExperimentHub": "3.0.0",
+                    "sesame": "1.28.1",
+                    "sesameData": "1.28.0"
+                },
+                "SESAME_PREPROCESS": {
+                    "sesame": "1.28.1",
+                    "sesameData": "1.28.0"
+                },
+                "Workflow": {
+                    "bhagesh-h/methylarray": "v1.0.0dev"
+                }
+            },
+            [
+                "multiqc",
+                "multiqc/multiqc_data",
+                "multiqc/multiqc_data/llms-full.txt",
+                "multiqc/multiqc_data/multiqc.log",
+                "multiqc/multiqc_data/multiqc.parquet",
+                "multiqc/multiqc_data/multiqc_citations.txt",
+                "multiqc/multiqc_data/multiqc_data.json",
+                "multiqc/multiqc_data/multiqc_general_stats.txt",
+                "multiqc/multiqc_data/multiqc_software_versions.txt",
+                "multiqc/multiqc_data/multiqc_sources.txt",
+                "multiqc/multiqc_plots",
+                "multiqc/multiqc_plots/pdf",
+                "multiqc/multiqc_plots/png",
+                "multiqc/multiqc_plots/svg",
+                "multiqc/multiqc_report.html",
+                "pipeline_info",
+                "pipeline_info/methylarray_software_mqc_versions.yml",
+                "preprocessing",
+                "preprocessing/combined",
+                "preprocessing/combined/combined_se",
+                "preprocessing/combined/combined_se/assays.h5",
+                "preprocessing/combined/combined_se/se.rds",
+                "preprocessing/sesame",
+                "preprocessing/sesame/sesame_se",
+                "preprocessing/sesame/sesame_se/assays.h5",
+                "preprocessing/sesame/sesame_se/se.rds",
+                "qc",
+                "qc/combined",
+                "qc/combined/combined_qc.tsv",
+                "qc/sesame",
+                "qc/sesame/sesame_qc.tsv"
+            ],
+            [
+                "multiqc_citations.txt:md5,4c806e63a283ec1b7e78cdae3a923d4f",
+                "multiqc_general_stats.txt:md5,f85b7266bfedcbcb4d43fe14f19573f2",
+                "combined_qc.tsv:md5,c7b65691b83c81d339062047c78f9961",
+                "sesame_qc.tsv:md5,8c384c44edc19a2bc6c504e45900861e"
+            ]
+        ],
+        "timestamp": "2026-11-15T01:23:36.417027606",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

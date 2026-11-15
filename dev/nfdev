@@ -14,6 +14,7 @@
 #   NFDEV_APPTAINER_IMAGE  Apptainer devkit image tag (default: methylarray-apptainer-kit:dev)
 #   NFDEV_JAVA_OPTS  JVM options for Nextflow (default: -Xms512m -Xmx4g)
 #   NFDEV_DIND_IMAGE Docker-in-Docker daemon image (default: docker:29.9.3-dind)
+#   NFDEV_TASK_MEMORY_GB  memory cap in GB for all tasks of a run together (default: 28)
 #
 # NXF_VER=<version> in the calling environment runs that Nextflow release instead
 # of the pinned one (as in the CI matrix). Its -dist binary is downloaded once
@@ -65,6 +66,7 @@ NFDEV_IMAGE="${NFDEV_IMAGE:-methylarray-devkit:dev}"
 NFDEV_APPTAINER_IMAGE="${NFDEV_APPTAINER_IMAGE:-methylarray-apptainer-kit:dev}"
 NFDEV_JAVA_OPTS="${NFDEV_JAVA_OPTS:--Xms512m -Xmx4g}"
 NFDEV_DIND_IMAGE="${NFDEV_DIND_IMAGE:-docker:29.9.3-dind}"
+NFDEV_TASK_MEMORY_GB="${NFDEV_TASK_MEMORY_GB:-28}"
 DIND_NAME="nfdev-dind"
 DIND_NETWORK="nfdev-net"
 
@@ -111,11 +113,6 @@ case "${ENGINE}" in
         IMAGE="${NFDEV_IMAGE}"
         engine_opts=( --env NXF_CONDA_CACHEDIR="${NFDEV_OUT_ROOT}/cache/conda/envs"
                       --env CONDA_PKGS_DIRS="${NFDEV_OUT_ROOT}/cache/conda/pkgs" )
-        # The devkit ships micromamba, not conda: tell Nextflow through the
-        # NXF_HOME config, so that the pipeline's own conda profile stays unchanged
-        mkdir -p "${NFDEV_OUT_ROOT}/cache/nextflow"
-        grep -qs '^conda.useMicromamba' "${NFDEV_OUT_ROOT}/cache/nextflow/config" \
-            || echo 'conda.useMicromamba = true' >> "${NFDEV_OUT_ROOT}/cache/nextflow/config"
         ;;
     *) die "engine '${ENGINE}' is not implemented yet" ;;
 esac
@@ -123,6 +120,21 @@ esac
 mkdir -p "${NFDEV_OUT_ROOT}/logs" "${NFDEV_OUT_ROOT}/cache/home" "${NFDEV_OUT_ROOT}/cache/nextflow" \
          "${NFDEV_OUT_ROOT}/cache/apptainer" "${NFDEV_OUT_ROOT}/cache/conda/envs" "${NFDEV_OUT_ROOT}/cache/conda/pkgs" \
          "${NFDEV_OUT_ROOT}/tests/nf-test" "${NFDEV_OUT_ROOT}/tests/metro"
+
+# Workstation settings go to the NXF_HOME config, which every Nextflow and
+# nf-test run here reads first, so the pipeline's own configs stay unchanged.
+# - The devkit ships micromamba, not conda.
+# - All tasks together get at most NFDEV_TASK_MEMORY_GB (local executor), and
+#   no single task asks for more; a profile with its own resourceLimits (test)
+#   lowers this further. With the Nextflow JVM (NFDEV_JAVA_OPTS -Xmx) on top,
+#   the defaults keep a run under 32 GB.
+[[ "${NFDEV_TASK_MEMORY_GB}" =~ ^[1-9][0-9]*$ ]] || die "NFDEV_TASK_MEMORY_GB must be a whole number of GB"
+cat > "${NFDEV_OUT_ROOT}/cache/nextflow/config" <<EOF
+// Written by dev/nfdev on every run; change the settings in .nfdev.env instead.
+conda.useMicromamba = true
+executor.memory = '${NFDEV_TASK_MEMORY_GB} GB'
+process.resourceLimits = [ memory: ${NFDEV_TASK_MEMORY_GB}.GB ]
+EOF
 
 LOG="${NFDEV_OUT_ROOT}/logs/nfdev_$(date +%Y%m%d_%H%M%S)_${ENGINE}_${COMMAND}.log"
 

@@ -5,6 +5,7 @@
 */
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { PREPROCESS_SESAME      } from '../subworkflows/local/preprocess_sesame'
+include { PREPROCESS_MINFI       } from '../subworkflows/local/preprocess_minfi'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -37,10 +38,20 @@ workflow METHYLARRAY {
 
     //
     // SUBWORKFLOW: Preprocessing
+    // sesame: SeSAMe only. minfi, enmix: minfi import. combined: the minfi
+    // import with ENmix correction, masked with the SeSAMe result.
     //
-    if (params.preprocessing == 'sesame') {
+    def ch_sesame_se = channel.value([])
+    if (params.preprocessing in ['sesame', 'combined']) {
         PREPROCESS_SESAME(ch_arrays, params.sesame_cache, params.platform)
-        ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS_SESAME.out.multiqc.map { _meta, table -> table })
+        ch_sesame_se = PREPROCESS_SESAME.out.se.map { _meta, se -> se }
+        if (params.preprocessing == 'sesame') {
+            ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS_SESAME.out.multiqc.map { _meta, table -> table })
+        }
+    }
+    if (params.preprocessing in ['minfi', 'enmix', 'combined']) {
+        PREPROCESS_MINFI(ch_arrays, params.preprocessing, ch_sesame_se)
+        ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS_MINFI.out.multiqc.map { _meta, table -> table })
     }
 
     //

@@ -110,6 +110,14 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Fortin JP, Labbe A, Lemire M, et al. Functional normalization of 450k methylation array data improves replication in large cancer studies. Genome Biol. 2014;15:503.
 
+- [SWAN normalisation](https://doi.org/10.1186/gb-2012-13-6-r44)
+
+  > Maksimovic J, Gordon L, Oshlack A. SWAN: Subset-quantile within array normalization for Illumina Infinium HumanMethylation450 BeadChips. Genome Biol. 2012;13(6):R44.
+
+- [Stratified quantile normalisation](https://doi.org/10.2217/epi.12.21)
+
+  > Touleimat N, Tost J. Complete pipeline for Infinium Human Methylation 450K BeadChip data processing using subset quantile normalization for accurate DNA methylation estimation. Epigenomics. 2012;4(3):325-341.
+
 - [minfi for EPIC](https://doi.org/10.1093/bioinformatics/btw691)
 
   > Fortin JP, Triche TJ Jr, Hansen KD. Preprocessing, normalization and integration of the Illumina HumanMethylationEPIC array with minfi. Bioinformatics. 2017;33(4):558-560.

@@ -329,28 +329,83 @@ def validateModels(models, samplesheet_rows, phenotype_columns) {
 }
 
 //
+// Sample metadata written to the SummarizedExperiment colData, in this order
+//
+def sampleColumns() {
+    return [
+        'id', 'sentrix_id', 'sentrix_position', 'sentrix_row', 'sentrix_col', 'plate', 'well',
+        'batch', 'reported_sex', 'reported_age', 'replicate_group'
+    ]
+}
+
+//
+// One TSV file with a row per array ('sample' plus sampleColumns); with
+// with_idat_prefix, a last column holds the IDAT file prefix used by minfi
+//
+def sampleTable(ch_arrays, with_idat_prefix) {
+    def columns = sampleColumns()
+    def header = (['sample'] + columns.drop(1) + (with_idat_prefix ? ['idat_prefix'] : [])).join('\t')
+    return ch_arrays
+        .map { meta, idat_red, _idat_grn ->
+            def values = columns.collect { column -> meta[column] ?: '' }
+            if (with_idat_prefix) {
+                values << idat_red.name.replaceFirst(/_Red\.idat(\.gz)?$/, '')
+            }
+            values.join('\t')
+        }
+        .collectFile(name: 'samples.tsv', seed: header, newLine: true, sort: true)
+}
+
+//
 // Generate methods description for MultiQC
 //
 def toolCitationText() {
-    def preprocessing = params.preprocessing == 'sesame'
-        ? "Arrays were preprocessed per sample with SeSAMe (Zhou et al. 2018) using prepSesame code ${params.sesame_prep}, with pOOBAH detection masking at p > ${params.detection_pval}, noob background correction (Triche et al. 2013) and probes with fewer than ${params.min_beads} beads masked."
-        : ""
-    def citation_text = [
-            preprocessing,
-            "Results were summarised with MultiQC (Ewels et al. 2016)."
-        ].join(' ').trim()
+    def norm_text = [
+        noob: "Noob background and dye-bias correction (Triche et al. 2013)",
+        funnorm: "functional normalisation (Fortin et al. 2014)",
+        quantile: "stratified quantile normalisation (Touleimat and Tost 2012)",
+        swan: "SWAN normalisation (Maksimovic et al. 2012) of the Noob-corrected intensities (Triche et al. 2013)"
+    ]
+    def enmix_text = "ENmix out-of-band background correction (Xu et al. 2016) with RELIC dye-bias correction (Xu et al. 2017)${params.enmix_quantile ? ', quantile normalisation' : ''} and RCP probe-type correction (Niu et al. 2016)"
+    def masks = "values with a detection p-value above ${params.detection_pval} or fewer than ${params.min_beads} beads were set to missing"
+    def preprocessing = [
+        sesame: "Arrays were preprocessed per sample with SeSAMe (Zhou et al. 2018) using prepSesame code ${params.sesame_prep}, with pOOBAH detection masking at p > ${params.detection_pval}, noob background correction (Triche et al. 2013) and probes with fewer than ${params.min_beads} beads masked.",
+        minfi: "Arrays were read with minfi (Aryee et al. 2014; Fortin et al. 2017) and preprocessed with ${norm_text[params.minfi_norm]}; ${masks}.",
+        enmix: "Arrays were read with minfi (Aryee et al. 2014) and preprocessed with ${enmix_text}; ${masks}.",
+        combined: "Arrays were read with minfi (Aryee et al. 2014) and preprocessed with ${enmix_text}. Values masked by SeSAMe (Zhou et al. 2018; quality mask and pOOBAH detection at p > ${params.detection_pval}) or measured by fewer than ${params.min_beads} beads were set to missing."
+    ]
+    return [ preprocessing[params.preprocessing] ?: '', "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+}
 
-    return citation_text
+//
+// One reference as an HTML list item for the MultiQC methods description
+//
+def referenceHtml(authors, year, title, journal, doi) {
+    return "<li>${authors} (${year}). ${title}. ${journal}. doi: <a href=\"https://doi.org/${doi}\">${doi}</a></li>"
 }
 
 def toolBibliographyText() {
-    def reference_text = [
-            params.preprocessing == 'sesame' ? "<li>Zhou, W., Triche, T. J., Laird, P. W., & Shen, H. (2018). SeSAMe: reducing artifactual detection of DNA methylation by Infinium BeadChips in genomic deletions. Nucleic Acids Research, 46(20), e123. doi: <a href=\"https://doi.org/10.1093/nar/gky691\">10.1093/nar/gky691</a></li>" : "",
-            params.preprocessing == 'sesame' ? "<li>Triche, T. J., Weisenberger, D. J., Van Den Berg, D., Laird, P. W., & Siegmund, K. D. (2013). Low-level processing of Illumina Infinium DNA Methylation BeadArrays. Nucleic Acids Research, 41(7), e90. doi: <a href=\"https://doi.org/10.1093/nar/gkt090\">10.1093/nar/gkt090</a></li>" : "",
-            "<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics, 32(19), 3047-3048. doi: <a href=\"https://doi.org/10.1093/bioinformatics/btw354\">10.1093/bioinformatics/btw354</a></li>"
-        ].join(' ').trim()
-
-    return reference_text
+    def refs = [
+        sesame: referenceHtml('Zhou, W., Triche, T. J., Laird, P. W., & Shen, H.', 2018, 'SeSAMe: reducing artifactual detection of DNA methylation by Infinium BeadChips in genomic deletions', 'Nucleic Acids Research, 46(20), e123', '10.1093/nar/gky691'),
+        noob: referenceHtml('Triche, T. J., Weisenberger, D. J., Van Den Berg, D., Laird, P. W., & Siegmund, K. D.', 2013, 'Low-level processing of Illumina Infinium DNA Methylation BeadArrays', 'Nucleic Acids Research, 41(7), e90', '10.1093/nar/gkt090'),
+        minfi: referenceHtml('Aryee, M. J., Jaffe, A. E., Corrada-Bravo, H., et al.', 2014, 'Minfi: a flexible and comprehensive Bioconductor package for the analysis of Infinium DNA methylation microarrays', 'Bioinformatics, 30(10), 1363-1369', '10.1093/bioinformatics/btu049'),
+        minfi_epic: referenceHtml('Fortin, J. P., Triche, T. J., & Hansen, K. D.', 2017, 'Preprocessing, normalization and integration of the Illumina HumanMethylationEPIC array with minfi', 'Bioinformatics, 33(4), 558-560', '10.1093/bioinformatics/btw691'),
+        funnorm: referenceHtml('Fortin, J. P., Labbe, A., Lemire, M., et al.', 2014, 'Functional normalization of 450k methylation array data improves replication in large cancer studies', 'Genome Biology, 15, 503', '10.1186/s13059-014-0503-2'),
+        quantile: referenceHtml('Touleimat, N., & Tost, J.', 2012, 'Complete pipeline for Infinium Human Methylation 450K BeadChip data processing using subset quantile normalization for accurate DNA methylation estimation', 'Epigenomics, 4(3), 325-341', '10.2217/epi.12.21'),
+        swan: referenceHtml('Maksimovic, J., Gordon, L., & Oshlack, A.', 2012, 'SWAN: Subset-quantile within array normalization for Illumina Infinium HumanMethylation450 BeadChips', 'Genome Biology, 13(6), R44', '10.1186/gb-2012-13-6-r44'),
+        enmix: referenceHtml('Xu, Z., Niu, L., Li, L., & Taylor, J. A.', 2016, 'ENmix: a novel background correction method for Illumina HumanMethylation450 BeadChip', 'Nucleic Acids Research, 44(3), e20', '10.1093/nar/gkv907'),
+        relic: referenceHtml('Xu, Z., Langie, S. A., De Boever, P., Taylor, J. A., & Niu, L.', 2017, 'RELIC: a novel dye-bias correction method for Illumina Methylation BeadChip', 'BMC Genomics, 18, 4', '10.1186/s12864-016-3426-3'),
+        rcp: referenceHtml('Niu, L., Xu, Z., & Taylor, J. A.', 2016, 'RCP: a novel probe design bias correction method for Illumina Methylation BeadChip', 'Bioinformatics, 32(17), 2659-2663', '10.1093/bioinformatics/btw285'),
+        multiqc: referenceHtml('Ewels, P., Magnusson, M., Lundin, S., & Käller, M.', 2016, 'MultiQC: summarize analysis results for multiple tools and samples in a single report', 'Bioinformatics, 32(19), 3047-3048', '10.1093/bioinformatics/btw354')
+    ]
+    def minfi_norm_refs = [ noob: ['noob'], funnorm: ['funnorm'], quantile: ['quantile'], swan: ['swan', 'noob'] ]
+    def keys = [
+        sesame: ['sesame', 'noob'],
+        minfi: ['minfi', 'minfi_epic'] + minfi_norm_refs[params.minfi_norm],
+        enmix: ['minfi', 'enmix', 'relic', 'rcp'],
+        combined: ['minfi', 'enmix', 'relic', 'rcp', 'sesame']
+    ][params.preprocessing] ?: []
+    return (keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
 }
 
 def methodsDescriptionText(mqc_methods_yaml) {

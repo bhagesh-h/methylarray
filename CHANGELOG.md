@@ -12,6 +12,7 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - Samplesheet validation for IDAT input: matching red and green files, unique IDATs, Sentrix ID and position from the file names, manual exclusions with a reason.
 - Optional phenotype table (`--phenotypes`) and model definitions (`--models`), checked against the samplesheet and each other before any task starts.
 - SeSAMe preprocessing (`--preprocessing sesame`): sesameData cache (`SESAME_CACHE`, reusable offline with `--sesame_cache`), per-array `prepSesame` (`SESAME_PREPROCESS`, default `QCDPB`) and one HDF5-backed SummarizedExperiment with the sample QC statistics (`SESAME_BUILDSE`), plus a MultiQC general statistics table.
+- minfi, ENmix and combined preprocessing (`--preprocessing minfi|enmix|combined`, #10): one `MINFI_PREPROCESS` module with Noob, Funnorm, quantile or SWAN normalisation (`--minfi_norm`), ENmix oob background with RELIC and RCP (optional `--enmix_quantile`), and the SeSAMe masks for the combined route. All routes write the same SummarizedExperiment and never drop arrays or probes.
 
 ### `Fixed`
 
@@ -21,6 +22,7 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 ### `Dependencies`
 
 - Nextflow 26.04.2 or later (#4).
+- minfi 1.56.0, ENmix 1.46.2, IlluminaHumanMethylationEPICv2manifest 1.0.0 and IlluminaHumanMethylationEPICv2anno.20a1.hg38 1.0.0.
 - SeSAMe 1.28.1, sesameData 1.28.0, ExperimentHub 3.0.0, SummarizedExperiment 1.40.0 and HDF5Array 1.38.0 on R 4.5.3, with the reference (netlib) BLAS.
 
 ### `Deprecated`
