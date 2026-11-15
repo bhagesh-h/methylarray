@@ -3,7 +3,7 @@ process EWAS_SUMMARY {
 
     conda "${moduleDir}/environment.yml"
     // Same image as EWAS_LIMMA (identical environment.yml)
-    container 'docker.io/bhagesh/methylarray-ewas:1.0.0'
+    container 'docker.io/bhagesh/methylarray-ewas@sha256:e208cdcd0107e83b7aaa316d5d67146f1e780e5e74cd0048a1d1ff277cee4fa2'
 
     input:
     path summaries, stageAs: 'summaries/*'

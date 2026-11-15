@@ -5,7 +5,7 @@ process EWAS_LIMMA {
     conda "${moduleDir}/environment.yml"
     // Built with containers/conda.Dockerfile from environment.yml (dev/nfdev image), because
     // Wave rate-limited anonymous builds: bhagesh/methylarray-ewas:1.0.0
-    container 'docker.io/bhagesh/methylarray-ewas:1.0.0'
+    container 'docker.io/bhagesh/methylarray-ewas@sha256:e208cdcd0107e83b7aaa316d5d67146f1e780e5e74cd0048a1d1ff277cee4fa2'
 
     input:
     tuple val(meta), path(model), path(se), path(samples), path(sample_qc), path(phenotypes), path(cell_fractions), path(ctrl_pcs)
