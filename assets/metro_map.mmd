@@ -13,13 +13,16 @@
 %%metro line: combined | minfi + SeSAMe + ENmix | #CC79A7
 %%metro legend: bl
 %%metro font_scale: 1.8
+%%metro stroke_scale: 2.0
 %%metro section_x_gap: 20
-%%metro section_y_gap: 30
+%%metro section_y_gap: 20
+%%metro center_ports: true
 %%metro grid: preprocessing | 0,0
 %%metro grid: qc | 1,0
 %%metro grid: biology | 2,0
-%%metro grid: report | 1,1
 %%metro grid: association | 2,1
+%%metro grid: regions | 1,1
+%%metro grid: report | 0,1
 
 graph LR
     subgraph preprocessing [Preprocessing]
@@ -64,6 +67,14 @@ graph LR
         limma[limma]
         bacon[bacon]
         ewas_out[ ]
+
+        models_in -->|minfi,sesame,enmix,combined| limma
+        limma -->|minfi,sesame,enmix,combined| bacon
+        bacon -->|minfi,sesame,enmix,combined| ewas_out
+    end
+
+    subgraph regions [Regions and enrichment]
+        %%metro direction: RL
         dmrcate[DMRcate]
         dmrff[dmrff]
         missmethyl[missMethyl]
@@ -71,16 +82,11 @@ graph LR
         kegg[KEGG]
         msigdb[MSigDB]
 
-        models_in -->|minfi,sesame,enmix,combined| limma
-        limma -->|minfi,sesame,enmix,combined| bacon
-        bacon -->|minfi,sesame,enmix,combined| ewas_out
-        bacon -->|minfi,sesame,enmix,combined| dmrcate
-        bacon -->|minfi,sesame,enmix,combined| dmrff
         dmrcate -->|minfi,sesame,enmix,combined| missmethyl
         dmrff -->|minfi,sesame,enmix,combined| missmethyl
         missmethyl -->|minfi,sesame,enmix,combined| go
-        go -->|minfi,sesame,enmix,combined| kegg
-        kegg -->|minfi,sesame,enmix,combined| msigdb
+        missmethyl -->|minfi,sesame,enmix,combined| kegg
+        missmethyl -->|minfi,sesame,enmix,combined| msigdb
     end
 
     subgraph report [Report]
@@ -99,4 +105,8 @@ graph LR
     enmix -->|enmix,combined| ewastools
     masks -->|minfi,sesame,enmix,combined| epidish
     isva -->|minfi,sesame,enmix,combined| limma
+    bacon -->|minfi,sesame,enmix,combined| dmrcate
+    bacon -->|minfi,sesame,enmix,combined| dmrff
+    go -->|minfi,sesame,enmix,combined| multiqc
+    kegg -->|minfi,sesame,enmix,combined| multiqc
     msigdb -->|minfi,sesame,enmix,combined| multiqc
