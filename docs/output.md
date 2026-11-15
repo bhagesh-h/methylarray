@@ -14,6 +14,7 @@ The directories listed below will be created in the results directory after the 
 - [Probe filtering](#probe-filtering): filtered data for analysis, one row per CpG and one row per probe, with the probe attrition
 - [Cell composition](#cell-composition): blood cell-type fractions per array
 - [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration and clock coverage per array
+- [Exploratory analysis](#exploratory-analysis): control-probe PCs, PCA of the methylation data and its associations with technical and biological variables
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
@@ -104,6 +105,16 @@ Not with `--skip_clocks`.
 
 - `clocks/clocks.tsv`: one row per array that passed QC, with the reported age (`age`) and one column per clock of `--clocks`. With at least six reported ages, `eaa_<clock>` holds the age acceleration (residual of the clock on age) of the clocks that estimate age, and, with at least 14 such arrays, `ieaa_<clock>` the intrinsic age acceleration (also adjusted for six of the seven `centDHSbloodDMC` cell fractions).
 - `clocks/clocks_coverage.tsv`: for each clock, its CpGs, how many are in the data (`present`) and how many of those only under their EPIC v1 or 450K ID (`present_by_legacy_id`), the share present, the values that failed detection and were set to the CpG mean (`filled_values`), and notes.
+
+### Exploratory analysis
+
+- `exploration/pca_ctrl_pcs.tsv`: the control-probe principal components kept (`--n_ctrl_pcs`) per array, used as covariates by models with `@ctrlpcs`. Only the `sample` column without ewastools.
+- `exploration/pca_ctrl_pca_variance.tsv`: share of the control-probe variance per component, and the cumulative share.
+- `exploration/pca_scores.tsv`: the tested principal components (`--n_pcs`) of the most variable CpGs per array.
+- `exploration/pca_variance.tsv`: share of variance per component, the cumulative share, and whether the component was tested.
+- `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
+
+The MultiQC report shows the associations as a heatmap of -log10 P, the variance per component, and PC1 against PC2 coloured by predicted sex.
 
 ### Reference resources
 

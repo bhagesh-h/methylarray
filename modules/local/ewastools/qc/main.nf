@@ -14,6 +14,7 @@ process EWASTOOLS_QC {
     output:
     tuple val(meta), path("${prefix}_qc.tsv")           , emit: qc
     tuple val(meta), path("${prefix}_snp_conflicts.tsv"), emit: conflicts
+    tuple val(meta), path("${prefix}_controls.tsv.gz")  , emit: controls
     path "versions.yml", emit: versions, topic: versions
 
     script:
@@ -25,6 +26,7 @@ process EWASTOOLS_QC {
     """
     printf 'sample\\tplatform\\n' > ${prefix}_qc.tsv
     printf 'group\\tsample1\\texpected_donor1\\tsample2\\texpected_donor2\\tagreement\\n' > ${prefix}_snp_conflicts.tsv
+    printf '\\x1f\\x8b\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x03\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00' > ${prefix}_controls.tsv.gz
     printf '"%s":\\n    ewastools: stub\\n    illuminaio: stub\\n' "${task.process}" > versions.yml
     """
 }

@@ -316,6 +316,37 @@
                 }
             }
         },
+        "exploration_options": {
+            "title": "Exploratory analysis options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-area",
+            "description": "Principal component analyses of the methylation data and the control probes.",
+            "properties": {
+                "n_variable_cpgs": {
+                    "type": "integer",
+                    "default": 50000,
+                    "minimum": 1000,
+                    "description": "Number of most variable CpGs (by M-value variance) used for the PCA.",
+                    "fa_icon": "fas fa-sort-amount-down"
+                },
+                "n_pcs": {
+                    "type": "string",
+                    "default": "auto",
+                    "pattern": "^(auto|[1-9][0-9]?)$",
+                    "description": "Principal components tested for associations: a number, or `auto`.",
+                    "help_text": "`auto` uses the random matrix theory estimate of `isva::EstDimRMT` (Teschendorff et al. 2011), as ChAMP does; at most 20 and at most the number of arrays minus one.",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "n_ctrl_pcs": {
+                    "type": "string",
+                    "default": "auto",
+                    "pattern": "^(auto|[1-9][0-9]?)$",
+                    "description": "Control-probe principal components kept as covariates: a number, or `auto`.",
+                    "help_text": "The control-probe PCs (Lehne et al. 2015) come from the log2, standardised intensities of the non-negative control probes in both channels, read by ewastools. `auto` keeps the smallest number that explains at least 90% of their variance, at most 20. Without ewastools (`--skip_ewastools`) there are no control-probe PCs.",
+                    "fa_icon": "fas fa-layer-group"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -485,6 +516,9 @@
         },
         {
             "$ref": "#/$defs/clock_options"
+        },
+        {
+            "$ref": "#/$defs/exploration_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

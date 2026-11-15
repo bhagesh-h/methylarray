@@ -58,6 +58,16 @@ output:
           pattern: "*_snp_conflicts.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475
+  controls:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_controls.tsv.gz":
+          type: file
+          description: Control-probe intensities, one row per control probe and channel (channel, group, name), one column per array
+          pattern: "*_controls.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
   versions:
     - versions.yml:
         type: file

@@ -19,6 +19,14 @@
                     ]
                 ],
                 "2": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
                     "versions.yml:md5,46c736dd2bd622c35dd4f5e5a0acea83"
                 ],
                 "conflicts": [
@@ -27,6 +35,14 @@
                             "id": "ewastools"
                         },
                         "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0"
+                    ]
+                ],
+                "controls": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "qc": [
@@ -42,7 +58,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T08:56:03.920620978",
+        "timestamp": "2026-11-15T13:49:12.316260988",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
