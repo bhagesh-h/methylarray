@@ -5,7 +5,7 @@ process DMR_CALL {
     conda "${moduleDir}/environment.yml"
     // Built with containers/conda.Dockerfile from environment.yml (dev/nfdev image), because
     // Wave rate-limited anonymous builds: bhagesh/methylarray-dmr:1.0.0
-    container 'docker.io/bhagesh/methylarray-dmr:1.0.0'
+    container 'docker.io/bhagesh/methylarray-dmr@sha256:1edf71d7343a0078ee854b7a55d0bc4787b29923bac5a7f8fc7f50f3504bd96d'
 
     input:
     tuple val(meta), path(stats), path(resolved), path(se)
