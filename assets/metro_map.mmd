@@ -8,8 +8,8 @@
 %%metro file: ewas_out | TSV | EWAS
 %%metro file: report_out | HTML | Reports
 %%metro off_track: idat_in, models_in, matrices_out, ewas_out
-%%metro line: sesame | SeSAMe (default) | #009E73
-%%metro line: minfi | minfi | #0072B2
+%%metro line: sesame | SeSAMe | #009E73
+%%metro line: minfi | minfi (default) | #0072B2
 %%metro line: combined | minfi + SeSAMe + ENmix | #CC79A7
 %%metro line: enmix | ENmix | #E69F00
 %%metro marker: concordance | square, open
@@ -31,24 +31,24 @@ graph LR
     subgraph inputs [Input]
         samplesheet_in[ ]
         idat_in[ ]
-        validate[Validate]
-        refcache[References]
+        validate[nf-schema]
+        refcache[sesameData]
 
         samplesheet_in -->|sesame,minfi,combined,enmix| validate
         idat_in -->|sesame,minfi,combined,enmix| validate
-        validate -->|sesame,minfi,combined,enmix| refcache
+        validate -->|sesame,combined| refcache
     end
 
     subgraph preprocessing [Preprocessing]
-        sesame_read[SeSAMe read]
-        minfi_read[minfi read]
-        sesame_prep[QCDPB]
+        sesame_read[readIDATpair]
+        minfi_read[read.metharray.exp]
+        sesame_prep[prepSesame]
         minfi_detp[detectionP]
         poobah[pOOBAH]
         enmix_qc[QCinfo]
-        minfi_norm[Noob]
-        enmix_norm[RELIC]
-        rcp[RCP]
+        minfi_norm[preprocessNoob]
+        enmix_norm[preprocessENmix]
+        rcp[rcp]
 
         sesame_read -->|sesame| sesame_prep
         minfi_read -->|minfi| minfi_detp
@@ -61,9 +61,9 @@ graph LR
     end
 
     subgraph sample_qc [Sample QC]
-        controls[Controls]
-        sexcheck[Sex]
-        identity[Genotypes]
+        controls[control_metrics]
+        sexcheck[check_sex]
+        identity[call_genotypes]
         qc_status[QC status]
 
         controls -->|sesame,minfi,combined,enmix| sexcheck
@@ -73,7 +73,7 @@ graph LR
 
     subgraph probe_filter [Probe filtering]
         detection_filter[Detection]
-        probe_masks[Masks]
+        probe_masks[EPICv2manifest]
         collapse[Collapse]
         matrices_out[ ]
 
@@ -85,21 +85,25 @@ graph LR
     subgraph biology [Cells and clocks]
         %%metro direction: RL
         epidish[EpiDISH]
-        clocks[Clocks]
+        clocks[dnaMethyAge]
+        pace[DunedinPACE]
         scores[Scores]
 
         epidish -->|sesame,minfi,combined,enmix| clocks
-        clocks -->|sesame,minfi,combined,enmix| scores
+        clocks -->|sesame,minfi,combined,enmix| pace
+        pace -->|sesame,minfi,combined,enmix| scores
     end
 
     subgraph exploratory [Exploration]
         %%metro direction: RL
         ctrl_pcs[Control PCs]
         pca[PCA]
+        varpart[variancePartition]
         design[Design check]
 
         ctrl_pcs -->|sesame,minfi,combined,enmix| pca
-        pca -->|sesame,minfi,combined,enmix| design
+        pca -->|sesame,minfi,combined,enmix| varpart
+        varpart -->|sesame,minfi,combined,enmix| design
     end
 
     subgraph association [Association]
@@ -111,7 +115,7 @@ graph LR
         dmrcate[DMRcate]
         dmrff[dmrff]
         consensus[DMRs]
-        enrich[Enrichment]
+        enrich[missMethyl]
 
         models_in -->|sesame,minfi,combined,enmix| limma
         limma -->|sesame,minfi,combined,enmix| bacon
@@ -127,15 +131,18 @@ graph LR
         %%metro direction: RL
         concordance[Concordance]
         multiqc[MultiQC]
+        quarto[Quarto]
         report_out[ ]
 
         concordance -->|sesame,minfi,combined,enmix| multiqc
-        multiqc -->|sesame,minfi,combined,enmix| report_out
+        multiqc -->|sesame,minfi,combined,enmix| quarto
+        quarto -->|sesame,minfi,combined,enmix| report_out
     end
 
     %% Inter-section edges
     refcache -->|sesame| sesame_read
-    refcache -->|minfi,combined,enmix| minfi_read
+    validate -->|minfi,enmix| minfi_read
+    refcache -->|combined| minfi_read
     sesame_prep -->|sesame| controls
     minfi_norm -->|minfi| controls
     rcp -->|combined,enmix| controls
