@@ -13,6 +13,7 @@ The directories listed below will be created in the results directory after the 
 - [Sample QC](#sample-qc): control metrics, sex check, SNP genotypes and one status per array
 - [Probe filtering](#probe-filtering): filtered data for analysis, one row per CpG and one row per probe, with the probe attrition
 - [Cell composition](#cell-composition): blood cell-type fractions per array
+- [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration and clock coverage per array
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
@@ -96,6 +97,13 @@ Only with `--tissue blood` (default).
   - `dhs7_*`: fractions for the 7 types of `centDHSbloodDMC`, for comparison with earlier studies
   - `sum_cent12`, `sum_dhs7`: sum of the fractions of each reference
 - `cell_composition/cell_fractions_reference_coverage.tsv`: for each reference, the number of reference CpGs, the missing ones by reason (`sex_chromosome`: left out on purpose, because X inactivation can mimic a cell-type signal; `not_on_array`: not measured by EPIC v2; `removed_by_filter`: removed by the probe filter), the CpGs found and how many of them only through their EPIC v1 or 450K ID, the coverage of the autosomal reference CpGs, the missing values set to the CpG median, and the status (`ok`, or `warn` below 98%; the run stops below `--min_reference_coverage`).
+
+### Epigenetic clocks
+
+Not with `--skip_clocks`.
+
+- `clocks/clocks.tsv`: one row per array that passed QC, with the reported age (`age`) and one column per clock of `--clocks`. With at least six reported ages, `eaa_<clock>` holds the age acceleration (residual of the clock on age) of the clocks that estimate age, and, with at least 14 such arrays, `ieaa_<clock>` the intrinsic age acceleration (also adjusted for six of the seven `centDHSbloodDMC` cell fractions).
+- `clocks/clocks_coverage.tsv`: for each clock, its CpGs, how many are in the data (`present`) and how many of those only under their EPIC v1 or 450K ID (`present_by_legacy_id`), the share present, the values that failed detection and were set to the CpG mean (`filled_values`), and notes.
 
 ### Reference resources
 

@@ -273,6 +273,49 @@
                 }
             }
         },
+        "clock_options": {
+            "title": "Epigenetic clock options",
+            "type": "object",
+            "fa_icon": "fas fa-clock",
+            "description": "Epigenetic clocks computed with dnaMethyAge and DunedinPACE.",
+            "properties": {
+                "skip_clocks": {
+                    "type": "boolean",
+                    "description": "Skip the epigenetic clocks.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "clocks": {
+                    "type": "string",
+                    "default": "HorvathS2013,HannumG2013,LevineM2018,HorvathS2018,ZhangQ2019,LuA2019,ZhangY2017,PCGrimAge,PCPhenoAge,PCHorvathS2013,PCHannumG2013,PCHorvathS2018,FuentealbaM2025,epiTOC2,DunedinPACE",
+                    "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+                    "description": "Comma-separated clocks to compute: dnaMethyAge clock names and DunedinPACE.",
+                    "help_text": "dnaMethyAge clocks: HorvathS2013 (pan-tissue age), HannumG2013 (blood age), LevineM2018 (PhenoAge), HorvathS2018 (skin and blood age), ZhangQ2019, LuA2019 (telomere length), ZhangY2017 (mortality risk score), PCGrimAge, PCPhenoAge, PCHorvathS2013, PCHannumG2013 and PCHorvathS2018 (principal-component clocks; PCGrimAge needs reported age and sex), FuentealbaM2025 (intrinsic capacity), epiTOC2 (mitotic clock); see `dnaMethyAge::availableClock()`. DunedinPACE: pace of ageing. GrimAge, GrimAge2 and FitAge need licensed coefficients and are not available. BernabeuE2023c (cAge) can be added but fails in dnaMethyAge 0.2.0 when an array's estimate is below 20 years; it then gives NA with the error in the coverage notes.",
+                    "fa_icon": "fas fa-list"
+                },
+                "dunedinpace_min_probes": {
+                    "type": "number",
+                    "default": 0.8,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "DunedinPACE returns NA when a smaller share of its CpGs is in the data.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "dnamethyage_source": {
+                    "type": "string",
+                    "default": "https://github.com/yiluyucheng/dnaMethyAge/archive/0d40c9bb02c7d9a4d91ce01d150a9c0b12edf1f4.tar.gz",
+                    "description": "dnaMethyAge source package (URL or local path), installed by the clock task.",
+                    "help_text": "dnaMethyAge is not on conda or CRAN. The default is version 0.2.0 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
+                    "fa_icon": "fas fa-box"
+                },
+                "dunedinpace_source": {
+                    "type": "string",
+                    "default": "https://github.com/danbelsky/DunedinPACE/archive/4b569983543e51d1022aecec9a25e694bb3a336a.tar.gz",
+                    "description": "DunedinPACE source package (URL or local path), installed by the clock task.",
+                    "help_text": "DunedinPACE is not on conda or CRAN. The default is version 0.99.0 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
+                    "fa_icon": "fas fa-box"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -439,6 +482,9 @@
         },
         {
             "$ref": "#/$defs/cell_composition_options"
+        },
+        {
+            "$ref": "#/$defs/clock_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

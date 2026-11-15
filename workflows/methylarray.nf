@@ -9,6 +9,7 @@ include { PREPROCESS_MINFI       } from '../subworkflows/local/preprocess_minfi'
 include { SAMPLE_QC              } from '../subworkflows/local/sample_qc'
 include { PROBE_FILTER           } from '../subworkflows/local/probe_filter'
 include { CELL_COMPOSITION       } from '../subworkflows/local/cell_composition'
+include { CLOCKS                 } from '../subworkflows/local/clocks'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -78,9 +79,20 @@ workflow METHYLARRAY {
     //
     // SUBWORKFLOW: Blood cell-type composition
     //
+    def ch_cell_fractions = channel.value([])
     if (params.tissue == 'blood') {
         CELL_COMPOSITION(PROBE_FILTER.out.se, PROBE_FILTER.out.annotation)
+        ch_cell_fractions = CELL_COMPOSITION.out.fractions.map { _meta, fractions -> fractions }
         ch_multiqc_files = ch_multiqc_files.mix(CELL_COMPOSITION.out.multiqc.map { _meta, table -> table })
+    }
+
+    //
+    // SUBWORKFLOW: Epigenetic clocks
+    //
+    if (!params.skip_clocks) {
+        CLOCKS(ch_arrays, ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation, ch_cell_fractions,
+            params.dnamethyage_source, params.dunedinpace_source)
+        ch_multiqc_files = ch_multiqc_files.mix(CLOCKS.out.multiqc.map { _meta, table -> table })
     }
 
     //

@@ -209,6 +209,20 @@ Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and 
 
 With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH (robust partial correlations) from the filtered, CpG-level beta values without masking. The main reference is `cent12CT` (12 cell types, Luo et al. 2023); `centDHSbloodDMC` (7 types) is reported for comparison. Reference CpGs are matched through their EPIC v1 and 450K IDs as well as the CpG ID, because some CpGs have new names on EPIC v2. The run stops if less than `--min_reference_coverage` (default 90%) of a reference's CpGs are present. Use `--tissue other` for tissues without a blood reference.
 
+## Epigenetic clocks
+
+Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked beta values of the arrays that passed QC, averaged per CpG. The probe filter for association testing is not applied here, because each clock was trained on its own set of CpGs. Values that failed detection are set to the CpG's mean over the other arrays. CpGs that EPIC v2 does not measure take the reference means of dnaMethyAge, and DunedinPACE returns NA when less than `--dunedinpace_min_probes` of its CpGs are present. `clocks/clocks_coverage.tsv` reports the coverage of every clock.
+
+| Parameter                  | Default                  | Meaning                                                   |
+| -------------------------- | ------------------------ | --------------------------------------------------------- |
+| `--clocks`                 | 16 clocks (see schema)   | Comma-separated dnaMethyAge clock names and `DunedinPACE` |
+| `--dunedinpace_min_probes` | `0.8`                    | Minimum share of DunedinPACE CpGs in the data             |
+| `--skip_clocks`            | `false`                  | Skip the clocks                                           |
+| `--dnamethyage_source`     | dnaMethyAge 0.2.0 source | dnaMethyAge source package (URL or local path)            |
+| `--dunedinpace_source`     | DunedinPACE 0.99.0       | DunedinPACE source package (URL or local path)            |
+
+PCGrimAge needs the reported age and sex (`reported_age`, `reported_sex` in the samplesheet); arrays without them get NA. Age acceleration is computed when at least six arrays have a reported age. GrimAge, GrimAge2 and FitAge need licensed coefficients and are not available. BernabeuE2023c (cAge) is not in the default list: dnaMethyAge 0.2.0 fails for it when an array's estimate is below 20 years. A clock that fails gives NA, with the error in the notes of `clocks/clocks_coverage.tsv`. Intrinsic age acceleration needs at least five residual degrees of freedom after adjusting for age and six cell fractions, so at least 14 arrays with ages. Neither dnaMethyAge nor DunedinPACE is on conda or CRAN: the clock task installs them from their source packages at fixed GitHub commits. For runs without network access, download the two files once and pass their local paths.
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

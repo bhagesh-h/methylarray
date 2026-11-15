@@ -2,6 +2,13 @@
     "-profile test --preprocessing combined - stub": {
         "content": [
             {
+                "CLOCKS_COMPUTE": {
+                    "DunedinPACE": "stub",
+                    "RPMM": "stub",
+                    "dnaMethyAge": "stub",
+                    "impute": "stub",
+                    "preprocessCore": "stub"
+                },
                 "EPIDISH_RPC": {
                     "EpiDISH": "stub",
                     "HDF5Array": "stub",
@@ -49,6 +56,9 @@
                 "cell_composition",
                 "cell_composition/cell_fractions.tsv",
                 "cell_composition/cell_fractions_reference_coverage.tsv",
+                "clocks",
+                "clocks/clocks.tsv",
+                "clocks/clocks_coverage.tsv",
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/.stub",
@@ -89,6 +99,8 @@
             [
                 "cell_fractions.tsv:md5,d522843d0cd415cbf3d1bc5c6bb51d01",
                 "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5",
+                "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4",
+                "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "combined_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31",
@@ -101,7 +113,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T12:19:15.048786603",
+        "timestamp": "2026-11-15T13:29:44.153204998",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
