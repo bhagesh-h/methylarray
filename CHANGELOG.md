@@ -13,6 +13,12 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - Optional phenotype table (`--phenotypes`) and model definitions (`--models`), checked against the samplesheet and each other before any task starts.
 - SeSAMe preprocessing (`--preprocessing sesame`): sesameData cache (`SESAME_CACHE`, reusable offline with `--sesame_cache`), per-array `prepSesame` (`SESAME_PREPROCESS`, default `QCDPB`) and one HDF5-backed SummarizedExperiment with the sample QC statistics (`SESAME_BUILDSE`), plus a MultiQC general statistics table.
 - minfi, ENmix and combined preprocessing (`--preprocessing minfi|enmix|combined`, #10): one `MINFI_PREPROCESS` module with Noob, Funnorm, quantile or SWAN normalisation (`--minfi_norm`), ENmix oob background with RELIC and RCP (optional `--enmix_quantile`), and the SeSAMe masks for the combined route. All routes write the same SummarizedExperiment and never drop arrays or probes.
+- Sample QC (#12): ewastools control metrics against Illumina's thresholds, X/Y intensities and sex prediction, SNP genotypes with contamination scores and identity checks against `replicate_group` (`EWASTOOLS_QC`), and one status per array (`PASS`, `FLAG`, `FAIL`, `EXCLUDED`) with its reasons (`SAMPLEQC_SUMMARY`), in `qc/sample_qc.tsv`, `qc/sample_qc_retained.txt` and the MultiQC report. New parameters `--max_undetected_fraction`, `--snp_outlier_threshold`, `--skip_ewastools` and `--ewastools_source`.
+- Developer guide (`docs/developer.md`) and `dev/nfdev container`, which builds a module's images from its `environment.yml` with Wave.
+
+### `Changed`
+
+- Task images come from Seqera Containers (`community.wave.seqera.io`), built by Wave from each module's `environment.yml`, with separate Docker and Singularity images. The minfi module keeps its Docker Hub image, because installing the EPIC v2 annotation packages exceeds the Wave build time limit.
 
 ### `Fixed`
 
@@ -23,6 +29,7 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 
 - Nextflow 26.04.2 or later (#4).
 - minfi 1.56.0, ENmix 1.46.2, IlluminaHumanMethylationEPICv2manifest 1.0.0 and IlluminaHumanMethylationEPICv2anno.20a1.hg38 1.0.0.
+- ewastools 1.8.2 (GitHub commit d7d0a32, installed from source by the QC task), illuminaio 0.52.0 and data.table 1.18.6.1.
 - SeSAMe 1.28.1, sesameData 1.28.0, ExperimentHub 3.0.0, SummarizedExperiment 1.40.0 and HDF5Array 1.38.0 on R 4.5.3, with the reference (netlib) BLAS.
 
 ### `Deprecated`

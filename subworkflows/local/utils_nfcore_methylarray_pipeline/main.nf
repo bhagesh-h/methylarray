@@ -374,7 +374,10 @@ def toolCitationText() {
         enmix: "Arrays were read with minfi (Aryee et al. 2014) and preprocessed with ${enmix_text}; ${masks}.",
         combined: "Arrays were read with minfi (Aryee et al. 2014) and preprocessed with ${enmix_text}. Values masked by SeSAMe (Zhou et al. 2018; quality mask and pOOBAH detection at p > ${params.detection_pval}) or measured by fewer than ${params.min_beads} beads were set to missing."
     ]
-    return [ preprocessing[params.preprocessing] ?: '', "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+    def sample_qc = params.skip_ewastools
+        ? "Arrays with more than ${String.format("%.1f", (params.max_undetected_fraction as double) * 100)}% undetected probes or a predicted sex that contradicted the reported sex failed quality control."
+        : "Control-probe metrics, normalised X and Y intensities and SNP probe genotypes were computed with ewastools (Heiss and Just 2018). Arrays with more than ${String.format("%.1f", (params.max_undetected_fraction as double) * 100)}% undetected probes, a predicted sex that contradicted the reported sex or a SNP outlier score above ${params.snp_outlier_threshold} failed quality control; arrays with control metrics below Illumina's thresholds or genotype conflicts with the expected donors were flagged."
+    return [ preprocessing[params.preprocessing] ?: '', sample_qc, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
 }
 
 //
@@ -396,6 +399,7 @@ def toolBibliographyText() {
         enmix: referenceHtml('Xu, Z., Niu, L., Li, L., & Taylor, J. A.', 2016, 'ENmix: a novel background correction method for Illumina HumanMethylation450 BeadChip', 'Nucleic Acids Research, 44(3), e20', '10.1093/nar/gkv907'),
         relic: referenceHtml('Xu, Z., Langie, S. A., De Boever, P., Taylor, J. A., & Niu, L.', 2017, 'RELIC: a novel dye-bias correction method for Illumina Methylation BeadChip', 'BMC Genomics, 18, 4', '10.1186/s12864-016-3426-3'),
         rcp: referenceHtml('Niu, L., Xu, Z., & Taylor, J. A.', 2016, 'RCP: a novel probe design bias correction method for Illumina Methylation BeadChip', 'Bioinformatics, 32(17), 2659-2663', '10.1093/bioinformatics/btw285'),
+        ewastools: referenceHtml('Heiss, J. A., & Just, A. C.', 2018, 'Identifying mislabeled and contaminated DNA methylation microarray data: an extended quality control toolset with examples from GEO', 'Clinical Epigenetics, 10, 73', '10.1186/s13148-018-0504-1'),
         multiqc: referenceHtml('Ewels, P., Magnusson, M., Lundin, S., & Käller, M.', 2016, 'MultiQC: summarize analysis results for multiple tools and samples in a single report', 'Bioinformatics, 32(19), 3047-3048', '10.1093/bioinformatics/btw354')
     ]
     def minfi_norm_refs = [ noob: ['noob'], funnorm: ['funnorm'], quantile: ['quantile'], swan: ['swan', 'noob'] ]
@@ -405,7 +409,8 @@ def toolBibliographyText() {
         enmix: ['minfi', 'enmix', 'relic', 'rcp'],
         combined: ['minfi', 'enmix', 'relic', 'rcp', 'sesame']
     ][params.preprocessing] ?: []
-    return (keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
+    def qc_keys = params.skip_ewastools ? [] : ['ewastools']
+    return (keys + qc_keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
 }
 
 def methodsDescriptionText(mqc_methods_yaml) {

@@ -63,12 +63,12 @@ graph LR
     subgraph sample_qc [Sample QC]
         controls[Controls]
         sexcheck[Sex]
-        identity[Identity]
-        outliers[Outliers]
+        identity[Genotypes]
+        qc_status[QC status]
 
         controls -->|sesame,minfi,combined,enmix| sexcheck
         sexcheck -->|sesame,minfi,combined,enmix| identity
-        identity -->|sesame,minfi,combined,enmix| outliers
+        identity -->|sesame,minfi,combined,enmix| qc_status
     end
 
     subgraph probe_filter [Probe filtering]
@@ -139,7 +139,7 @@ graph LR
     sesame_prep -->|sesame| controls
     minfi_norm -->|minfi| controls
     rcp -->|combined,enmix| controls
-    outliers -->|sesame,minfi,combined,enmix| detection_filter
+    qc_status -->|sesame,minfi,combined,enmix| detection_filter
     collapse -->|sesame,minfi,combined,enmix| epidish
     scores -->|sesame,minfi,combined,enmix| ctrl_pcs
     design -->|sesame,minfi,combined,enmix| limma

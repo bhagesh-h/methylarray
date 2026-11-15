@@ -1,0 +1,7 @@
+sample	platform	predicted_sex	frac_dt
+A1	EPICv2	female	0.97
+A2	EPICv2	male	0.85
+A3	EPICv2	male	0.96
+A4	EPICv2	male	0.98
+A5	EPICv2	female	0.98
+A7	EPICv2	female	0.95

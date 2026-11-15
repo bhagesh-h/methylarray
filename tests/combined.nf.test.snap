@@ -2,11 +2,18 @@
     "-profile test --preprocessing combined - stub": {
         "content": [
             {
+                "EWASTOOLS_QC": {
+                    "ewastools": "stub",
+                    "illuminaio": "stub"
+                },
                 "MINFI_PREPROCESS": {
                     "ENmix": "stub",
                     "HDF5Array": "stub",
                     "SummarizedExperiment": "stub",
                     "minfi": "stub"
+                },
+                "SAMPLEQC_SUMMARY": {
+                    "R": "stub"
                 },
                 "SESAME_BUILDSE": {
                     "HDF5Array": "stub",
@@ -46,6 +53,11 @@
                 "qc",
                 "qc/combined",
                 "qc/combined/combined_qc.tsv",
+                "qc/ewastools",
+                "qc/ewastools/ewastools_qc.tsv",
+                "qc/ewastools/ewastools_snp_conflicts.tsv",
+                "qc/sample_qc.tsv",
+                "qc/sample_qc_retained.txt",
                 "qc/sesame",
                 "qc/sesame/sesame_qc.tsv"
             ],
@@ -53,10 +65,14 @@
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "combined_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
+                "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
+                "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0",
+                "sample_qc.tsv:md5,2f0638a9c17a82d2a7dd883687300b81",
+                "sample_qc_retained.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T08:39:19.297324024",
+        "timestamp": "2026-11-15T09:47:09.487082921",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

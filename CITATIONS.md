@@ -144,6 +144,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Heiss JA, Just AC. Identifying mislabeled and contaminated DNA methylation microarray data: an extended quality control toolset with examples from GEO. Clin Epigenetics. 2018;10:73.
 
+- [illuminaio](https://doi.org/10.12688/f1000research.2-264.v1)
+
+  > Smith ML, Baggerly KA, Bengtsson H, Ritchie ME, Hansen KD. illuminaio: An open source IDAT parsing tool for Illumina microarrays. F1000Research. 2013;2:264.
+
 - [Control-probe principal components](https://doi.org/10.1186/s13059-015-0600-x)
 
   > Lehne B, Drong AW, Loh M, et al. A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies. Genome Biol. 2015;16:37.
