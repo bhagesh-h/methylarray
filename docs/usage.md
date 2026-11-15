@@ -248,6 +248,21 @@ For every tested model, regions are called from the same statistics as the CpG-l
 
 Region-level statistics are optimistic; the consensus of both methods is the more reliable result. `--skip_dmr` skips regions for every model, `skip_dmr: true` in the models file for one model. dmrff is not on conda or CRAN: the region task installs it from its source package at a fixed GitHub commit (`--dmrff_source`).
 
+## Gene set enrichment
+
+For every tested model, the CpGs at FDR < 0.05 are tested for enrichment against all tested CpGs with missMethyl, which corrects for the number of CpGs per gene (a gene with many CpGs is otherwise more likely to contain a significant one):
+
+- GO (`gometh`), with the annotation packages in the container.
+- KEGG (`gometh`): the pathways are downloaded from the KEGG REST service during the run. Without network access KEGG is recorded as not run in the summary, and the other collections still run.
+- Every GMT file of `--gene_set_gmts` (`gsameth`): by default MSigDB 2025.1 Hallmark and Reactome, with Entrez gene IDs. Download them once and pass local paths for runs without network access.
+
+| Parameter                  | Default                   | Meaning                                                                  |
+| -------------------------- | ------------------------- | ------------------------------------------------------------------------ |
+| `--enrichment_collections` | `GO,KEGG`                 | missMethyl `gometh` collections, or `none`                               |
+| `--gene_set_gmts`          | MSigDB Hallmark, Reactome | Comma-separated GMT files with Entrez IDs (URLs or paths); empty to skip |
+| `--enrichment_min_hits`    | `10`                      | Minimum number of CpGs at FDR < 0.05 for a contrast to be tested         |
+| `--skip_enrichment`        | `false`                   | Skip enrichment for every model (`skip_enrichment: true` for one model)  |
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

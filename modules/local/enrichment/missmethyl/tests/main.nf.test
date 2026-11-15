@@ -1,0 +1,100 @@
+nextflow_process {
+
+    name "Test Process ENRICHMENT_MISSMETHYL"
+    script "../main.nf"
+    process "ENRICHMENT_MISSMETHYL"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "enrichment"
+    tag "enrichment/missmethyl"
+
+    // Simulated statistics (make_fixture.R): every CpG of the 30 genes of the set
+    // PLANTED is significant; CONTROL_A and CONTROL_B are random genes
+
+    test("GO and a planted gene set") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'score' ],
+                    file("$moduleTestDir/stats.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/resolved.json", checkIfExists: true)
+                ]
+                input[1] = [ file("$moduleTestDir/sets.entrez.gmt", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.enrichment[0][1]).readLines()
+            def header = lines[0].split('\t') as List
+            def rows = lines.drop(1).collect { l -> [header, l.split('\t', -1) as List].transpose().collectEntries() }
+            def sets = rows.findAll { r -> r.collection == 'sets' }
+            assertAll(
+                { assert process.success },
+                { assert rows.collect { r -> r.collection }.unique().sort() == ['GO', 'sets'] },
+                // the planted set is the top gene set and significant; the control sets are not
+                { assert sets[0].set == 'PLANTED' && (sets[0].fdr as double) < 0.05 },
+                { assert sets.findAll { r -> r.set != 'PLANTED' }.every { r -> (r.fdr as double) > 0.05 } },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+
+    test("skip_enrichment") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'skipped' ],
+                    file("$moduleTestDir/stats.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/resolved_skip.json", checkIfExists: true)
+                ]
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            def summary = new groovy.json.JsonSlurper().parse(path(process.out.summary[0][1]).toFile())
+            assertAll(
+                { assert process.success },
+                { assert summary.status == 'skipped: skip_enrichment' }
+            )
+        }
+    }
+
+    test("GO and a planted gene set - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'score' ],
+                    file("$moduleTestDir/stats.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/resolved.json", checkIfExists: true)
+                ]
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

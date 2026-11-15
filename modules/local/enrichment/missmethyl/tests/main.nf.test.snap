@@ -1,0 +1,63 @@
+{
+    "GO and a planted gene set - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "enrichment_score.tsv:md5,adbf0efb474ed273fc10b48b133a9c58"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "enrichment_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,f46892d57a56811b124895dfd7ea3f41"
+                ],
+                "enrichment": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "enrichment_score.tsv:md5,adbf0efb474ed273fc10b48b133a9c58"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "enrichment_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,f46892d57a56811b124895dfd7ea3f41"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T16:20:38.756613462",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "GO and a planted gene set": {
+        "content": [
+            [
+                "versions.yml:md5,f0247d759249f5872ce49f915576a612"
+            ]
+        ],
+        "timestamp": "2026-11-15T16:19:42.924816073",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

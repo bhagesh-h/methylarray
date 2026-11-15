@@ -13,6 +13,7 @@ include { CLOCKS                 } from '../subworkflows/local/clocks'
 include { EXPLORATION            } from '../subworkflows/local/exploration'
 include { EWAS                   } from '../subworkflows/local/ewas'
 include { DMR                    } from '../subworkflows/local/dmr'
+include { ENRICHMENT             } from '../subworkflows/local/enrichment'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -118,6 +119,13 @@ workflow METHYLARRAY {
     //
     if (!params.skip_dmr) {
         DMR(EWAS.out.stats, EWAS.out.resolved, PROBE_FILTER.out.se, params.dmrff_source)
+    }
+
+    //
+    // SUBWORKFLOW: Gene set enrichment of every model
+    //
+    if (!params.skip_enrichment) {
+        ENRICHMENT(EWAS.out.stats, EWAS.out.resolved, params.gene_set_gmts)
     }
 
     //
