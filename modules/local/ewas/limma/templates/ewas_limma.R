@@ -4,7 +4,8 @@
 #   1. Resolve the model: covariate tokens, subset, trait transform, complete
 #      cases (min_n); every dropped array is recorded with its reason
 #   2. Design check: trait against plate and Sentrix row, VIF of the covariates
-#   3. limma on M-values: lmFit (+ duplicateCorrelation with a block), then
+#   3. limma on M-values: lmFit (+ duplicateCorrelation with a block, its
+#      consensus correlation estimated on --block_cpgs random CpGs), then
 #      eBayes(trend = TRUE, robust = TRUE); delta-beta from the same design on
 #      beta values
 #   4. Inflation: genomic lambda, bacon bias and inflation with corrected P/FDR
@@ -24,7 +25,7 @@ cells_file <- "${cell_fractions}"
 ctrl_file <- "${ctrl_pcs}"
 scores_file <- "${dnam_scores}"
 
-defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000")
+defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000")
 parse_args <- function(x, defaults) {
     tokens <- strsplit(trimws(x), "[[:space:]]+")[[1]]
     tokens <- tokens[nzchar(tokens)]
@@ -70,7 +71,7 @@ covariates <- data.table(sample = arrays)
 join <- function(table) {
     table <- table[match(arrays, table[["sample"]])]
     new <- setdiff(names(table), names(covariates))
-    if (length(new) > 0) covariates[, (new) := table[, ..new]]
+    if (length(new) > 0) covariates[, (new) := table[, new, with = FALSE]]
 }
 join(read_table(samples_file))
 sample_qc <- read_table(sample_qc_file)
@@ -214,8 +215,13 @@ mvalue <- as.matrix(assay(se, "mvalue")[, rownames(data), drop = FALSE])
 beta <- as.matrix(assay(se, "beta")[, rownames(data), drop = FALSE])
 correlation <- NULL
 if (!is.null(block)) {
-    correlation <- duplicateCorrelation(mvalue, design, block = data[[block]])[["consensus.correlation"]]
+    # The consensus correlation is one trimmed mean over CpGs, so a fixed random
+    # subset gives the same estimate at a fraction of the cost (0 = every CpG)
+    block_cpgs <- as.integer(opts[["block_cpgs"]])
+    rows <- if (block_cpgs > 0 && nrow(mvalue) > block_cpgs) sort(sample.int(nrow(mvalue), block_cpgs)) else seq_len(nrow(mvalue))
+    correlation <- duplicateCorrelation(mvalue[rows, , drop = FALSE], design, block = data[[block]])[["consensus.correlation"]]
     report[["block_correlation"]] <- correlation
+    report[["block_correlation_cpgs"]] <- length(rows)
 }
 fit_m <- lmFit(mvalue, design, block = if (is.null(block)) NULL else data[[block]], correlation = correlation)
 fit_b <- lmFit(beta, design, block = if (is.null(block)) NULL else data[[block]], correlation = correlation)

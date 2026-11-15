@@ -1,6 +1,6 @@
 process EXPLORATION_PCA {
     tag "${meta.id}"
-    label 'process_medium'
+    label 'process_low'
 
     conda "${moduleDir}/environment.yml"
     // Built with containers/conda.Dockerfile from environment.yml (dev/nfdev image), because

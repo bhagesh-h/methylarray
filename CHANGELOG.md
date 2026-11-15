@@ -30,6 +30,8 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 
 ### `Changed`
 
+- Faster runs: `MINFI_PREPROCESS` processes its chunks on parallel worker processes (as many as the task's CPUs and memory allow); the per-module CPU and memory requests follow measured use, so the single-threaded steps (cell composition, PCA, probe annotation, association models, enrichment) request 2 CPUs and 12 GB and several models run side by side; with a `block`, the `duplicateCorrelation` consensus correlation is estimated on 50,000 random CpGs instead of every CpG.
+
 - `MINFI_PREPROCESS` reads and corrects the arrays in chunks (hidden `--minfi_chunk_size`, default 40) and writes each chunk to HDF5 at once, which lowers its memory use. Results are unchanged: Noob, detection p-values, ENmix oob/RELIC/RCP and SWAN work array by array; Funnorm, quantile normalisation and the ENmix quantile step run on all arrays in a second pass, and the ENmix low-quality flag is computed over all arrays.
 - minfi (Noob) is the default preprocessing route (`--preprocessing minfi`); SeSAMe stays available with `--preprocessing sesame`.
 - Task images are built from each module's `environment.yml`: by Wave in Seqera Containers (`community.wave.seqera.io`), with separate Docker and Singularity images, or, where Wave could not build them (the minfi and enrichment environments exceed its build time limit; the exploration, EWAS, DMR and report images were built locally while Wave was rate-limited), as Docker Hub images referenced by digest. `EXPORT_GEO` reuses the minfi image.

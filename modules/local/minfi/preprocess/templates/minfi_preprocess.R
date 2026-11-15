@@ -9,7 +9,8 @@
 # Values that fail detection or the bead count are set to NA in 'beta';
 # 'beta_unmasked' keeps them. No array or probe is removed.
 #
-# Memory: the arrays are read and corrected in chunks of --chunk_size arrays
+# Memory and time: the arrays are read and corrected in chunks of --chunk_size
+# arrays, on parallel worker processes when the task has several CPUs
 # (at least 2; Noob, detection p-values, ENmix oob/RELIC/RCP and SWAN work array by array),
 # and each chunk is written to HDF5 at once. Funnorm, quantile normalisation and
 # the ENmix quantile step need all arrays together and run in a second pass.
@@ -61,7 +62,8 @@ set.seed(1)
 samples <- read.delim(samples_file, colClasses = "character", na.strings = c("", "NA"), check.names = FALSE)
 samples <- samples[order(samples[["sample"]]), , drop = FALSE]
 rownames(samples) <- samples[["sample"]]
-targets <- data.frame(Basename = file.path("idat", samples[["idat_prefix"]]), Sample_Name = samples[["sample"]])
+task_dir <- getwd()
+targets <- data.frame(Basename = file.path(task_dir, "idat", samples[["idat_prefix"]]), Sample_Name = samples[["sample"]])
 n_chunks <- max(1, floor(nrow(samples) / chunk_size))
 chunks <- split(seq_len(nrow(samples)), (seq_len(nrow(samples)) - 1) %/% ceiling(nrow(samples) / n_chunks))
 between_arrays <- (method == "minfi" && minfi_norm %in% c("funnorm", "quantile")) || (method != "minfi" && enmix_quantile)
@@ -84,46 +86,49 @@ align <- function(m, columns) {
     out
 }
 
-# Chunks are written as separate datasets of a scratch HDF5 file and bound by
-# column at the end
-scratch_h5 <- "scratch_assays.h5"
-parts <- list()
-store <- function(name, k, m) {
-    parts[[name]][[k]] <<- writeHDF5Array(m, filepath = scratch_h5, name = paste0(name, "_", k))
-}
-bound <- function(name) do.call(cbind, parts[[name]])
-
-qc_parts <- list()
-for (k in seq_along(chunks)) {
+# One chunk: read, correct and write its matrices to its own scratch HDF5 file,
+# in its own directory (QCinfo writes its plots to the working directory).
+# Returns the per-array QC values and the names of the datasets written.
+process_chunk <- function(k) {
     idx <- chunks[[k]]
     columns <- samples[["sample"]][idx]
+    chunk_dir <- file.path(task_dir, sprintf("chunk_%03d", k))
+    dir.create(chunk_dir, showWarnings = FALSE)
+    owd <- setwd(chunk_dir)
+    on.exit(setwd(owd))
+    h5 <- file.path(chunk_dir, "assays.h5")
+    written <- character()
+    store <- function(name, m) {
+        writeHDF5Array(m, filepath = h5, name = name)
+        written <<- c(written, name)
+    }
     message(sprintf("Chunk %d of %d: %d arrays", k, length(chunks), length(idx)))
     rg <- read_arrays(idx, extended = TRUE)
 
     # Detection p-values and bead counts per probe (ENmix QCinfo; no array or
     # CpG is flagged here). distplot = TRUE because QCinfo 1.46.2 fails with
     # outlier = FALSE and distplot = FALSE ('mdat' not found); the plots stay
-    # in the task directory.
+    # in the chunk directory.
     qci <- QCinfo(rg, detPthre = detection_pval, nbthre = min_beads, samplethre = 1, CpGthre = 1, bisulthre = 0,
                   outlier = FALSE, distplot = TRUE)
     noob <- preprocessNoob(rg)
     if (is.null(probes)) {
-        probes <- rownames(noob)
-        array_annotation <- annotation(noob)
+        probes <<- rownames(noob)
+        array_annotation <<- annotation(noob)
     }
-    store("nbead", k, align(qci[["nbead"]], columns))
+    store("nbead", align(qci[["nbead"]], columns))
     if (method == "minfi") {
-        store("detp", k, align(detectionP(rg), columns))
-        store("meth", k, align(getMeth(noob), columns))
-        store("unmeth", k, align(getUnmeth(noob), columns))
-        if (minfi_norm == "noob") store("beta_unmasked", k, align(getBeta(noob), columns))
-        if (minfi_norm == "swan") store("beta_unmasked", k, align(getBeta(preprocessSWAN(rg, mSet = noob)), columns))
+        store("detp", align(detectionP(rg), columns))
+        store("meth", align(getMeth(noob), columns))
+        store("unmeth", align(getUnmeth(noob), columns))
+        if (minfi_norm == "noob") store("beta_unmasked", align(getBeta(noob), columns))
+        if (minfi_norm == "swan") store("beta_unmasked", align(getBeta(preprocessSWAN(rg, mSet = noob)), columns))
     } else {
-        store("detp", k, align(qci[["detP"]], columns))
+        store("detp", align(qci[["detP"]], columns))
         mdat <- preprocessENmix(rg, bgParaEst = "oob", dyeCorr = "RELIC", nCores = 1)
-        store("meth", k, align(getMeth(mdat), columns))
-        store("unmeth", k, align(getUnmeth(mdat), columns))
-        if (!enmix_quantile) store("beta_unmasked", k, align(rcp(mdat), columns))
+        store("meth", align(getMeth(mdat), columns))
+        store("unmeth", align(getUnmeth(mdat), columns))
+        if (!enmix_quantile) store("beta_unmasked", align(rcp(mdat), columns))
         rm(mdat)
     }
 
@@ -136,7 +141,7 @@ for (k in seq_along(chunks)) {
     copy_number <- getCN(genome)
     chromosome <- as.character(seqnames(genome))
     bad_values <- qci[["nbead"]] < min_beads | qci[["detP"]] > detection_pval
-    qc_parts[[k]] <- data.frame(
+    qc <- data.frame(
         sample = columns,
         x_med = matrixStats::colMedians(copy_number[chromosome == "chrX", , drop = FALSE], na.rm = TRUE),
         y_med = matrixStats::colMedians(copy_number[chromosome == "chrY", , drop = FALSE], na.rm = TRUE),
@@ -147,7 +152,37 @@ for (k in seq_along(chunks)) {
     )
     rm(rg, qci, noob, raw_qc, genome, copy_number, chromosome, bad_values)
     invisible(gc())
+    list(qc = qc, h5 = h5, datasets = written)
 }
+
+# The first chunk runs here and sets the probe order; the others run in
+# parallel worker processes, as many as the CPUs and the memory allow
+# (about 0.25 GB per array of a chunk, plus 2 GB)
+results <- list(process_chunk(1))
+if (length(chunks) > 1) {
+    memory_gb <- ${task.memory ? task.memory.toGiga() : 8}
+    per_chunk_gb <- 0.25 * max(lengths(chunks)) + 2
+    workers <- max(1L, min(${task.cpus}, length(chunks) - 1, floor(memory_gb / per_chunk_gb)))
+    message("Remaining chunks on ", workers, " worker(s)")
+    rest <- parallel::mclapply(seq_along(chunks)[-1], process_chunk, mc.cores = workers, mc.preschedule = FALSE)
+    failed <- vapply(rest, function(r) inherits(r, "try-error") || is.null(r), logical(1))
+    if (any(failed)) stop("Chunk processing failed: ", paste(unique(vapply(rest[failed], function(r) if (is.null(r)) "worker ended without a result (out of memory?)" else as.character(r), character(1))), collapse = "; "))
+    results <- c(results, rest)
+}
+qc_parts <- lapply(results, `[[`, "qc")
+
+# Chunks bound by column at the end; arrays computed across all chunks go to a
+# scratch file of their own
+parts <- list()
+for (k in seq_along(results)) {
+    for (name in results[[k]][["datasets"]]) parts[[name]][[k]] <- HDF5Array(results[[k]][["h5"]], name)
+}
+scratch_h5 <- file.path(task_dir, "scratch_assays.h5")
+store <- function(name, k, m) {
+    parts[[name]][[k]] <<- writeHDF5Array(m, filepath = scratch_h5, name = paste0(name, "_", k))
+}
+bound <- function(name) do.call(cbind, parts[[name]])
+
 
 # Normalisations across all arrays
 if (between_arrays) {
@@ -246,7 +281,7 @@ se <- SummarizedExperiment(
     )
 )
 saveHDF5SummarizedExperiment(se, dir = paste0(prefix, "_se"), replace = TRUE)
-unlink(scratch_h5)
+unlink(c(scratch_h5, file.path(task_dir, sprintf("chunk_%03d", seq_along(chunks)))), recursive = TRUE)
 
 
 write.table(col_data, paste0(prefix, "_qc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE)
