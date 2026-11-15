@@ -93,7 +93,6 @@ How the status is set:
 
 - `probe_filter/`
   - `<method>_filtered_se/`: the arrays with QC status `PASS` or `FLAG` and the probes that passed every filter, as an HDF5-backed SummarizedExperiment. With the default `--replicate_probe_strategy mean`, rows are CpGs (`cg########`, the mean of the replicate probes; `rowData` column `n_probes`). Assays: `beta` (failed values `NA`), `mvalue` (log2 of beta / (1 - beta), with beta clipped to [1e-4, 1 - 1e-4]) and `beta_unmasked`. `rowData` has the position, design, gene and CpG island context and the EPIC v1 and 450K IDs.
-  - `<method>_filtered_uncollapsed_se/`: one row per probe, after every filter except cross-hybridisation, so that DMR callers that remap cross-hybridising probes to their off-target locus can use them. Assays `beta` and `beta_unmasked`. The pipeline's own steps use the CpG-level data above.
   - `<method>_filtered_attrition.tsv`: probes removed at each step (`removed`), probes left (`remaining`), and probes carrying each reason in any order (`n_with_reason`). The `report_only_*` rows count flagged probes that were kept.
   - `<method>_filtered_exclusions.tsv.gz`: every removed probe with the step that removed it (`first_reason`), all reasons that apply, and its undetected and masked fractions.
 
@@ -125,7 +124,6 @@ Not with `--skip_clocks`.
 - `exploration/pca_scores.tsv`: the tested principal components (`--n_pcs`) of the most variable CpGs per array.
 - `exploration/pca_variance.tsv`: share of variance per component, the cumulative share, and whether the component was tested.
 - `exploration/pca_outliers.tsv`: per array the robust Mahalanobis distance on PC1 and PC2 (each centred on its median and scaled by its MAD) and `pca_outlier` (`TRUE` above the chi-square 0.999 quantile with 2 degrees of freedom). Report only: flagged arrays stay in the analysis. Needs at least 5 arrays.
-- `exploration/pca_scree_mqc.tsv`: the variance per component in the MultiQC custom-content format.
 - `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
 
 The MultiQC report shows the associations as a heatmap of -log10 P, the variance per component, and PC1 against PC2 coloured by predicted sex.
