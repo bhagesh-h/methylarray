@@ -143,7 +143,9 @@
                 "qc/minfi",
                 "qc/minfi/minfi_qc.tsv",
                 "qc/sample_qc.tsv",
-                "qc/sample_qc_retained.txt"
+                "qc/sample_qc_retained.txt",
+                "report",
+                "report/methylarray_report.html"
             ],
             [
                 "cell_fractions.tsv:md5,3deea5971f1558e6da3820d8815cb31e",
@@ -179,7 +181,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-15T17:08:43.72903603",
+        "timestamp": "2026-11-15T18:22:32.118942128",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

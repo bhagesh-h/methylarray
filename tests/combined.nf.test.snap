@@ -150,7 +150,9 @@
                 "qc/sample_qc.tsv",
                 "qc/sample_qc_retained.txt",
                 "qc/sesame",
-                "qc/sesame/sesame_qc.tsv"
+                "qc/sesame/sesame_qc.tsv",
+                "report",
+                "report/methylarray_report.html"
             ],
             [
                 "cell_fractions.tsv:md5,d522843d0cd415cbf3d1bc5c6bb51d01",
@@ -191,7 +193,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T17:02:10.711326519",
+        "timestamp": "2026-11-15T18:17:31.193711601",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

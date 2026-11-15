@@ -20,6 +20,7 @@ The directories listed below will be created in the results directory after the 
 - [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment of the significant CpGs per model
 - [DNA methylation scores](#dna-methylation-scores): smoking, alcohol, BMI and IL-6 scores per array
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
+- [Analysis report](#analysis-report): one HTML report of the run
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
 
@@ -163,6 +164,12 @@ Not with `--skip_dnam_scores`.
   - `probe_annotation_summary.tsv`, `probe_annotation_resources.tsv`: probes per flag, and the source files with their MD5 checksums.
   - `sesame_cache/`: ExperimentHub cache with the sesameData resources for the platform. Pass it to `--sesame_cache` to run without network access.
   - `sesame_resources.tsv`: title, ExperimentHub ID, cached file and MD5 checksum of each resource.
+
+### Analysis report
+
+Not with `--skip_report`.
+
+- `report/methylarray_report.html`: a self-contained HTML report (Quarto) of the run: run summary, sample QC with the flagged and failed arrays, probe attrition, cell composition, clock and score coverage with the agreement of the clocks with age, the PCA variance and associations, the association models (summary, QQ and Manhattan plots, top CpGs), consensus DMRs, the top gene sets per collection, the methods text with references and software versions, and limitations. It prints aggregates and plots, not individual phenotype values; sections of steps that did not run are left out.
 
 ### MultiQC
 

@@ -31,6 +31,7 @@ workflow EXPLORATION {
 
     emit:
     ctrl_pcs     = EXPLORATION_PCA.out.ctrl_pcs                                                // channel: [ meta, control-probe PCs ]
+    variance     = EXPLORATION_PCA.out.variance                                                // channel: [ meta, variance per component ]
     scores       = EXPLORATION_PCA.out.scores                                                  // channel: [ meta, PC scores ]
     associations = EXPLORATION_PCA.out.associations                                            // channel: [ meta, PC associations ]
     multiqc      = EXPLORATION_PCA.out.multiqc.map { _meta, files -> files }.flatten()         // channel: MultiQC custom content

@@ -12,7 +12,7 @@ workflow DNAM_SCORE {
     ch_annotation // channel: probe annotation table
 
     main:
-    def weights = file("${projectDir}/assets/dnam_scores/*.tsv").findAll { f -> f.name != 'sources.tsv' }
+    def weights = files("${projectDir}/assets/dnam_scores/*.tsv").findAll { f -> f.name != 'sources.tsv' }
     DNAM_SCORES(
         ch_se
             .combine(ch_retained.map { _meta, retained -> retained })

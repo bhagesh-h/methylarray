@@ -15,6 +15,7 @@ include { EXPLORATION            } from '../subworkflows/local/exploration'
 include { EWAS                   } from '../subworkflows/local/ewas'
 include { DMR                    } from '../subworkflows/local/dmr'
 include { ENRICHMENT             } from '../subworkflows/local/enrichment'
+include { REPORT_QUARTO          } from '../modules/local/report/quarto'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -41,6 +42,7 @@ workflow METHYLARRAY {
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
+    def ch_report_files = channel.empty()
 
     //
     // Arrays excluded in the samplesheet are left out of every step
@@ -76,12 +78,14 @@ workflow METHYLARRAY {
     //
     SAMPLE_QC(ch_samplesheet, ch_preprocessing_qc, params.skip_ewastools ? null : params.ewastools_source)
     ch_multiqc_files = ch_multiqc_files.mix(SAMPLE_QC.out.multiqc.map { _meta, files -> files }.flatten())
+    ch_report_files = ch_report_files.mix(SAMPLE_QC.out.qc.map { _meta, qc -> qc })
 
     //
     // SUBWORKFLOW: Probe annotation and filtering
     //
     PROBE_FILTER(ch_route_se, SAMPLE_QC.out.retained, params.probe_annotation, params.probe_manifest_source, params.probe_mask_source, params.platform)
     ch_multiqc_files = ch_multiqc_files.mix(PROBE_FILTER.out.multiqc.map { _meta, table -> table })
+    ch_report_files = ch_report_files.mix(PROBE_FILTER.out.attrition.map { _meta, table -> table })
 
     //
     // SUBWORKFLOW: Blood cell-type composition
@@ -91,6 +95,7 @@ workflow METHYLARRAY {
         CELL_COMPOSITION(PROBE_FILTER.out.se, PROBE_FILTER.out.annotation)
         ch_cell_fractions = CELL_COMPOSITION.out.fractions.map { _meta, fractions -> fractions }
         ch_multiqc_files = ch_multiqc_files.mix(CELL_COMPOSITION.out.multiqc.map { _meta, table -> table })
+        ch_report_files = ch_report_files.mix(CELL_COMPOSITION.out.fractions.map { _meta, f -> f }, CELL_COMPOSITION.out.coverage.map { _meta, f -> f })
     }
 
     //
@@ -100,6 +105,7 @@ workflow METHYLARRAY {
         CLOCKS(ch_arrays, ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation, ch_cell_fractions,
             params.dnamethyage_source, params.dunedinpace_source)
         ch_multiqc_files = ch_multiqc_files.mix(CLOCKS.out.multiqc.map { _meta, table -> table })
+        ch_report_files = ch_report_files.mix(CLOCKS.out.clocks.map { _meta, f -> f }, CLOCKS.out.coverage.map { _meta, f -> f })
     }
 
     //
@@ -110,6 +116,7 @@ workflow METHYLARRAY {
         DNAM_SCORE(ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation)
         ch_dnam_scores = DNAM_SCORE.out.scores.map { _meta, scores -> scores }
         ch_multiqc_files = ch_multiqc_files.mix(DNAM_SCORE.out.multiqc.map { _meta, table -> table })
+        ch_report_files = ch_report_files.mix(DNAM_SCORE.out.coverage.map { _meta, f -> f })
     }
 
     //
@@ -117,6 +124,7 @@ workflow METHYLARRAY {
     //
     EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
     ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
+    ch_report_files = ch_report_files.mix(EXPLORATION.out.variance.map { _meta, f -> f }, EXPLORATION.out.associations.map { _meta, f -> f })
 
     //
     // SUBWORKFLOW: Epigenome-wide association, one model per entry of --models
@@ -124,12 +132,14 @@ workflow METHYLARRAY {
     EWAS(ch_models, ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, ch_phenotypes, ch_cell_fractions,
         EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_dnam_scores)
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
+    ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f })
 
     //
     // SUBWORKFLOW: Differentially methylated regions of every model
     //
     if (!params.skip_dmr) {
         DMR(EWAS.out.stats, EWAS.out.resolved, PROBE_FILTER.out.se, params.dmrff_source)
+        ch_report_files = ch_report_files.mix(DMR.out.consensus.map { _meta, f -> f }, DMR.out.summary.map { _meta, f -> f })
     }
 
     //
@@ -137,6 +147,7 @@ workflow METHYLARRAY {
     //
     if (!params.skip_enrichment) {
         ENRICHMENT(EWAS.out.stats, EWAS.out.resolved, params.gene_set_gmts)
+        ch_report_files = ch_report_files.mix(ENRICHMENT.out.enrichment.map { _meta, f -> f })
     }
 
     //
@@ -180,6 +191,19 @@ workflow METHYLARRAY {
         : file("${projectDir}/assets/methods_description_template.yml", checkIfExists: true)
     def ch_methods_description = channel.value(methodsDescriptionText(ch_multiqc_custom_methods_description))
     ch_multiqc_files = ch_multiqc_files.mix(ch_methods_description.collectFile(name: 'methods_description_mqc.yaml', sort: true))
+    //
+    // MODULE: HTML report (Quarto) from the result tables, versions, methods and parameters
+    //
+    if (!params.skip_report) {
+        def ch_params_json = channel.value(groovy.json.JsonOutput.toJson(params.collectEntries { name, value -> [ name, value?.toString() ] })).collectFile(name: 'params.json')
+        REPORT_QUARTO(
+            file("${projectDir}/assets/report/methylarray_report.qmd", checkIfExists: true),
+            ch_report_files
+                .mix(ch_collated_versions, ch_methods_description.collectFile(name: 'methods_description_mqc.yaml'), ch_params_json)
+                .collect()
+        )
+    }
+
     MULTIQC(
         ch_multiqc_files.flatten().collect().map { files ->
             [
