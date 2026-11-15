@@ -15,6 +15,7 @@ The directories listed below will be created in the results directory after the 
 - [Cell composition](#cell-composition): blood cell-type fractions per array
 - [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration and clock coverage per array
 - [Exploratory analysis](#exploratory-analysis): control-probe PCs, PCA of the methylation data and its associations with technical and biological variables
+- [Association models](#association-models): epigenome-wide association results per model of `--models`
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
@@ -115,6 +116,18 @@ Not with `--skip_clocks`.
 - `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
 
 The MultiQC report shows the associations as a heatmap of -log10 P, the variance per component, and PC1 against PC2 coloured by predicted sex.
+
+### Association models
+
+Only with `--models`.
+
+- `ewas/ewas_summary.tsv`: one row per model and contrast: status (`tested`, or why not), complete cases, CpGs tested, genomic lambda before and after bacon, bacon inflation and bias, CpGs at FDR < 0.05, at `--p_epigenome_wide` and at `--p_suggestive` (raw, and after bacon), and the top CpG.
+- `ewas/<model>/`
+  - `ewas_<model>_stats.tsv.gz`: every CpG: `cpg_id`, position and gene context, `contrast`, `logfc_m` and `se_m` (coefficient and standard error on the M-value scale, per unit of the transformed trait or for the level against the reference), `delta_beta` (the same coefficient on beta values), moderated `t`, `p_value`, `fdr` (Benjamini-Hochberg), `p_bacon` and `fdr_bacon` (after bacon correction of bias and inflation), `mean_beta` and `n`.
+  - `ewas_<model>_top.tsv`: the 1,000 CpGs with the smallest P per contrast.
+  - `ewas_<model>_design_check.tsv`: association of the trait with plate and Sentrix row (`confounded` below P = 0.01), and the variance inflation factor of each design column (`collinear` above 10).
+  - `ewas_<model>_resolved.json`: the model with its covariate tokens expanded, the number of complete cases, and every array left out with its reason.
+  - `ewas_<model>_summary.json`: the per-model values of `ewas_summary.tsv`.
 
 ### Reference resources
 

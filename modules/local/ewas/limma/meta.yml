@@ -1,0 +1,130 @@
+name: ewas_limma
+description: One epigenome-wide association model - model resolution (tokens, subset, transform, complete cases), design check, limma on M-values with delta-beta, genomic lambda and bacon correction, and significance thresholds
+keywords:
+  - dna methylation
+  - methylation array
+  - ewas
+  - association
+  - limma
+tools:
+  - limma:
+      description: "Linear models for microarray and RNA-seq data"
+      homepage: https://bioconductor.org/packages/limma
+      documentation: https://bioconductor.org/packages/limma
+      doi: 10.1093/nar/gkv007
+      licence: ["GPL-2.0-or-later"]
+      identifier: biotools:limma
+  - bacon:
+      description: "Controlling bias and inflation in association studies using the empirical null distribution"
+      homepage: https://bioconductor.org/packages/bacon
+      documentation: https://bioconductor.org/packages/bacon
+      doi: 10.1186/s13059-016-1131-9
+      licence: ["GPL-2.0-or-later"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the model name as id
+          e.g. [ id:'bmi' ]
+    - model:
+        type: file
+        description: The validated model definition as JSON (name, trait, trait_type, transform, reference, contrasts, covariates, block, subset, min_n)
+        pattern: "*.json"
+        ontologies:
+          - edam: http://edamontology.org/format_3464
+    - se:
+        type: directory
+        description: Filtered SummarizedExperiment with one row per CpG (assays beta, mvalue)
+    - samples:
+        type: file
+        description: Samplesheet columns per array
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - sample_qc:
+        type: file
+        description: Sample QC table (predicted_sex_<method>)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - phenotypes:
+        type: file
+        description: Phenotype table; [] without phenotypes
+        pattern: "*.{csv,tsv}"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - cell_fractions:
+        type: file
+        description: Cell fractions (lineage_* columns, used as cc_*); [] without cell composition
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - ctrl_pcs:
+        type: file
+        description: Control-probe PCs (ctrl_PC* columns, used as ctrlpc*)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  stats:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_stats.tsv.gz":
+          type: file
+          description: Every CpG with annotation, contrast, M-value coefficient and SE, delta-beta, t, P, FDR, bacon-corrected P and FDR, mean beta and N
+          pattern: "*_stats.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  top:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_top.tsv":
+          type: file
+          description: The top CpGs per contrast, by P
+          pattern: "*_top.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  design_check:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_design_check.tsv":
+          type: file
+          description: Association of the trait with plate and Sentrix row, and the VIF of each design column, with flags
+          pattern: "*_design_check.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  resolved:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_resolved.json":
+          type: file
+          description: The model with expanded covariates, N and every dropped array with its reason
+          pattern: "*_resolved.json"
+          ontologies:
+            - edam: http://edamontology.org/format_3464
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_summary.json":
+          type: file
+          description: Status, N, lambda, bacon inflation and bias, hits per threshold and top CpG per contrast
+          pattern: "*_summary.json"
+          ontologies:
+            - edam: http://edamontology.org/format_3464
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

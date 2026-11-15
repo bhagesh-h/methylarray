@@ -1,0 +1,111 @@
+{
+    "continuous trait - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_top.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "5": [
+                    "versions.yml:md5,c844c3649cf66be3426d50d9a5bc8b27"
+                ],
+                "design_check": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "resolved": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                    ]
+                ],
+                "stats": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "top": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_top.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,c844c3649cf66be3426d50d9a5bc8b27"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T14:33:25.430600115",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "continuous trait with every covariate token": {
+        "content": [
+            [
+                "versions.yml:md5,4494e2a43de035a5f02ecdd6e4d7561c"
+            ]
+        ],
+        "timestamp": "2026-11-15T14:33:07.183602076",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

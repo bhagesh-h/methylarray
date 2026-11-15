@@ -347,6 +347,31 @@
                 }
             }
         },
+        "association_options": {
+            "title": "Association options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "Significance thresholds of the epigenome-wide association models.",
+            "properties": {
+                "p_epigenome_wide": {
+                    "type": "number",
+                    "default": 9e-8,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Epigenome-wide significance threshold for EPIC arrays.",
+                    "help_text": "9e-8 was derived for the EPIC array by Mansell et al. (2019). Hits at FDR < 0.05 are reported as well.",
+                    "fa_icon": "fas fa-less-than"
+                },
+                "p_suggestive": {
+                    "type": "number",
+                    "default": 1e-5,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Suggestive significance threshold.",
+                    "fa_icon": "fas fa-less-than"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -519,6 +544,9 @@
         },
         {
             "$ref": "#/$defs/exploration_options"
+        },
+        {
+            "$ref": "#/$defs/association_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

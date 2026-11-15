@@ -18,6 +18,14 @@
                     "ewastools": "stub",
                     "illuminaio": "stub"
                 },
+                "EWAS_LIMMA": {
+                    "SummarizedExperiment": "stub",
+                    "bacon": "stub",
+                    "limma": "stub"
+                },
+                "EWAS_SUMMARY": {
+                    "jsonlite": "stub"
+                },
                 "EXPLORATION_PCA": {
                     "HDF5Array": "stub",
                     "SummarizedExperiment": "stub",
@@ -64,6 +72,14 @@
                 "clocks",
                 "clocks/clocks.tsv",
                 "clocks/clocks_coverage.tsv",
+                "ewas",
+                "ewas/age",
+                "ewas/age/ewas_age_design_check.tsv",
+                "ewas/age/ewas_age_resolved.json",
+                "ewas/age/ewas_age_stats.tsv.gz",
+                "ewas/age/ewas_age_summary.json",
+                "ewas/age/ewas_age_top.tsv",
+                "ewas/ewas_summary.tsv",
                 "exploration",
                 "exploration/pca_associations.tsv",
                 "exploration/pca_ctrl_pca_variance.tsv",
@@ -114,6 +130,12 @@
                 "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5",
                 "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4",
                 "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9",
+                "ewas_age_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewas_age_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11",
+                "ewas_age_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewas_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
+                "ewas_age_top.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewas_summary.tsv:md5,163b91e05f33021d9fbf32c250b7c345",
                 "pca_associations.tsv:md5,ad9be22e4e7a74c14b6bad99b7365e2b",
                 "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94",
                 "pca_ctrl_pcs.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
@@ -133,7 +155,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T14:14:56.671732761",
+        "timestamp": "2026-11-15T14:38:47.215916896",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

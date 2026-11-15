@@ -1,0 +1,12 @@
+{
+    "name": "smoker",
+    "trait": "smoker",
+    "trait_type": "binary",
+    "reference": "no",
+    "transform": "none",
+    "covariates": ["age", "@sex"],
+    "block": "plate",
+    "min_n": 20,
+    "skip_dmr": false,
+    "skip_enrichment": false
+}

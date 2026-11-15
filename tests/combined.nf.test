@@ -18,6 +18,7 @@ nextflow_pipeline {
             params {
                 outdir        = "$outputDir"
                 preprocessing = 'combined'
+                models        = "${projectDir}/tests/data/models_test.yml"
             }
         }
 

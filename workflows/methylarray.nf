@@ -11,6 +11,7 @@ include { PROBE_FILTER           } from '../subworkflows/local/probe_filter'
 include { CELL_COMPOSITION       } from '../subworkflows/local/cell_composition'
 include { CLOCKS                 } from '../subworkflows/local/clocks'
 include { EXPLORATION            } from '../subworkflows/local/exploration'
+include { EWAS                   } from '../subworkflows/local/ewas'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -27,6 +28,7 @@ workflow METHYLARRAY {
     take:
     ch_samplesheet // channel: samplesheet read in from --input
     ch_phenotypes  // channel: phenotype table, or []
+    ch_models      // channel: one map per validated model (empty without --models)
     multiqc_config
     multiqc_logo
     multiqc_methods_description
@@ -102,6 +104,13 @@ workflow METHYLARRAY {
     //
     EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
     ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
+
+    //
+    // SUBWORKFLOW: Epigenome-wide association, one model per entry of --models
+    //
+    EWAS(ch_models, ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, ch_phenotypes, ch_cell_fractions,
+        EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs })
+    ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
 
     //
     // Collate and save software versions
