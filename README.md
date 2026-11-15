@@ -30,7 +30,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
 ![methylarray workflow](docs/images/metro_map.svg)
 
-> **Status:** under development. Version 1.0.0 has not been released. [CHANGELOG.md](CHANGELOG.md) lists what is implemented.
+> **Status:** version 1.0.0, the first release. [CHANGELOG.md](CHANGELOG.md) lists what it contains.
 
 ## Pipeline summary
 
