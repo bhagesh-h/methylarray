@@ -12,6 +12,7 @@ The directories listed below will be created in the results directory after the 
 - [Preprocessing QC](#preprocessing-qc): per-array QC statistics of the preprocessing method, with the sample metadata
 - [Sample QC](#sample-qc): control metrics, sex check, SNP genotypes and one status per array
 - [Probe filtering](#probe-filtering): filtered data for analysis, one row per CpG and one row per probe, with the probe attrition
+- [Cell composition](#cell-composition): blood cell-type fractions per array
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
@@ -84,6 +85,17 @@ How the status is set:
   - `<method>_filtered_exclusions.tsv.gz`: every removed probe with the step that removed it (`first_reason`), all reasons that apply, and its undetected and masked fractions.
 
 The filters, in order: rs, nv and control probes; non-CG probes; probes without an hg38 position; chrX and chrY (kept with `--keep_sex_chr`); detection failure in more than `--probe_fail_fraction` of arrays; other masked values (bead count, quality mask) in more than `--bead_fail_fraction` of arrays; the SNP mask of `--snp_mask`; the Zhou general mask; cross-hybridisation (`--crosshyb_filter`). Manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poor titration (Zhou) are counted but never removed.
+
+### Cell composition
+
+Only with `--tissue blood` (default).
+
+- `cell_composition/cell_fractions.tsv`: one row per array that passed QC:
+  - `lineage_B`, `lineage_CD4T`, `lineage_CD8T`, `lineage_NK`, `lineage_Mono`, `lineage_Gran`: the six lineages summed from the 12-type estimate (Gran: neutrophils, eosinophils, basophils)
+  - `cent12_*`: EpiDISH RPC fractions for the 12 types of `cent12CT` (naive and memory B, CD4 T and CD8 T cells, regulatory T cells, NK cells, monocytes, neutrophils, eosinophils, basophils)
+  - `dhs7_*`: fractions for the 7 types of `centDHSbloodDMC`, for comparison with earlier studies
+  - `sum_cent12`, `sum_dhs7`: sum of the fractions of each reference
+- `cell_composition/cell_fractions_reference_coverage.tsv`: for each reference, the number of reference CpGs, the missing ones by reason (`sex_chromosome`: left out on purpose, because X inactivation can mimic a cell-type signal; `not_on_array`: not measured by EPIC v2; `removed_by_filter`: removed by the probe filter), the CpGs found and how many of them only through their EPIC v1 or 450K ID, the coverage of the autosomal reference CpGs, the missing values set to the CpG median, and the status (`ok`, or `warn` below 98%; the run stops below `--min_reference_coverage`).
 
 ### Reference resources
 

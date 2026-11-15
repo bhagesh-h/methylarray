@@ -205,6 +205,10 @@ The probe annotation comes from two pinned sources: the Peters et al. 2024 exten
 
 Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are counted in the attrition table, not removed.
 
+## Cell composition
+
+With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH (robust partial correlations) from the filtered, CpG-level beta values without masking. The main reference is `cent12CT` (12 cell types, Luo et al. 2023); `centDHSbloodDMC` (7 types) is reported for comparison. Reference CpGs are matched through their EPIC v1 and 450K IDs as well as the CpG ID, because some CpGs have new names on EPIC v2. The run stops if less than `--min_reference_coverage` (default 90%) of a reference's CpGs are present. Use `--tissue other` for tissues without a blood reference.
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:

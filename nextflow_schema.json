@@ -248,6 +248,31 @@
                 }
             }
         },
+        "cell_composition_options": {
+            "title": "Cell composition options",
+            "type": "object",
+            "fa_icon": "fas fa-tint",
+            "description": "Cell-type deconvolution.",
+            "properties": {
+                "tissue": {
+                    "type": "string",
+                    "default": "blood",
+                    "enum": ["blood", "other"],
+                    "description": "Tissue of the samples.",
+                    "help_text": "`blood`: estimate leukocyte fractions with EpiDISH (12-type reference cent12CT, and the 7-type centDHSbloodDMC for comparison). `other`: skip reference-based deconvolution.",
+                    "fa_icon": "fas fa-vial"
+                },
+                "min_reference_coverage": {
+                    "type": "number",
+                    "default": 0.9,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Stop if a smaller share of the reference CpGs is in the filtered data.",
+                    "help_text": "Coverage below 98% is reported as a warning in `cell_composition/cell_fractions_reference_coverage.tsv`.",
+                    "fa_icon": "fas fa-percent"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -411,6 +436,9 @@
         },
         {
             "$ref": "#/$defs/probe_filter_options"
+        },
+        {
+            "$ref": "#/$defs/cell_composition_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

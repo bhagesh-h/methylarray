@@ -2,6 +2,11 @@
     "-profile test": {
         "content": [
             {
+                "EPIDISH_RPC": {
+                    "EpiDISH": "2.26.0",
+                    "HDF5Array": "1.38.0",
+                    "SummarizedExperiment": "1.40.0"
+                },
                 "EWASTOOLS_QC": {
                     "ewastools": "1.8.2",
                     "illuminaio": "0.52.0"
@@ -28,11 +33,15 @@
                 }
             },
             [
+                "cell_composition",
+                "cell_composition/cell_fractions.tsv",
+                "cell_composition/cell_fractions_reference_coverage.tsv",
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/llms-full.txt",
                 "multiqc/multiqc_data/multiqc.log",
                 "multiqc/multiqc_data/multiqc.parquet",
+                "multiqc/multiqc_data/multiqc_cell_fractions_plot.txt",
                 "multiqc/multiqc_data/multiqc_citations.txt",
                 "multiqc/multiqc_data/multiqc_data.json",
                 "multiqc/multiqc_data/multiqc_general_stats.txt",
@@ -43,16 +52,19 @@
                 "multiqc/multiqc_data/multiqc_sources.txt",
                 "multiqc/multiqc_plots",
                 "multiqc/multiqc_plots/pdf",
+                "multiqc/multiqc_plots/pdf/cell_fractions_plot.pdf",
                 "multiqc/multiqc_plots/pdf/probe_attrition_plot-cnt.pdf",
                 "multiqc/multiqc_plots/pdf/probe_attrition_plot-pct.pdf",
                 "multiqc/multiqc_plots/pdf/sample_qc_sex_plot.pdf",
                 "multiqc/multiqc_plots/pdf/sample_qc_status.pdf",
                 "multiqc/multiqc_plots/png",
+                "multiqc/multiqc_plots/png/cell_fractions_plot.png",
                 "multiqc/multiqc_plots/png/probe_attrition_plot-cnt.png",
                 "multiqc/multiqc_plots/png/probe_attrition_plot-pct.png",
                 "multiqc/multiqc_plots/png/sample_qc_sex_plot.png",
                 "multiqc/multiqc_plots/png/sample_qc_status.png",
                 "multiqc/multiqc_plots/svg",
+                "multiqc/multiqc_plots/svg/cell_fractions_plot.svg",
                 "multiqc/multiqc_plots/svg/probe_attrition_plot-cnt.svg",
                 "multiqc/multiqc_plots/svg/probe_attrition_plot-pct.svg",
                 "multiqc/multiqc_plots/svg/sample_qc_sex_plot.svg",
@@ -84,6 +96,9 @@
                 "qc/sample_qc_retained.txt"
             ],
             [
+                "cell_fractions.tsv:md5,3deea5971f1558e6da3820d8815cb31e",
+                "cell_fractions_reference_coverage.tsv:md5,2cd8e8a09cc98bc50e4b17c393423844",
+                "multiqc_cell_fractions_plot.txt:md5,0ae9e09b8bb2126f4aafa3a7619cee9f",
                 "multiqc_citations.txt:md5,4c806e63a283ec1b7e78cdae3a923d4f",
                 "multiqc_general_stats.txt:md5,4d2448c93dd797b6dcd62dd199ef2ad6",
                 "multiqc_probe_attrition_plot.txt:md5,0cafd1689ba4efd85f7715d0448dd4a3",
@@ -98,7 +113,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-15T11:23:14.673373876",
+        "timestamp": "2026-11-15T12:24:38.220134578",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

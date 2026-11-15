@@ -8,6 +8,7 @@ include { PREPROCESS_SESAME      } from '../subworkflows/local/preprocess_sesame
 include { PREPROCESS_MINFI       } from '../subworkflows/local/preprocess_minfi'
 include { SAMPLE_QC              } from '../subworkflows/local/sample_qc'
 include { PROBE_FILTER           } from '../subworkflows/local/probe_filter'
+include { CELL_COMPOSITION       } from '../subworkflows/local/cell_composition'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -73,6 +74,14 @@ workflow METHYLARRAY {
     //
     PROBE_FILTER(ch_route_se, SAMPLE_QC.out.retained, params.probe_annotation, params.probe_manifest_source, params.probe_mask_source, params.platform)
     ch_multiqc_files = ch_multiqc_files.mix(PROBE_FILTER.out.multiqc.map { _meta, table -> table })
+
+    //
+    // SUBWORKFLOW: Blood cell-type composition
+    //
+    if (params.tissue == 'blood') {
+        CELL_COMPOSITION(PROBE_FILTER.out.se, PROBE_FILTER.out.annotation)
+        ch_multiqc_files = ch_multiqc_files.mix(CELL_COMPOSITION.out.multiqc.map { _meta, table -> table })
+    }
 
     //
     // Collate and save software versions

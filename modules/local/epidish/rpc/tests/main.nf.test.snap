@@ -1,0 +1,132 @@
+{
+    "whole blood - cent12CT and centDHSbloodDMC": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions.tsv:md5,3deea5971f1558e6da3820d8815cb31e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_reference_coverage.tsv:md5,2cd8e8a09cc98bc50e4b17c393423844"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_mqc.tsv:md5,94a4faa33c7619a95ae9504d862d259e"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,54e833ddecd148eccd88181140e82658"
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_reference_coverage.tsv:md5,2cd8e8a09cc98bc50e4b17c393423844"
+                    ]
+                ],
+                "fractions": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions.tsv:md5,3deea5971f1558e6da3820d8815cb31e"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_mqc.tsv:md5,94a4faa33c7619a95ae9504d862d259e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,54e833ddecd148eccd88181140e82658"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T12:11:54.687523968",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "whole blood - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions.tsv:md5,d522843d0cd415cbf3d1bc5c6bb51d01"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_mqc.tsv:md5,7f5c93300e06e54926db32c062be2e5c"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,42434947c94b849059f29e397e066917"
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5"
+                    ]
+                ],
+                "fractions": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions.tsv:md5,d522843d0cd415cbf3d1bc5c6bb51d01"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_mqc.tsv:md5,7f5c93300e06e54926db32c062be2e5c"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,42434947c94b849059f29e397e066917"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T12:11:58.118182455",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}
