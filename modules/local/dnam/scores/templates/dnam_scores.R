@@ -77,6 +77,7 @@ if (nrow(aliases) > 0) {
 
 scores <- data.table(sample = colnames(beta))
 coverage <- list()
+weight_tables <- list()
 for (name in wanted) {
     file <- weight_files[basename(weight_files) == sources[score == name][["file"]]]
     if (length(file) != 1) stop("Weight file for score ", name, " not staged")
@@ -90,6 +91,10 @@ for (name in wanted) {
         values[idx] <- means[idx[, 1]]
     }
     usable <- rowSums(is.na(values)) == 0
+    # standardised weight: the weight times the SD of the CpG's beta value in these arrays
+    sds <- matrixStats::rowSds(values[usable, , drop = FALSE])
+    weight_tables[[name]] <- data.table(score = name, cpg = found[["cpg_id"]][usable], weight = signif(found[["weight"]][usable], 6),
+                                        sd_beta = signif(sds, 4), standardised = signif(found[["weight"]][usable] * sds, 4))[order(-abs(standardised))]
     scores[, (paste0("dnam_", name)) := round(colSums(values[usable, , drop = FALSE] * found[["weight"]][usable]), 6)]
     coverage[[name]] <- data.table(score = name, cpgs = nrow(weights), present = sum(usable),
                                    present_by_legacy_id = sum(found[["cpg_id"]][usable] %in% aliases[["alias"]]),
@@ -98,6 +103,7 @@ for (name in wanted) {
 }
 setorder(scores, sample)
 coverage <- rbindlist(coverage)
+fwrite(rbindlist(weight_tables), paste0(prefix, "_weights.tsv"), sep = "\\t")
 fwrite(scores, paste0(prefix, ".tsv"), sep = "\\t")
 fwrite(coverage, paste0(prefix, "_coverage.tsv"), sep = "\\t")
 

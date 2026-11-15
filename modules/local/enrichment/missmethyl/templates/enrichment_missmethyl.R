@@ -57,6 +57,20 @@ write_outputs <- function(table, status) {
     report[["status"]] <<- status
     fwrite(table, paste0(prefix, ".tsv"), sep = "\\t", na = "")
     write_json(report, paste0(prefix, "_summary.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA, null = "null")
+    # MultiQC: the 10 sets with the smallest P per collection and contrast
+    if (nrow(table) > 0) {
+        top <- table[order(p_value)][, head(.SD, 10), by = .(collection, contrast)]
+        writeLines(c(
+            paste0("# id: 'enrichment_", model[["name"]], "'"),
+            paste0("# section_name: 'Gene set enrichment: ", model[["name"]], "'"),
+            "# description: 'missMethyl enrichment of the CpGs at FDR < 0.05 against all tested CpGs: the 10 sets with the smallest P per collection (GO, KEGG, MSigDB GMT files) and contrast. Genes: genes in the set; Hits: genes with a significant CpG, weighted for CpGs in several genes.'",
+            "# plot_type: 'table'"
+        ), paste0(prefix, "_mqc.tsv"))
+        write.table(data.frame(Set = paste(top[["collection"]], top[["contrast"]], top[["set"]], sep = " | "), Collection = top[["collection"]],
+                               Contrast = top[["contrast"]], Term = gsub("\\t", " ", ifelse(is.na(top[["term"]]), top[["set"]], top[["term"]])),
+                               Genes = top[["n"]], Hits = round(top[["de"]], 1), P = signif(top[["p_value"]], 3), FDR = signif(top[["fdr"]], 3), check.names = FALSE),
+                    paste0(prefix, "_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE)
+    }
 }
 
 stats <- fread(text = readLines(gzfile(stats_file)), na.strings = c("", "NA"))

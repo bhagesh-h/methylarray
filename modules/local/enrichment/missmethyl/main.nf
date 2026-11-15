@@ -14,6 +14,7 @@ process ENRICHMENT_MISSMETHYL {
     output:
     tuple val(meta), path("${prefix}.tsv")         , emit: enrichment
     tuple val(meta), path("${prefix}_summary.json"), emit: summary
+    tuple val(meta), path("${prefix}_mqc.tsv")     , emit: multiqc, optional: true
     path "versions.yml", emit: versions, topic: versions
 
     script:

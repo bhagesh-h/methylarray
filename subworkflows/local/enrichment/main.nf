@@ -19,4 +19,5 @@ workflow ENRICHMENT {
     emit:
     enrichment = ENRICHMENT_MISSMETHYL.out.enrichment // channel: [ meta, enrichment table ]
     summary    = ENRICHMENT_MISSMETHYL.out.summary    // channel: [ meta, per-model summary ]
+    multiqc    = ENRICHMENT_MISSMETHYL.out.multiqc    // channel: [ meta, MultiQC table of the top sets ]
 }

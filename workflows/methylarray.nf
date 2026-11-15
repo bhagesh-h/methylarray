@@ -16,6 +16,7 @@ include { EWAS                   } from '../subworkflows/local/ewas'
 include { DMR                    } from '../subworkflows/local/dmr'
 include { ENRICHMENT             } from '../subworkflows/local/enrichment'
 include { EXPORT_GEO             } from '../modules/local/export/geo'
+include { BIOMARKERS_ASSOCIATE   } from '../modules/local/biomarkers/associate'
 include { REPORT_QUARTO          } from '../modules/local/report/quarto'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -80,7 +81,8 @@ workflow METHYLARRAY {
     //
     SAMPLE_QC(ch_samplesheet, ch_preprocessing_qc, params.skip_ewastools ? null : params.ewastools_source)
     ch_multiqc_files = ch_multiqc_files.mix(SAMPLE_QC.out.multiqc.map { _meta, files -> files }.flatten())
-    ch_report_files = ch_report_files.mix(SAMPLE_QC.out.qc.map { _meta, qc -> qc })
+    ch_report_files = ch_report_files.mix(SAMPLE_QC.out.qc.map { _meta, qc -> qc }, SAMPLE_QC.out.snp)
+    ch_multiqc_files = ch_multiqc_files.mix(SAMPLE_QC.out.snp_mqc)
 
     //
     // SUBWORKFLOW: Probe annotation and filtering
@@ -103,11 +105,14 @@ workflow METHYLARRAY {
     //
     // SUBWORKFLOW: Epigenetic clocks
     //
+    def ch_clocks = channel.value([])
     if (!params.skip_clocks) {
         CLOCKS(ch_arrays, ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation, ch_cell_fractions,
             params.dnamethyage_source, params.dunedinpace_source)
+        ch_clocks = CLOCKS.out.clocks.map { _meta, f -> f }
         ch_multiqc_files = ch_multiqc_files.mix(CLOCKS.out.multiqc.map { _meta, table -> table })
-        ch_report_files = ch_report_files.mix(CLOCKS.out.clocks.map { _meta, f -> f }, CLOCKS.out.coverage.map { _meta, f -> f })
+        ch_report_files = ch_report_files.mix(CLOCKS.out.clocks.map { _meta, f -> f }, CLOCKS.out.coverage.map { _meta, f -> f },
+            CLOCKS.out.weights.map { _meta, f -> f })
     }
 
     //
@@ -118,7 +123,28 @@ workflow METHYLARRAY {
         DNAM_SCORE(ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation)
         ch_dnam_scores = DNAM_SCORE.out.scores.map { _meta, scores -> scores }
         ch_multiqc_files = ch_multiqc_files.mix(DNAM_SCORE.out.multiqc.map { _meta, table -> table })
-        ch_report_files = ch_report_files.mix(DNAM_SCORE.out.coverage.map { _meta, f -> f })
+        ch_report_files = ch_report_files.mix(DNAM_SCORE.out.coverage.map { _meta, f -> f }, DNAM_SCORE.out.weights.map { _meta, f -> f })
+    }
+
+    //
+    // MODULE: clocks, scores and cell fractions against each other, the batches and the phenotypes
+    //
+    if (!params.skip_clocks || !params.skip_dnam_scores) {
+        BIOMARKERS_ASSOCIATE(
+            sampleTable(ch_arrays, false)
+                .combine(SAMPLE_QC.out.qc.map { _meta, qc -> qc })
+                .combine(ch_clocks.map { f -> [ f ] })
+                .combine(ch_cell_fractions.map { f -> [ f ] })
+                .combine(ch_dnam_scores.map { f -> [ f ] })
+                .combine(ch_phenotypes.map { f -> [ f ] })
+                .map { samples, qc, clocks, cells, scores, phenotypes -> [ [ id: 'biomarkers' ], samples, qc, clocks, cells, scores, phenotypes ] }
+        )
+        ch_multiqc_files = ch_multiqc_files.mix(BIOMARKERS_ASSOCIATE.out.multiqc.map { _meta, files -> files }.flatten())
+        def ch_biomarker_tables = BIOMARKERS_ASSOCIATE.out.agreement
+            .mix(BIOMARKERS_ASSOCIATE.out.cells_measures, BIOMARKERS_ASSOCIATE.out.cells_phenotypes, BIOMARKERS_ASSOCIATE.out.batch,
+                BIOMARKERS_ASSOCIATE.out.phenotypes, BIOMARKERS_ASSOCIATE.out.quartiles)
+            .map { _meta, f -> f }
+        ch_report_files = ch_report_files.mix(ch_biomarker_tables)
     }
 
     //
@@ -151,6 +177,7 @@ workflow METHYLARRAY {
     if (!params.skip_enrichment) {
         ENRICHMENT(EWAS.out.stats, EWAS.out.resolved, params.gene_set_gmts)
         ch_report_files = ch_report_files.mix(ENRICHMENT.out.enrichment.map { _meta, f -> f })
+        ch_multiqc_files = ch_multiqc_files.mix(ENRICHMENT.out.multiqc.map { _meta, f -> f })
     }
 
     //

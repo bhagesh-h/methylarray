@@ -15,6 +15,7 @@ process CLOCKS_COMPUTE {
     output:
     tuple val(meta), path("${prefix}.tsv")             , emit: clocks
     tuple val(meta), path("${prefix}_coverage.tsv")    , emit: coverage
+    tuple val(meta), path("${prefix}_weights.tsv")     , emit: weights
     tuple val(meta), path("${prefix}_coverage_mqc.tsv"), emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
@@ -27,6 +28,7 @@ process CLOCKS_COMPUTE {
     """
     printf 'sample\\tage\\n' > ${prefix}.tsv
     printf 'clock\\tcpgs\\tpresent\\n' > ${prefix}_coverage.tsv
+    printf 'clock\\tcpg\\tgene\\tweight\\tsd_beta\\tstandardised\\tsnp\\n' > ${prefix}_weights.tsv
     printf 'Clock\\tCpGs\\n' > ${prefix}_coverage_mqc.tsv
     printf '"%s":\\n    dnaMethyAge: stub\\n    DunedinPACE: stub\\n    preprocessCore: stub\\n    impute: stub\\n    RPMM: stub\\n' "${task.process}" > versions.yml
     """

@@ -1,0 +1,138 @@
+name: biomarkers_associate
+description: Epigenetic clocks, DNA methylation scores and blood cell fractions related to each other, to the technical batches and to the phenotypes (agreement, cell fractions, batch tests, phenotype associations plain and with cells held, quartile groups of acceleration), as aggregate tables and MultiQC heatmaps
+keywords:
+  - dna methylation
+  - epigenetic clock
+  - age acceleration
+  - cell composition
+tools:
+  - r:
+      description: "R language and environment for statistical computing"
+      homepage: https://www.r-project.org
+      documentation: https://www.r-project.org
+      licence: ["GPL-2.0-or-later"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the id
+          e.g. [ id:'biomarkers' ]
+    - samples:
+        type: file
+        description: Sample table (sample, plate, sentrix_id, sentrix_position, reported_sex, reported_age)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - sample_qc:
+        type: file
+        description: Sample QC table (sample, status); PASS and FLAG arrays are used
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - clocks:
+        type: file
+        description: Clock table of CLOCKS_COMPUTE (values, eaa_ and ieaa_ columns), or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - cell_fractions:
+        type: file
+        description: Cell fractions of EPIDISH_RPC (lineage_ columns), or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - dnam_scores:
+        type: file
+        description: DNA methylation scores of DNAM_SCORES (dnam_ columns), or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - phenotypes:
+        type: file
+        description: Phenotype table with a sample column, or []
+        pattern: "*.{tsv,csv}"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  agreement:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_agreement.tsv":
+          type: file
+          description: Spearman correlation of every pair of accelerations and scores
+          pattern: "*_agreement.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  cells_measures:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_cells_measures.tsv":
+          type: file
+          description: Spearman correlation of each cell lineage with each acceleration and score
+          pattern: "*_cells_measures.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  cells_phenotypes:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_cells_phenotypes.tsv":
+          type: file
+          description: Each cell lineage against age, sex and every phenotype, with age and sex held
+          pattern: "*_cells_phenotypes.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  batch:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_batch.tsv":
+          type: file
+          description: Each acceleration and score against DNA plate, BeadChip and Sentrix row
+          pattern: "*_batch.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  phenotypes:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_phenotypes.tsv":
+          type: file
+          description: Each acceleration and score against every phenotype, plain and with cells held
+          pattern: "*_phenotypes.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  quartiles:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_quartiles.tsv":
+          type: file
+          description: Characteristics by quartile group of each acceleration, with trend tests
+          pattern: "*_quartiles.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_*_mqc.json":
+          type: file
+          description: MultiQC heatmaps (agreement, cells, phenotypes)
+          pattern: "*_*_mqc.json"
+          ontologies:
+            - edam: http://edamontology.org/format_3464
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

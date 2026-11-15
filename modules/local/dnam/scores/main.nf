@@ -15,6 +15,7 @@ process DNAM_SCORES {
     output:
     tuple val(meta), path("${prefix}.tsv")             , emit: scores
     tuple val(meta), path("${prefix}_coverage.tsv")    , emit: coverage
+    tuple val(meta), path("${prefix}_weights.tsv")     , emit: weights
     tuple val(meta), path("${prefix}_coverage_mqc.tsv"), emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
@@ -27,6 +28,7 @@ process DNAM_SCORES {
     """
     printf 'sample\\tdnam_smoking\\n' > ${prefix}.tsv
     printf 'score\\tcpgs\\tpresent\\n' > ${prefix}_coverage.tsv
+    printf 'score\\tcpg\\tweight\\tsd_beta\\tstandardised\\n' > ${prefix}_weights.tsv
     printf 'Score\\tCpGs\\n' > ${prefix}_coverage_mqc.tsv
     printf '"%s":\\n    SummarizedExperiment: stub\\n    data.table: stub\\n' "${task.process}" > versions.yml
     """
