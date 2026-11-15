@@ -23,7 +23,7 @@
                         {
                             "id": "BeCOME_1"
                         },
-                        "BeCOME_1.controls.tsv.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                        "BeCOME_1.controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "3": [
@@ -34,7 +34,7 @@
                         {
                             "id": "BeCOME_1"
                         },
-                        "BeCOME_1.controls.tsv.gz:md5,68b329da9893e34099c7d8ad5cb9c940"
+                        "BeCOME_1.controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "qc": [
@@ -58,7 +58,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-14T23:41:22.145537786",
+        "timestamp": "2026-11-15T10:12:20.781045705",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
