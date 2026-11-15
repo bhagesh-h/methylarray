@@ -1,0 +1,63 @@
+nextflow_process {
+
+    name "Test Process REPORT_QUARTO"
+    script "../main.nf"
+    process "REPORT_QUARTO"
+
+    tag "modules"
+    tag "modules_local"
+    tag "report"
+    tag "report/quarto"
+
+    // Result tables of the six public test arrays (sample QC to PCA), with
+    // simulated association, region and enrichment results so that every section renders
+
+    test("every section") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = file("$projectDir/assets/report/methylarray_report.qmd", checkIfExists: true)
+                input[1] = files("$moduleTestDir/inputs/*")
+                """
+            }
+        }
+
+        then {
+            def html = path(process.out.report[0]).text
+            assertAll(
+                { assert process.success },
+                { assert ['Run summary', 'Sample QC', 'Probe filtering', 'Cell composition', 'Epigenetic clocks and DNA methylation scores',
+                          'Exploratory analysis', 'Association models', 'Differentially methylated regions', 'Gene set enrichment',
+                          'Methods', 'Limitations'].every { section -> html.contains(section) } },
+                { assert html.contains('minfi') && html.contains('PLANTED') },
+                { assert !html.contains('Error in') },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+
+    test("every section - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = file("$projectDir/assets/report/methylarray_report.qmd", checkIfExists: true)
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

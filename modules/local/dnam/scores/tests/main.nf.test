@@ -26,7 +26,7 @@ nextflow_process {
                     file("$moduleTestDir/retained.txt", checkIfExists: true),
                     file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true)
                 ]
-                input[1] = file("$projectDir/assets/dnam_scores/*.tsv").findAll { f -> f.name != 'sources.tsv' }
+                input[1] = files("$projectDir/assets/dnam_scores/*.tsv").findAll { f -> f.name != 'sources.tsv' }
                 input[2] = file("$projectDir/assets/dnam_scores/sources.tsv", checkIfExists: true)
                 """
             }

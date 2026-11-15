@@ -1,0 +1,223 @@
+---
+title: "methylarray analysis report"
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+    theme: cosmo
+    fig-width: 8
+    fig-height: 4.5
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r setup}
+suppressPackageStartupMessages({
+    library(data.table)
+    library(ggplot2)
+    library(jsonlite)
+    library(knitr)
+})
+inputs <- "inputs"
+find <- function(pattern) sort(list.files(inputs, pattern = pattern, full.names = TRUE))
+has <- function(pattern) length(find(pattern)) > 0
+read <- function(file) if (endsWith(file, ".gz")) fread(text = readLines(gzfile(file)), na.strings = c("", "NA")) else fread(file, na.strings = c("", "NA"))
+model_of <- function(file, prefix, suffix) sub(paste0("^", prefix), "", sub(paste0(suffix, "$"), "", basename(file)))
+theme_set(theme_minimal(base_size = 11))
+params_run <- if (has("^params\\.json$")) fromJSON(find("^params\\.json$")) else list()
+param <- function(name) { v <- params_run[[name]]; if (is.null(v)) "" else as.character(v) }
+heading <- function(text) cat("\n\n#", text, "\n\n")
+```
+
+This report summarises one run of the [methylarray](https://github.com/bhagesh-h/methylarray) pipeline. It shows aggregate results and plots; individual phenotype values are not printed. The full tables are in the pipeline's output folders, described in the pipeline's output documentation.
+
+# Run summary
+
+```{r summary}
+qc <- if (has("^sample_qc\\.tsv$")) read(find("^sample_qc\\.tsv$")) else NULL
+rows <- data.table(
+    Item = c("Preprocessing", "Platform", "Arrays in the samplesheet", "Arrays retained for analysis", "Arrays failed", "Arrays excluded in the samplesheet", "Association models"),
+    Value = c(param("preprocessing"), param("platform"),
+              if (is.null(qc)) NA else nrow(qc),
+              if (is.null(qc)) NA else sum(qc[["status"]] %in% c("PASS", "FLAG")),
+              if (is.null(qc)) NA else sum(qc[["status"]] == "FAIL"),
+              if (is.null(qc)) NA else sum(qc[["status"]] == "EXCLUDED"),
+              length(find("^ewas_.*_top\\.tsv$")))
+)
+kable(rows)
+```
+
+# Sample QC
+
+```{r sample-qc, eval = !is.null(qc)}
+counts <- qc[, .N, by = status][order(match(status, c("PASS", "FLAG", "FAIL", "EXCLUDED")))]
+kable(counts, col.names = c("Status", "Arrays"))
+flagged <- qc[status %in% c("FLAG", "FAIL"), .(Array = sample, Status = status, Reasons = reasons)]
+if (nrow(flagged) > 0) kable(flagged) else cat("No array was flagged or failed.\n")
+```
+
+```{r sex-plot, eval = !is.null(qc) && "sex_x" %in% names(qc) && any(!is.na(qc[["sex_x"]]))}
+ggplot(qc[!is.na(sex_x)], aes(sex_x, sex_y, colour = status)) +
+    geom_point(size = 2) +
+    labs(x = "Normalised X intensity", y = "Normalised Y intensity", colour = "QC status",
+         title = "Sex check: X and Y chromosome intensities (ewastools)")
+```
+
+# Probe filtering
+
+```{r attrition, eval = has("_filtered_attrition\\.tsv$")}
+attrition <- read(find("_filtered_attrition\\.tsv$")[1])
+steps <- attrition[step != "start" & !startsWith(step, "report_only_")]
+steps[, step := factor(step, levels = rev(step))]
+cat(sprintf("%s probes at the start, %s kept after filtering.\n\n", format(attrition[step == "start", remaining], big.mark = ","),
+            format(tail(steps[["remaining"]], 1), big.mark = ",")))
+ggplot(steps, aes(removed, step)) + geom_col(fill = "#4c72b0") +
+    labs(x = "Probes removed", y = NULL, title = "Probes removed per filter step, in order")
+kable(attrition[startsWith(step, "report_only_"), .(Flag = sub("report_only_", "", step), `Kept probes with the flag` = n_with_reason)])
+```
+
+```{r cells, results = "asis", eval = has("^cell_fractions\\.tsv$")}
+heading("Cell composition")
+cells <- read(find("^cell_fractions\\.tsv$"))
+long <- melt(cells[, c("sample", grep("^lineage_", names(cells), value = TRUE)), with = FALSE], id.vars = "sample")
+long[, variable := sub("^lineage_", "", variable)]
+print(ggplot(long, aes(variable, value)) + geom_boxplot(fill = "#dd8452", outlier.size = 0.8) +
+    labs(x = NULL, y = "Fraction", title = "Blood cell lineages (EpiDISH, cent12CT reference)"))
+if (has("^cell_fractions_reference_coverage\\.tsv$")) print(kable(read(find("^cell_fractions_reference_coverage\\.tsv$"))))
+```
+
+```{r clocks, results = "asis", eval = has("^clocks\\.tsv$") || has("^dnam_scores_coverage\\.tsv$")}
+heading("Epigenetic clocks and DNA methylation scores")
+if (has("^clocks_coverage\\.tsv$")) {
+    coverage <- read(find("^clocks_coverage\\.tsv$"))
+    print(kable(coverage[, .(Clock = clock, CpGs = cpgs, Present = present, `Share present` = share_present, Note = note)], caption = "Clock coverage"))
+}
+if (has("^clocks\\.tsv$")) {
+    clocks <- read(find("^clocks\\.tsv$"))
+    values <- setdiff(names(clocks), c("sample", "age", grep("^i?eaa_", names(clocks), value = TRUE)))
+    if (sum(!is.na(clocks[["age"]])) >= 3) {
+        agreement <- rbindlist(lapply(values, function(clock) {
+            ok <- !is.na(clocks[[clock]]) & !is.na(clocks[["age"]])
+            if (sum(ok) < 3) return(NULL)
+            data.table(Clock = clock, Arrays = sum(ok), `Pearson r with age` = round(cor(clocks[[clock]][ok], clocks[["age"]][ok]), 3))
+        }))
+        print(kable(agreement, caption = "Agreement of the clocks with the reported age"))
+    }
+}
+if (has("^dnam_scores_coverage\\.tsv$")) {
+    scores_coverage <- read(find("^dnam_scores_coverage\\.tsv$"))
+    print(kable(scores_coverage[, .(Score = score, CpGs = cpgs, Present = present, `Share present` = share_present, Reference = reference)], caption = "DNA methylation score coverage"))
+}
+```
+
+
+```{r pca, results = "asis", eval = has("^pca_variance\\.tsv$")}
+heading("Exploratory analysis")
+variance <- read(find("^pca_variance\\.tsv$"))
+print(ggplot(variance, aes(factor(pc, levels = pc), variance_explained, fill = tested)) + geom_col() +
+    scale_fill_manual(values = c(`TRUE` = "#4c72b0", `FALSE` = "#bbbbbb")) +
+    labs(x = NULL, y = "Share of variance", fill = "Tested", title = "Variance explained by the principal components of the most variable CpGs"))
+associations <- read(find("^pca_associations\\.tsv$"))
+if (nrow(associations) > 0) {
+    print(ggplot(associations, aes(pc, variable, fill = pmin(-log10(p_value), 10))) + geom_tile() +
+        scale_fill_gradient(low = "white", high = "#c44e52", limits = c(0, 10)) +
+        labs(x = NULL, y = NULL, fill = "-log10 P", title = "Association of the principal components with technical and biological variables"))
+}
+```
+
+```{r ewas-summary, results = "asis", eval = has("^ewas_summary\\.tsv$")}
+heading("Association models")
+ewas <- read(find("^ewas_summary\\.tsv$"))
+columns <- intersect(c("model", "contrast", "status", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_epigenome_wide", "hits_suggestive", "top_cpg", "top_p"), names(ewas))
+print(kable(ewas[, ..columns]))
+```
+
+```{r ewas-models, results = "asis", eval = has("^ewas_.*_stats\\.tsv\\.gz$")}
+for (file in find("^ewas_.*_stats\\.tsv\\.gz$")) {
+    model <- model_of(file, "ewas_", "_stats\\.tsv\\.gz")
+    stats <- read(file)
+    if (nrow(stats) == 0) next
+    cat("\n\n## Model", model, "\n\n")
+    for (k in unique(stats[["contrast"]])) {
+        s <- stats[contrast == k & !is.na(p_value)]
+        n <- nrow(s)
+        qq <- data.table(expected = -log10(ppoints(n)), observed = -log10(sort(s[["p_value"]])), corrected = -log10(sort(s[["p_bacon"]])))
+        qq <- qq[expected > 2 | seq_len(.N) %% 50 == 0]
+        print(ggplot(qq) + geom_point(aes(expected, observed, colour = "raw"), size = 0.6) +
+                  geom_point(aes(expected, corrected, colour = "bacon"), size = 0.6) + geom_abline(linetype = 2) +
+                  scale_colour_manual(values = c(raw = "#4c72b0", bacon = "#dd8452")) +
+                  labs(x = "Expected -log10 P", y = "Observed -log10 P", colour = NULL, title = paste0(model, " (", k, "): QQ plot")))
+        m <- s[!is.na(chr) & !is.na(pos) & (p_value < 0.01 | seq_len(.N) %% 20 == 0)]
+        m[, chromosome := factor(sub("^chr", "", chr), levels = c(1:22, "X", "Y"))]
+        m <- m[!is.na(chromosome)]
+        m[, index := frank(list(as.integer(chromosome), pos), ties.method = "first")]
+        print(ggplot(m, aes(index, -log10(p_value), colour = as.integer(chromosome) %% 2 == 0)) + geom_point(size = 0.5) +
+                  geom_hline(yintercept = -log10(as.numeric(param("p_epigenome_wide"))), linetype = 2, colour = "#c44e52") +
+                  scale_colour_manual(values = c(`TRUE` = "#4c72b0", `FALSE` = "#8da0cb"), guide = "none") +
+                  labs(x = "Chromosome position", y = "-log10 P", title = paste0(model, " (", k, "): Manhattan plot")))
+        top <- head(s[order(p_value), .(CpG = cpg_id, Chr = chr, Position = pos, Gene = gene, `Delta beta` = signif(delta_beta, 3),
+                                         P = signif(p_value, 3), FDR = signif(fdr, 3), `P (bacon)` = signif(p_bacon, 3))], 20)
+        print(kable(top, caption = paste0(model, " (", k, "): top 20 CpGs")))
+    }
+}
+```
+
+```{r dmr, results = "asis", eval = has("^dmr_.*_consensus\\.tsv$")}
+heading("Differentially methylated regions")
+for (file in find("^dmr_.*_consensus\\.tsv$")) {
+    model <- model_of(file, "dmr_", "_consensus\\.tsv")
+    summary_file <- sub("_consensus\\.tsv$", "_summary.json", file)
+    if (file.exists(summary_file)) {
+        s <- fromJSON(summary_file)
+        cat("\n\n**", model, "**: ", s[["status"]], "\n\n", sep = "")
+    }
+    if (file.info(file)[["size"]] == 0) next
+    regions <- read(file)
+    if (nrow(regions) == 0) next
+    print(kable(head(regions[order(dmrff_p_adjusted)], 20), caption = paste(model, ": consensus regions of DMRcate and dmrff")))
+}
+```
+
+```{r enrichment, results = "asis", eval = has("^enrichment_.*\\.tsv$")}
+heading("Gene set enrichment")
+for (file in setdiff(find("^enrichment_.*\\.tsv$"), find("_summary"))) {
+    model <- model_of(file, "enrichment_", "\\.tsv")
+    table <- read(file)
+    if (nrow(table) == 0) next
+    for (coll in unique(table[["collection"]])) {
+        part <- table[table[["collection"]] == coll]
+        top <- head(part[order(p_value)], 10)
+        print(kable(top[, .(Contrast = contrast, Set = set, Term = term, Genes = n, Hits = round(de, 1), P = signif(p_value, 3), FDR = signif(fdr, 3))],
+                    caption = paste0(model, ": ", coll, ", top 10")))
+    }
+}
+```
+
+# Methods
+
+```{r methods, results = "asis", eval = has("^methods_description_mqc\\.yaml$")}
+text <- readLines(find("^methods_description_mqc\\.yaml$"))
+start <- grep("^data: \\|", text)
+if (length(start) == 1) cat(sub("^  ", "", text[(start + 1):length(text)]), sep = "\n")
+```
+
+```{r versions, eval = has("software_mqc_versions\\.yml$")}
+lines <- readLines(find("software_mqc_versions\\.yml$")[1])
+current <- NA_character_
+versions <- list()
+for (line in lines) {
+    if (grepl("^[^ ].*:$", line)) current <- sub(":$", "", line)
+    else if (grepl("^ +[^:]+: ", line)) versions[[length(versions) + 1]] <- data.table(Process = current, Tool = trimws(sub(":.*", "", line)), Version = trimws(sub("^[^:]+: ", "", line)))
+}
+kable(unique(rbindlist(versions)[, .(Tool, Version)])[order(Tool)], caption = "Software versions")
+```
+
+# Limitations
+
+- Region-level P-values (DMRcate, dmrff) are known to be optimistic; regions found by both methods are the more reliable result.
+- Clocks and scores were trained on 450K or EPIC v1 data; CpGs that EPIC v2 does not measure take reference means (clocks) or are left out of the sum (scores), as reported in the coverage tables.
+- Cell composition is estimated from a blood reference and is only meaningful for blood samples.
+- KEGG enrichment needs network access at run time; when unavailable it is reported as not run.
