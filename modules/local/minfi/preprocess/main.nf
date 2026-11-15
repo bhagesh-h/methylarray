@@ -4,7 +4,7 @@ process MINFI_PREPROCESS {
 
     conda "${moduleDir}/environment.yml"
     // bhagesh/methylarray-minfi:1.56.0, built from environment.yml with containers/minfi/Dockerfile.
-    container 'docker.io/bhagesh/methylarray-minfi:1.56.0'
+    container 'docker.io/bhagesh/methylarray-minfi@sha256:fbbd3f2e40d24e5ed33807f34367919ccba2e3a37e9b64e0edd80ced7793cbdc'
 
     input:
     tuple val(meta), path(samples), path(idats, stageAs: 'idat/*'), path(sesame_se)
