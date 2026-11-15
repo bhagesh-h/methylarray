@@ -1,0 +1,79 @@
+nextflow_process {
+
+    name "Test Process SESAME_PREPROCESS"
+    script "../main.nf"
+    process "SESAME_PREPROCESS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "sesame"
+    tag "sesame/preprocess"
+
+    // One public EPIC v2 whole-blood array (GEO GSE286313), reported female
+    test("EPICv2 array - QCDPB") {
+
+        setup {
+            run("SESAME_CACHE") {
+                script "../../cache/main.nf"
+                process {
+                    """
+                    input[0] = 'EPICv2'
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'BeCOME_1' ],
+                    file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                    file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true)
+                ]
+                input[1] = SESAME_CACHE.out.cache
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).readLines().collect { line -> line.tokenize('\t') }
+            def row = [qc[0], qc[1]].transpose().collectEntries()
+            assertAll(
+                { assert process.success },
+                { assert row.sample == 'BeCOME_1' },
+                { assert row.platform == 'EPICv2' },
+                { assert row.prep == 'QCDPB' },
+                { assert row.predicted_sex == 'female' },
+                { assert row.num_probes == '937690' },
+                { assert path(process.out.controls[0][1]).linesGzip.size() == 636 },
+                { assert snapshot(process.out.qc, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("EPICv2 array - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'BeCOME_1' ],
+                    file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                    file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true)
+                ]
+                input[1] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

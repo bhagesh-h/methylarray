@@ -4,6 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
+include { PREPROCESS_SESAME      } from '../subworkflows/local/preprocess_sesame'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -28,6 +29,19 @@ workflow METHYLARRAY {
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
+
+    //
+    // Arrays excluded in the samplesheet are left out of every step
+    //
+    def ch_arrays = ch_samplesheet.filter { meta, _idat_red, _idat_grn -> !meta.exclude }
+
+    //
+    // SUBWORKFLOW: Preprocessing
+    //
+    if (params.preprocessing == 'sesame') {
+        PREPROCESS_SESAME(ch_arrays, params.sesame_cache, params.platform)
+        ch_multiqc_files = ch_multiqc_files.mix(PREPROCESS_SESAME.out.multiqc.map { _meta, table -> table })
+    }
 
     //
     // Collate and save software versions

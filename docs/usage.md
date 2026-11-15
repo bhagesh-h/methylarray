@@ -4,51 +4,158 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
+The pipeline takes up to three input files:
+
+| Parameter      | Required | Content                                                          |
+| -------------- | -------- | ---------------------------------------------------------------- |
+| `--input`      | yes      | Samplesheet: one row per array with its red and green IDAT files |
+| `--phenotypes` | no       | Phenotype table: one row per sample with traits and covariates   |
+| `--models`     | no       | Model definitions: the association models to run, in YAML        |
+
+All three are validated against JSON schemas before any task starts, and checked against each other: every sample, column and model name must resolve, otherwise the run stops with a message that lists every problem.
 
 ## Samplesheet input
-
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row as shown in the examples below.
 
 ```bash
 --input '[path to samplesheet file]'
 ```
 
-### Multiple runs of the same sample
-
-The `sample` identifiers have to be the same when you have re-sequenced the same sample more than once e.g. to increase sequencing depth. The pipeline will concatenate the raw reads before performing any downstream analysis. Below is an example for the same sample sequenced across 3 lanes:
+The samplesheet is a CSV, TSV, YAML or JSON file with one row per array. The IDAT files can be local paths or URLs, and may be gzipped.
 
 ```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
-CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
+sample,idat_red,idat_grn,plate,reported_sex,reported_age
+S001,/data/idat/207059430159/207059430159_R01C01_Red.idat,/data/idat/207059430159/207059430159_R01C01_Grn.idat,P01,F,52
+S002,/data/idat/207059430159/207059430159_R02C01_Red.idat,/data/idat/207059430159/207059430159_R02C01_Grn.idat,P01,M,47
 ```
 
-### Full samplesheet
+| Column             | Required    | Description                                                                                                      |
+| ------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------- |
+| `sample`           | yes         | Unique sample name. Letters, digits, `.`, `_` and `-` only                                                       |
+| `idat_red`         | yes         | Red channel IDAT, ending in `_Red.idat` or `_Red.idat.gz`                                                        |
+| `idat_grn`         | yes         | Green channel IDAT with the same prefix as the red file                                                          |
+| `sentrix_id`       | no          | Chip barcode (10 to 14 digits). Taken from the file name when omitted; an error if it contradicts the file name  |
+| `sentrix_position` | no          | Array position such as `R01C01`. Taken from the file name when omitted; an error if it contradicts the file name |
+| `plate`            | no          | Processing plate, used as a technical covariate                                                                  |
+| `well`             | no          | Plate well, such as `A1` or `H12`                                                                                |
+| `batch`            | no          | Any further processing batch                                                                                     |
+| `reported_sex`     | no          | `M` or `F`. Compared with the sex predicted from the array                                                       |
+| `reported_age`     | no          | Age in years                                                                                                     |
+| `replicate_group`  | no          | Technical replicates share a value; used for replicate concordance                                               |
+| `exclude`          | no          | `true` to exclude an array before analysis                                                                       |
+| `exclude_reason`   | conditional | Required when `exclude` is `true`; recorded in the QC report                                                     |
 
-The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. The samplesheet can have as many columns as you desire, however, there is a strict requirement for the first 3 columns to match those defined in the table below.
+Each IDAT file may appear in only one row. The pipeline derives `sentrix_row` (such as `R01`) and `sentrix_col` (such as `C01`) from the array position.
 
-A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 6 samples, where `TREATMENT_REP3` has been sequenced twice.
+An [example samplesheet](../assets/samplesheet.csv) is provided with the pipeline.
 
-```csv title="samplesheet.csv"
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-CONTROL_REP2,AEG588A2_S2_L002_R1_001.fastq.gz,AEG588A2_S2_L002_R2_001.fastq.gz
-CONTROL_REP3,AEG588A3_S3_L002_R1_001.fastq.gz,AEG588A3_S3_L002_R2_001.fastq.gz
-TREATMENT_REP1,AEG588A4_S4_L003_R1_001.fastq.gz,
-TREATMENT_REP2,AEG588A5_S5_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L003_R1_001.fastq.gz,
-TREATMENT_REP3,AEG588A6_S6_L004_R1_001.fastq.gz,
+## Phenotype table
+
+```bash
+--phenotypes '[path to phenotype table]'
 ```
 
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sample`  | Custom sample name. This entry will be identical for multiple sequencing libraries/runs from the same sample. Spaces in sample names are automatically converted to underscores (`_`). |
-| `fastq_1` | Full path to FastQ file for Illumina short reads 1. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
-| `fastq_2` | Full path to FastQ file for Illumina short reads 2. File has to be gzipped and have the extension ".fastq.gz" or ".fq.gz".                                                             |
+A CSV or TSV file with a `sample` column that matches the samplesheet and any number of further columns. Each further column is a trait or covariate that models can name. Missing values are written as `NA` or left empty.
 
-An [example samplesheet](../assets/samplesheet.csv) has been provided with the pipeline.
+```tsv title="phenotypes.tsv"
+sample	age	bmi	smoker
+S001	52	24.1	no
+S002	47	NA	yes
+```
+
+- Column names may not reuse samplesheet column names (for example `plate` or `reported_sex`) or the derived covariate names listed below.
+- Samples in the phenotype table that are not in the samplesheet are ignored with a warning.
+- Samples without a phenotype row are still processed, and are left out of the models that use phenotype columns.
+- Only column names and sample counts are written to the logs, never phenotype values.
+
+## Model definitions
+
+```bash
+--models '[path to models file]'
+```
+
+A YAML list with one entry per association model. Each model tests one trait against DNA methylation at every CpG, adjusted for its covariates.
+
+```yaml title="models.yml"
+- name: bmi
+  trait: bmi
+  trait_type: continuous
+  transform: log
+  covariates: [age, "@sex", "@cells", "@technical", "@ctrlpcs", "@smoking"]
+- name: smoking
+  trait: smoker
+  trait_type: binary
+  reference: "no"
+  covariates: [age, "@sex", "@cells", sentrix_row, "@ctrlpcs"]
+  block: plate
+```
+
+| Field             | Required    | Description                                                                                                                             |
+| ----------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `name`            | yes         | Unique model name; lower-case letters, digits and `_`. Used in output file names                                                        |
+| `trait`           | yes         | Column tested for association                                                                                                           |
+| `trait_type`      | yes         | `continuous`, `binary` or `categorical`                                                                                                 |
+| `transform`       | no          | Transformation of a continuous trait: `none` (default), `log`, `log2`, `log10`, `log1p`, `rint` (rank-based inverse normal) or `zscore` |
+| `reference`       | conditional | Reference level, required for binary and categorical traits                                                                             |
+| `contrasts`       | no          | Categorical traits only: a list of comparisons written `levelA-levelB`                                                                  |
+| `covariates`      | no          | Columns or tokens to adjust for                                                                                                         |
+| `block`           | no          | Column modelled as a random effect (limma `duplicateCorrelation`), for example `plate`                                                  |
+| `subset`          | no          | Restrict the model to some samples: `{column: sex, equals: F}` or `{column: group, in: [a, b]}`                                         |
+| `min_n`           | no          | Minimum number of complete cases (default 50, at least 10)                                                                              |
+| `skip_dmr`        | no          | `true` to skip region analysis for this model                                                                                           |
+| `skip_enrichment` | no          | `true` to skip enrichment for this model                                                                                                |
+| `description`     | no          | Free text shown in the report                                                                                                           |
+
+Columns can come from the samplesheet, the phenotype table or the covariates the pipeline derives from the methylation data:
+
+| Name or token   | Meaning                                                      |
+| --------------- | ------------------------------------------------------------ |
+| `predicted_sex` | Sex predicted from the sex chromosomes                       |
+| `dnam_smoking`  | DNA methylation smoking score                                |
+| `cc_<celltype>` | Estimated proportion of one cell type, for example `cc_Mono` |
+| `ctrlpc<k>`     | Principal component `k` of the control-probe intensities     |
+| `@cells`        | The configured cell-composition covariates                   |
+| `@ctrlpcs`      | The selected control-probe principal components              |
+| `@technical`    | `plate` and `sentrix_row`                                    |
+| `@sex`          | `predicted_sex`                                              |
+| `@smoking`      | `dnam_smoking`                                               |
+
+A model stops the run before any task starts when it names a column found in none of these sources, lists its trait among its covariates (directly or through a token), or uses its `block` column as a covariate as well. Without `--models` the pipeline runs preprocessing, QC, cell composition, biomarkers and the exploratory analysis, and no association models.
+
+## Preprocessing
+
+`--preprocessing sesame` (the default) runs SeSAMe on each array on its own, so the result for one array does not depend on the others in the run.
+
+| Parameter          | Default  | Meaning                                                                                                   |
+| ------------------ | -------- | --------------------------------------------------------------------------------------------------------- |
+| `--platform`       | `EPICv2` | Array platform. The platform of every array is detected from its IDATs and must match                     |
+| `--sesame_prep`    | `QCDPB`  | `prepSesame` steps in order: quality mask, channel inference, non-linear dye bias, pOOBAH detection, noob |
+| `--detection_pval` | `0.05`   | pOOBAH threshold; probes above it are set to `NA`                                                         |
+| `--min_beads`      | `3`      | Probes measured by fewer beads are set to `NA`                                                            |
+
+The masked beta values are used for association testing. The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution and epigenetic clocks.
+
+### Offline runs
+
+SeSAMe needs probe manifests, masks and platform signatures from Bioconductor's ExperimentHub (about 45 MB for EPIC v2). By default the first task of each run downloads them. To run without network access, save them once and pass them to later runs:
+
+```bash
+# once, with network access
+nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results --save_reference
+
+# later, offline
+nextflow run bhagesh-h/methylarray -profile docker --input samplesheet.csv --outdir results2 --sesame_cache results/references/sesame_cache
+```
+
+### Remote IDAT files
+
+IDAT paths may be HTTPS URLs, for example GEO supplementary files. Some servers, including NCBI GEO, refuse many parallel downloads. If staging fails with HTTP 503, limit the number of parallel transfers in a custom config passed with `-c`:
+
+```groovy
+threadPool.FileTransfer.maxThreads = 4
+filePorter.maxRetries = 10
+```
+
+Nextflow prints an "Unrecognized config option" warning for these two settings, but applies them.
 
 ## Running the pipeline
 

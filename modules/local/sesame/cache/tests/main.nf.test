@@ -1,0 +1,53 @@
+nextflow_process {
+
+    name "Test Process SESAME_CACHE"
+    script "../main.nf"
+    process "SESAME_CACHE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "sesame"
+    tag "sesame/cache"
+
+    test("EPICv2 - downloads the resources") {
+
+        when {
+            process {
+                """
+                input[0] = 'EPICv2'
+                """
+            }
+        }
+
+        then {
+            // The cached file names carry a random prefix: compare titles and hub IDs only
+            def resources = path(process.out.resources[0]).readLines().collect { line -> line.tokenize('\t').take(2).join('\t') }
+            assertAll(
+                { assert process.success },
+                { assert resources.size() == 6 },
+                { assert path(process.out.cache[0]).list().size() > 5 },
+                { assert snapshot(resources, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("EPICv2 - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = 'EPICv2'
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

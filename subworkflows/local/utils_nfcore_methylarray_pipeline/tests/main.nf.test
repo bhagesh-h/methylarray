@@ -39,9 +39,11 @@ nextflow_workflow {
                 input[3] = []
                 input[4] = params.outdir
                 input[5] = params.input
-                input[6] = false
-                input[7] = false
+                input[6] = params.phenotypes
+                input[7] = params.models
                 input[8] = false
+                input[9] = false
+                input[10] = false
                 """
             }
         }
@@ -56,13 +58,16 @@ nextflow_workflow {
                 { assert s1[0].sentrix_id == '207059430159' },
                 { assert s1[0].sentrix_position == 'R01C01' },
                 { assert s1[0].sentrix_row == 'R01' },
+                { assert s1[0].sentrix_col == 'C01' },
                 { assert s1[0].plate == '1' },
                 { assert rows.find { row -> row[0].id == 'S3' }[0].sentrix_id == '207805830137' },
                 { assert s1[0].reported_sex == 'F' },
                 { assert s1[0].exclude == false },
                 { assert s1[1].toString().endsWith('207059430159_R01C01_Red.idat') },
                 { assert s1[2].toString().endsWith('207059430159_R01C01_Grn.idat') },
-                { assert rows.findAll { row -> row[0].replicate_group == 'R1' }.size() == 2 }
+                { assert rows.findAll { row -> row[0].replicate_group == 'R1' }.size() == 2 },
+                { assert workflow.out.models.size() == 0 },
+                { assert workflow.out.phenotypes == [[]] }
             )
         }
     }
@@ -90,9 +95,11 @@ nextflow_workflow {
                 input[3] = []
                 input[4] = params.outdir
                 input[5] = params.input
-                input[6] = false
-                input[7] = false
+                input[6] = params.phenotypes
+                input[7] = params.models
                 input[8] = false
+                input[9] = false
+                input[10] = false
                 """
             }
         }
@@ -129,9 +136,11 @@ nextflow_workflow {
                 input[3] = []
                 input[4] = params.outdir
                 input[5] = params.input
-                input[6] = false
-                input[7] = false
+                input[6] = params.phenotypes
+                input[7] = params.models
                 input[8] = false
+                input[9] = false
+                input[10] = false
                 """
             }
         }
@@ -167,9 +176,11 @@ nextflow_workflow {
                 input[3] = []
                 input[4] = params.outdir
                 input[5] = params.input
-                input[6] = false
-                input[7] = false
+                input[6] = params.phenotypes
+                input[7] = params.models
                 input[8] = false
+                input[9] = false
+                input[10] = false
                 """
             }
         }
@@ -205,9 +216,11 @@ nextflow_workflow {
                 input[3] = []
                 input[4] = params.outdir
                 input[5] = params.input
-                input[6] = false
-                input[7] = false
+                input[6] = params.phenotypes
+                input[7] = params.models
                 input[8] = false
+                input[9] = false
+                input[10] = false
                 """
             }
         }
@@ -216,6 +229,291 @@ nextflow_workflow {
             assertAll(
                 { assert workflow.failed },
                 { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('exclude_reason') } }
+            )
+        }
+    }
+
+    test("phenotypes and models - validated and emitted") {
+
+        when {
+            params {
+                def dir = new File("$outputDir/fixtures")
+                dir.mkdirs()
+                ['207059430159_R01C01', '207059430159_R02C01', '207805830137_R01C01'].each { prefix ->
+                    new File(dir, "${prefix}_Red.idat").text = 'placeholder'
+                    new File(dir, "${prefix}_Grn.idat").text = 'placeholder'
+                }
+                new File(dir, 'samplesheet.csv').text = [
+                    'sample,idat_red,idat_grn,plate,reported_sex,reported_age',
+                    "S1,${dir}/207059430159_R01C01_Red.idat,${dir}/207059430159_R01C01_Grn.idat,P1,F,20",
+                    "S2,${dir}/207059430159_R02C01_Red.idat,${dir}/207059430159_R02C01_Grn.idat,P1,M,30",
+                    "S3,${dir}/207805830137_R01C01_Red.idat,${dir}/207805830137_R01C01_Grn.idat,P2,M,40",
+                ].join('\n') + '\n'
+                new File(dir, 'phenotypes.tsv').text = [
+                    'sample\tbmi\tsmoker',
+                    'S1\t61.237\tno',
+                    'S2\tNA\tyes',
+                    'S3\t74.913\tno',
+                    'S9\t66.481\tyes',
+                ].join('\n') + '\n'
+                new File(dir, 'models.yml').text = [
+                    '- name: bmi',
+                    '  trait: bmi',
+                    '  trait_type: continuous',
+                    '  transform: log',
+                    '  covariates: [reported_age, reported_sex, "@cells", "@technical", sentrix_row, cc_Mono]',
+                    '- name: smoking',
+                    '  trait: smoker',
+                    '  trait_type: binary',
+                    '  reference: "no"',
+                    '  block: plate',
+                    '  covariates: [reported_age, predicted_sex]',
+                    '  subset: {column: reported_sex, equals: M}',
+                ].join('\n') + '\n'
+                outdir = "$outputDir"
+                input  = "${dir}/samplesheet.csv"
+                phenotypes = "${dir}/phenotypes.tsv"
+                models     = "${dir}/models.yml"
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = true
+                input[2] = false
+                input[3] = []
+                input[4] = params.outdir
+                input[5] = params.input
+                input[6] = params.phenotypes
+                input[7] = params.models
+                input[8] = false
+                input[9] = false
+                input[10] = false
+                """
+            }
+        }
+
+        then {
+            def models = workflow.out.models
+            def log_lines = new File("${metaDir}/nextflow.log").readLines()
+            def bmi = models.find { model -> model.name == 'bmi' }
+            def smoking = models.find { model -> model.name == 'smoking' }
+            assertAll(
+                { assert workflow.success },
+                { assert models.size() == 2 },
+                { assert bmi.transform == 'log' },
+                { assert bmi.min_n == 50 },
+                { assert bmi.skip_dmr == false },
+                { assert smoking.transform == 'none' },
+                { assert smoking.reference == 'no' },
+                { assert smoking.subset == [column: 'reported_sex', equals: 'M'] },
+                { assert workflow.out.phenotypes.size() == 1 },
+                { assert workflow.out.phenotypes[0].toString().endsWith('phenotypes.tsv') },
+                { assert log_lines.any { line -> line.contains('1 sample(s) are not in the samplesheet') && line.contains('S9') } },
+                { assert log_lines.any { line -> line.contains('Phenotype table: 3 samples, 2 columns') } },
+                // Sentinel values that cannot occur in a log timestamp (seconds stop at 59)
+                { assert !log_lines.any { line -> line.contains('61.237') || line.contains('74.913') || line.contains('66.481') } }
+            )
+        }
+    }
+
+    test("model naming an unknown column - fails") {
+
+        when {
+            params {
+                def dir = new File("$outputDir/fixtures")
+                dir.mkdirs()
+                ['207059430159_R01C01', '207059430159_R02C01', '207805830137_R01C01'].each { prefix ->
+                    new File(dir, "${prefix}_Red.idat").text = 'placeholder'
+                    new File(dir, "${prefix}_Grn.idat").text = 'placeholder'
+                }
+                new File(dir, 'samplesheet.csv').text = [
+                    'sample,idat_red,idat_grn,plate,reported_sex,reported_age',
+                    "S1,${dir}/207059430159_R01C01_Red.idat,${dir}/207059430159_R01C01_Grn.idat,P1,F,20",
+                    "S2,${dir}/207059430159_R02C01_Red.idat,${dir}/207059430159_R02C01_Grn.idat,P1,M,30",
+                    "S3,${dir}/207805830137_R01C01_Red.idat,${dir}/207805830137_R01C01_Grn.idat,P2,M,40",
+                ].join('\n') + '\n'
+                new File(dir, 'models.yml').text = [
+                    '- name: bmi',
+                    '  trait: bmi',
+                    '  trait_type: continuous',
+                    '  covariates: [reported_age, waist]',
+                ].join('\n') + '\n'
+                outdir = "$outputDir"
+                input  = "${dir}/samplesheet.csv"
+                models = "${dir}/models.yml"
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = true
+                input[2] = false
+                input[3] = []
+                input[4] = params.outdir
+                input[5] = params.input
+                input[6] = params.phenotypes
+                input[7] = params.models
+                input[8] = false
+                input[9] = false
+                input[10] = false
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('not in the samplesheet, the phenotype table or the derived covariates: bmi, waist') } }
+            )
+        }
+    }
+
+    test("model using its block as a covariate through a token - fails") {
+
+        when {
+            params {
+                def dir = new File("$outputDir/fixtures")
+                dir.mkdirs()
+                ['207059430159_R01C01', '207059430159_R02C01', '207805830137_R01C01'].each { prefix ->
+                    new File(dir, "${prefix}_Red.idat").text = 'placeholder'
+                    new File(dir, "${prefix}_Grn.idat").text = 'placeholder'
+                }
+                new File(dir, 'samplesheet.csv').text = [
+                    'sample,idat_red,idat_grn,plate,reported_sex,reported_age',
+                    "S1,${dir}/207059430159_R01C01_Red.idat,${dir}/207059430159_R01C01_Grn.idat,P1,F,20",
+                    "S2,${dir}/207059430159_R02C01_Red.idat,${dir}/207059430159_R02C01_Grn.idat,P1,M,30",
+                    "S3,${dir}/207805830137_R01C01_Red.idat,${dir}/207805830137_R01C01_Grn.idat,P2,M,40",
+                ].join('\n') + '\n'
+                new File(dir, 'models.yml').text = [
+                    '- name: age',
+                    '  trait: reported_age',
+                    '  trait_type: continuous',
+                    '  covariates: [reported_sex, "@technical"]',
+                    '  block: plate',
+                ].join('\n') + '\n'
+                outdir = "$outputDir"
+                input  = "${dir}/samplesheet.csv"
+                models = "${dir}/models.yml"
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = true
+                input[2] = false
+                input[3] = []
+                input[4] = params.outdir
+                input[5] = params.input
+                input[6] = params.phenotypes
+                input[7] = params.models
+                input[8] = false
+                input[9] = false
+                input[10] = false
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains("model 'age' uses 'plate' both as block and as covariate") } }
+            )
+        }
+    }
+
+    test("phenotype column reusing a samplesheet name - fails") {
+
+        when {
+            params {
+                def dir = new File("$outputDir/fixtures")
+                dir.mkdirs()
+                ['207059430159_R01C01', '207059430159_R02C01', '207805830137_R01C01'].each { prefix ->
+                    new File(dir, "${prefix}_Red.idat").text = 'placeholder'
+                    new File(dir, "${prefix}_Grn.idat").text = 'placeholder'
+                }
+                new File(dir, 'samplesheet.csv').text = [
+                    'sample,idat_red,idat_grn,plate,reported_sex,reported_age',
+                    "S1,${dir}/207059430159_R01C01_Red.idat,${dir}/207059430159_R01C01_Grn.idat,P1,F,20",
+                    "S2,${dir}/207059430159_R02C01_Red.idat,${dir}/207059430159_R02C01_Grn.idat,P1,M,30",
+                    "S3,${dir}/207805830137_R01C01_Red.idat,${dir}/207805830137_R01C01_Grn.idat,P2,M,40",
+                ].join('\n') + '\n'
+                new File(dir, 'phenotypes.csv').text = [
+                    'sample,plate,bmi',
+                    'S1,P1,21.5',
+                ].join('\n') + '\n'
+                outdir = "$outputDir"
+                input  = "${dir}/samplesheet.csv"
+                phenotypes = "${dir}/phenotypes.csv"
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = true
+                input[2] = false
+                input[3] = []
+                input[4] = params.outdir
+                input[5] = params.input
+                input[6] = params.phenotypes
+                input[7] = params.models
+                input[8] = false
+                input[9] = false
+                input[10] = false
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('reuse samplesheet or derived covariate names; rename them: plate') } }
+            )
+        }
+    }
+
+    test("binary trait without a reference level - fails schema validation") {
+
+        when {
+            params {
+                def dir = new File("$outputDir/fixtures")
+                dir.mkdirs()
+                ['207059430159_R01C01', '207059430159_R02C01', '207805830137_R01C01'].each { prefix ->
+                    new File(dir, "${prefix}_Red.idat").text = 'placeholder'
+                    new File(dir, "${prefix}_Grn.idat").text = 'placeholder'
+                }
+                new File(dir, 'samplesheet.csv').text = [
+                    'sample,idat_red,idat_grn,plate,reported_sex,reported_age',
+                    "S1,${dir}/207059430159_R01C01_Red.idat,${dir}/207059430159_R01C01_Grn.idat,P1,F,20",
+                    "S2,${dir}/207059430159_R02C01_Red.idat,${dir}/207059430159_R02C01_Grn.idat,P1,M,30",
+                    "S3,${dir}/207805830137_R01C01_Red.idat,${dir}/207805830137_R01C01_Grn.idat,P2,M,40",
+                ].join('\n') + '\n'
+                new File(dir, 'models.yml').text = [
+                    '- name: sex',
+                    '  trait: reported_sex',
+                    '  trait_type: binary',
+                ].join('\n') + '\n'
+                outdir = "$outputDir"
+                input  = "${dir}/samplesheet.csv"
+                models = "${dir}/models.yml"
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = true
+                input[2] = false
+                input[3] = []
+                input[4] = params.outdir
+                input[5] = params.input
+                input[6] = params.phenotypes
+                input[7] = params.models
+                input[8] = false
+                input[9] = false
+                input[10] = false
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('Binary and categorical traits need a reference level') } }
             )
         }
     }

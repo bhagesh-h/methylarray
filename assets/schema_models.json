@@ -1,0 +1,137 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/bhagesh-h/methylarray/main/assets/schema_models.json",
+    "title": "bhagesh-h/methylarray pipeline - params.models schema",
+    "description": "List of association models. Each model tests one trait against DNA methylation, adjusted for the listed covariates.",
+    "type": "array",
+    "minItems": 1,
+    "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+            "name": {
+                "type": "string",
+                "pattern": "^[a-z0-9_]+$",
+                "errorMessage": "Model name must be provided and may only contain lower-case letters, digits and '_'"
+            },
+            "trait": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9._]*$",
+                "errorMessage": "Trait must be a column name starting with a letter"
+            },
+            "trait_type": {
+                "type": "string",
+                "enum": ["continuous", "binary", "categorical"],
+                "errorMessage": "Trait type must be 'continuous', 'binary' or 'categorical'"
+            },
+            "transform": {
+                "type": "string",
+                "enum": ["none", "log", "log2", "log10", "log1p", "rint", "zscore"],
+                "default": "none",
+                "errorMessage": "Transform must be one of none, log, log2, log10, log1p, rint or zscore"
+            },
+            "reference": {
+                "type": ["string", "integer"],
+                "pattern": "^\\S+$",
+                "errorMessage": "Reference level may not contain spaces"
+            },
+            "contrasts": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9._]+-[A-Za-z0-9._]+$",
+                    "errorMessage": "Each contrast must look like levelA-levelB"
+                }
+            },
+            "covariates": {
+                "type": "array",
+                "uniqueItems": true,
+                "items": {
+                    "type": "string",
+                    "pattern": "^(@(cells|ctrlpcs|technical|sex|smoking)|[A-Za-z][A-Za-z0-9._]*)$",
+                    "errorMessage": "Each covariate must be a column name or one of the tokens @cells, @ctrlpcs, @technical, @sex, @smoking"
+                }
+            },
+            "block": {
+                "type": "string",
+                "pattern": "^[A-Za-z][A-Za-z0-9._]*$",
+                "errorMessage": "Block must be a column name starting with a letter"
+            },
+            "subset": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "column": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z][A-Za-z0-9._]*$"
+                    },
+                    "equals": {
+                        "type": ["string", "number", "boolean"]
+                    },
+                    "in": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                            "type": ["string", "number", "boolean"]
+                        }
+                    }
+                },
+                "required": ["column"],
+                "oneOf": [{ "required": ["equals"] }, { "required": ["in"] }],
+                "errorMessage": "Subset must name a column and give exactly one of 'equals' or 'in'"
+            },
+            "min_n": {
+                "type": "integer",
+                "minimum": 10,
+                "default": 50,
+                "errorMessage": "Minimum number of complete cases must be an integer of at least 10"
+            },
+            "skip_dmr": {
+                "type": "boolean",
+                "default": false
+            },
+            "skip_enrichment": {
+                "type": "boolean",
+                "default": false
+            },
+            "description": {
+                "type": "string"
+            }
+        },
+        "required": ["name", "trait", "trait_type"],
+        "allOf": [
+            {
+                "if": {
+                    "properties": { "trait_type": { "enum": ["binary", "categorical"] } },
+                    "required": ["trait_type"]
+                },
+                "then": {
+                    "required": ["reference"],
+                    "errorMessage": "Binary and categorical traits need a reference level"
+                }
+            },
+            {
+                "if": {
+                    "properties": { "trait_type": { "const": "continuous" } },
+                    "required": ["trait_type"]
+                },
+                "then": {
+                    "not": { "anyOf": [{ "required": ["reference"] }, { "required": ["contrasts"] }] },
+                    "errorMessage": "Continuous traits take no reference level or contrasts"
+                }
+            },
+            {
+                "if": {
+                    "properties": { "trait_type": { "const": "binary" } },
+                    "required": ["trait_type"]
+                },
+                "then": {
+                    "not": { "required": ["contrasts"] },
+                    "errorMessage": "Binary traits take no contrasts; the non-reference level is compared with the reference"
+                }
+            }
+        ]
+    },
+    "uniqueEntries": ["name"]
+}

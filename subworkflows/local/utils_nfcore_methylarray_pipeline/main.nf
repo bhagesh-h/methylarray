@@ -32,6 +32,8 @@ workflow PIPELINE_INITIALISATION {
     nextflow_cli_args //   array: List of positional nextflow CLI args
     outdir            //  string: The output directory where the results will be saved
     input             //  string: Path to input samplesheet
+    phenotypes        //  string: Path to the phenotype table (optional)
+    models            //  string: Path to the YAML model definitions (optional)
     help              // boolean: Display help message and exit
     help_full         // boolean: Show the full help message
     show_hidden       // boolean: Show hidden parameters in the help message
@@ -88,14 +90,22 @@ workflow PIPELINE_INITIALISATION {
     //
     def samplesheet_rows = samplesheetToList(input, "${projectDir}/assets/schema_input.json")
     validateUniqueIdats(samplesheet_rows)
+    def validated_rows = samplesheet_rows.collect { meta, idat_red, idat_grn -> validateIdatPair(meta, idat_red, idat_grn) }
+    ch_samplesheet = channel.fromList(validated_rows)
 
-    channel
-        .fromList(samplesheet_rows)
-        .map { meta, idat_red, idat_grn -> validateIdatPair(meta, idat_red, idat_grn) }
-        .set { ch_samplesheet }
+    //
+    // Phenotype table and model definitions: check that they agree with the
+    // samplesheet and with each other before any task starts
+    //
+    def phenotype_columns = phenotypes ? validatePhenotypes(phenotypes, validated_rows) : []
+    def model_list = models ? validateModels(models, validated_rows, phenotype_columns) : []
+    ch_phenotypes = channel.value(phenotypes ? file(phenotypes, checkIfExists: true) : [])
+    ch_models = channel.fromList(model_list)
 
     emit:
-    samplesheet = ch_samplesheet
+    samplesheet = ch_samplesheet // channel: [ meta, idat_red, idat_grn ]
+    phenotypes  = ch_phenotypes  // value channel: phenotype table, or [] when not given
+    models      = ch_models      // channel: one map per model, defaults filled in
     versions    = ch_versions
 }
 
@@ -184,11 +194,13 @@ def validateIdatPair(meta_in, idat_red, idat_grn) {
     def sentrix_id = meta.sentrix_id ?: file_sentrix_id
     def sentrix_position = meta.sentrix_position ?: file_position
     def sentrix_row = sentrix_position ? sentrix_position.substring(0, 3) : null
+    def sentrix_col = sentrix_position ? sentrix_position.substring(3) : null
 
     def new_meta = meta + [
         sentrix_id: sentrix_id,
         sentrix_position: sentrix_position,
         sentrix_row: sentrix_row,
+        sentrix_col: sentrix_col,
         exclude: meta.exclude ?: false
     ]
     return [ new_meta, idat_red, idat_grn ]
@@ -206,27 +218,136 @@ def validateUniqueIdats(samplesheet) {
 }
 
 //
+// Covariates that the pipeline derives from the data. Phenotype columns may not
+// reuse these names, and models may refer to them without a phenotype table.
+//
+def isDerivedCovariate(name) {
+    return name in ['predicted_sex', 'dnam_smoking'] || name ==~ /cc_[A-Za-z0-9_]+/ || name ==~ /ctrlpc[0-9]+/
+}
+
+//
+// Columns behind a model covariate entry: a token with a fixed expansion, or the column itself
+//
+def tokenExpansion(covariate) {
+    def tokens = [ '@technical': ['plate', 'sentrix_row'], '@sex': ['predicted_sex'], '@smoking': ['dnam_smoking'] ]
+    return tokens.containsKey(covariate) ? tokens[covariate] : [ covariate ]
+}
+
+//
+// Samplesheet columns that models may use: every technical column with at least
+// one value, plus the Sentrix row and column derived from the file names
+//
+def samplesheetColumns(samplesheet_rows) {
+    def columns = samplesheet_rows.collectMany { row -> row[0].findAll { _key, value -> value != null }.keySet() } as Set
+    return columns - ['id', 'exclude', 'exclude_reason']
+}
+
+//
+// Phenotype table: one row per sample, column names that cannot be confused with
+// samplesheet or derived columns. Only column names and counts are logged, never values.
+// Returns the phenotype column names (without 'sample').
+//
+def validatePhenotypes(phenotypes, samplesheet_rows) {
+    def path = file(phenotypes, checkIfExists: true)
+    def separator = path.name.toLowerCase().endsWith('.tsv') ? '\t' : ','
+    def rows = path.splitCsv(header: true, sep: separator)
+    if (!rows) {
+        error("Phenotype table: ${path.name} has no data rows")
+    }
+    def columns = (rows[0].keySet() as List) - ['sample']
+
+    def reserved = samplesheet_rows[0][0].keySet() + ['sample']
+    def clashes = columns.findAll { column -> column in reserved || isDerivedCovariate(column) }
+    if (clashes) {
+        error("Phenotype table: these columns reuse samplesheet or derived covariate names; rename them: ${clashes.join(', ')}")
+    }
+
+    def phenotype_ids = rows.collect { row -> row.sample }
+    def duplicated = phenotype_ids.countBy { id -> id }.findAll { _id, n -> n > 1 }.keySet()
+    if (duplicated) {
+        error("Phenotype table: these samples appear in more than one row: ${duplicated.join(', ')}")
+    }
+
+    def sheet_ids = samplesheet_rows.collect { row -> row[0].id } as Set
+    def shared = sheet_ids.intersect(phenotype_ids as Set)
+    if (!shared) {
+        error("Phenotype table: none of its samples are in the samplesheet")
+    }
+    def unknown = phenotype_ids.findAll { id -> !(id in sheet_ids) }
+    if (unknown) {
+        def shown = unknown.take(10).join(', ') + (unknown.size() > 10 ? ', ...' : '')
+        log.warn("Phenotype table: ${unknown.size()} sample(s) are not in the samplesheet and are ignored: ${shown}")
+    }
+    def without = sheet_ids.size() - shared.size()
+    if (without) {
+        log.info("Phenotype table: ${without} of ${sheet_ids.size()} samplesheet samples have no phenotype row. They are processed, but left out of models that use phenotype columns.")
+    }
+    log.info("Phenotype table: ${shared.size()} samples, ${columns.size()} columns")
+    return columns
+}
+
+//
+// Model definitions: every column a model names must exist in the samplesheet,
+// the phenotype table or the derived covariates. Returns the models with defaults filled in.
+//
+def validateModels(models, samplesheet_rows, phenotype_columns) {
+    def path = file(models, checkIfExists: true)
+    def entries = new org.yaml.snakeyaml.Yaml().load(path.text)
+    if (!(entries instanceof List) || !entries) {
+        error("Models: ${path.name} must be a non-empty YAML list of models")
+    }
+
+    def available = samplesheetColumns(samplesheet_rows) + phenotype_columns
+    def defaults = [ transform: 'none', covariates: [], min_n: 50, skip_dmr: false, skip_enrichment: false ]
+    def problems = []
+    def resolved = entries.collect { entry ->
+        def model = defaults + entry
+        def named = [ model.trait ] + model.covariates.findAll { covariate -> !covariate.startsWith('@') } + [ model.block, model.subset?.column ]
+        def missing = named.findAll { column -> column != null && !(column in available) && !isDerivedCovariate(column) }.unique()
+        if (missing) {
+            problems << "model '${model.name}' uses columns that are not in the samplesheet, the phenotype table or the derived covariates: ${missing.join(', ')}"
+        }
+        // Tokens with a fixed expansion; @cells and @ctrlpcs depend on the data
+        def fixed = model.covariates.collectMany { covariate -> tokenExpansion(covariate) }
+        if (model.trait in fixed) {
+            problems << "model '${model.name}' lists its trait '${model.trait}' as a covariate"
+        }
+        if (model.block && model.block in fixed) {
+            problems << "model '${model.name}' uses '${model.block}' both as block and as covariate"
+        }
+        return model
+    }
+    def duplicated = resolved.collect { model -> model.name }.countBy { name -> name }.findAll { _name, n -> n > 1 }.keySet()
+    if (duplicated) {
+        problems << "these model names are used more than once: ${duplicated.join(', ')}"
+    }
+    if (problems) {
+        error("Models:\n  - " + problems.join('\n  - '))
+    }
+    log.info("Models: ${resolved.size()} defined (${resolved.collect { model -> model.name }.join(', ')})")
+    return resolved
+}
+
+//
 // Generate methods description for MultiQC
 //
 def toolCitationText() {
-    // TODO nf-core: Optionally add in-text citation tools to this list.
-    // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "Tool (Foo et al. 2023)" : "",
-    // Uncomment function in methodsDescriptionText to render in MultiQC report
+    def preprocessing = params.preprocessing == 'sesame'
+        ? "Arrays were preprocessed per sample with SeSAMe (Zhou et al. 2018) using prepSesame code ${params.sesame_prep}, with pOOBAH detection masking at p > ${params.detection_pval}, noob background correction (Triche et al. 2013) and probes with fewer than ${params.min_beads} beads masked."
+        : ""
     def citation_text = [
-            "Tools used in the workflow included:",
-            "MultiQC (Ewels et al. 2016)",
-            "."
+            preprocessing,
+            "Results were summarised with MultiQC (Ewels et al. 2016)."
         ].join(' ').trim()
 
     return citation_text
 }
 
 def toolBibliographyText() {
-    // TODO nf-core: Optionally add bibliographic entries to this list.
-    // Can use ternary operators to dynamically construct based conditions, e.g. params["run_xyz"] ? "<li>Author (2023) Pub name, Journal, DOI</li>" : "",
-    // Uncomment function in methodsDescriptionText to render in MultiQC report
     def reference_text = [
-            "<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics , 32(19), 3047–3048. doi: /10.1093/bioinformatics/btw354</li>"
+            params.preprocessing == 'sesame' ? "<li>Zhou, W., Triche, T. J., Laird, P. W., & Shen, H. (2018). SeSAMe: reducing artifactual detection of DNA methylation by Infinium BeadChips in genomic deletions. Nucleic Acids Research, 46(20), e123. doi: <a href=\"https://doi.org/10.1093/nar/gky691\">10.1093/nar/gky691</a></li>" : "",
+            params.preprocessing == 'sesame' ? "<li>Triche, T. J., Weisenberger, D. J., Van Den Berg, D., Laird, P. W., & Siegmund, K. D. (2013). Low-level processing of Illumina Infinium DNA Methylation BeadArrays. Nucleic Acids Research, 41(7), e90. doi: <a href=\"https://doi.org/10.1093/nar/gkt090\">10.1093/nar/gkt090</a></li>" : "",
+            "<li>Ewels, P., Magnusson, M., Lundin, S., & Käller, M. (2016). MultiQC: summarize analysis results for multiple tools and samples in a single report. Bioinformatics, 32(19), 3047-3048. doi: <a href=\"https://doi.org/10.1093/bioinformatics/btw354\">10.1093/bioinformatics/btw354</a></li>"
         ].join(' ').trim()
 
     return reference_text
@@ -253,12 +374,8 @@ def methodsDescriptionText(mqc_methods_yaml) {
     meta["nodoi_text"] = meta.manifest_map.doi ? "" : "<li>If available, make sure to update the text to include the Zenodo DOI of version of the pipeline used. </li>"
 
     // Tool references
-    meta["tool_citations"] = ""
-    meta["tool_bibliography"] = ""
-
-    // TODO nf-core: Only uncomment below if logic in toolCitationText/toolBibliographyText has been filled!
-    // meta["tool_citations"] = toolCitationText().replaceAll(", \\.", ".").replaceAll("\\. \\.", ".").replaceAll(", \\.", ".")
-    // meta["tool_bibliography"] = toolBibliographyText()
+    meta["tool_citations"] = toolCitationText()
+    meta["tool_bibliography"] = toolBibliographyText()
 
 
     def methods_text = mqc_methods_yaml.text

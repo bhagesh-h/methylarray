@@ -1,0 +1,89 @@
+name: sesame_buildse
+description: Gather per-array SeSAMe results into one HDF5-backed SummarizedExperiment with the sample metadata and QC statistics as colData
+keywords:
+  - dna methylation
+  - methylation array
+  - summarizedexperiment
+  - hdf5
+tools:
+  - summarizedexperiment:
+      description: "SummarizedExperiment container"
+      homepage: https://bioconductor.org/packages/SummarizedExperiment
+      documentation: https://bioconductor.org/packages/SummarizedExperiment
+      licence: ["Artistic-2.0"]
+      identifier: biotools:summarizedexperiment
+  - hdf5array:
+      description: "HDF5 backend for DelayedArray objects"
+      homepage: https://bioconductor.org/packages/HDF5Array
+      documentation: https://bioconductor.org/packages/HDF5Array
+      licence: ["Artistic-2.0"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+    - samples:
+        type: file
+        description: Sample metadata, one row per array, with a 'sample' column
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - rds:
+        type: file
+        description: Per-array results from SESAME_PREPROCESS
+        pattern: "*.sesame.rds"
+        ontologies: []
+    - qc:
+        type: file
+        description: Per-array QC tables from SESAME_PREPROCESS
+        pattern: "*.qc.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  se:
+    - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+      - "${prefix}_se":
+          type: directory
+          description: HDF5-backed SummarizedExperiment (assays beta, beta_unmasked, detp, meth, unmeth); load with HDF5Array::loadHDF5SummarizedExperiment()
+          pattern: "*_se"
+  qc:
+    - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+      - "${prefix}_qc.tsv":
+          type: file
+          description: Sample metadata joined to the SeSAMe QC statistics, one row per array
+          pattern: "*_qc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. [ id:'sample1' ]
+      - "${prefix}_qc_mqc.tsv":
+          type: file
+          description: MultiQC general statistics table
+          pattern: "*_qc_mqc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

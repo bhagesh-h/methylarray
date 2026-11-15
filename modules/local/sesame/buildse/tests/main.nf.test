@@ -1,0 +1,91 @@
+nextflow_process {
+
+    name "Test Process SESAME_BUILDSE"
+    script "../main.nf"
+    process "SESAME_BUILDSE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "sesame"
+    tag "sesame/buildse"
+
+    // Two public EPIC v2 whole-blood arrays (GEO GSE286313): one female, one male
+    test("two EPICv2 arrays - SummarizedExperiment") {
+
+        setup {
+            run("SESAME_CACHE") {
+                script "../../cache/main.nf"
+                process {
+                    """
+                    input[0] = 'EPICv2'
+                    """
+                }
+            }
+            run("SESAME_PREPROCESS") {
+                script "../../preprocess/main.nf"
+                process {
+                    """
+                    input[0] = channel.of(
+                        [
+                            [ id: 'BeCOME_1' ],
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true)
+                        ],
+                        [
+                            [ id: 'CALERIE_1' ],
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Red.idat.gz', checkIfExists: true),
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Grn.idat.gz', checkIfExists: true)
+                        ]
+                    )
+                    input[1] = SESAME_CACHE.out.cache
+                    """
+                }
+            }
+        }
+
+        when {
+            process {
+                """
+                def samples = channel.of('sample\treported_sex', 'BeCOME_1\tF', 'CALERIE_1\tM')
+                    .collectFile(name: 'samples.tsv', newLine: true, sort: false)
+                def rds = SESAME_PREPROCESS.out.rds.map { _meta, file -> file }.collect().map { files -> [ files ] }
+                def qc = SESAME_PREPROCESS.out.qc.map { _meta, file -> file }.collect().map { files -> [ files ] }
+                input[0] = samples.combine(rds).combine(qc).map { s, r, q -> [ [ id: 'test' ], s, r, q ] }
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.se[0][1]).list().collect { f -> f.fileName.toString() }.sort() == ['assays.h5', 'se.rds'] },
+                { assert qc.size() == 3 },
+                { assert qc[1].startsWith('BeCOME_1\tF\tEPICv2') },
+                { assert qc[2].startsWith('CALERIE_1\tM\tEPICv2') },
+                { assert path(process.out.multiqc[0][1]).text.contains("plot_type: 'generalstats'") },
+                { assert snapshot(process.out.qc, process.out.multiqc, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("two EPICv2 arrays - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [ [ id: 'test' ], file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz'), [], [] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

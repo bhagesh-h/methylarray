@@ -38,6 +38,8 @@ Commands:
                      nf-core pipelines lint and nextflow lint, then run prek in the repository
   metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
   dind-stop          Stop and remove the Docker-in-Docker daemon container (dind engine)
+  clean              Delete work directories, test results, download caches and old logs under
+                     \$NFDEV_OUT_ROOT; keep images, environments and the 10 newest logs
 
 Engines:
   docker             Docker outside of Docker through the host socket (default)
@@ -109,6 +111,11 @@ case "${ENGINE}" in
         IMAGE="${NFDEV_IMAGE}"
         engine_opts=( --env NXF_CONDA_CACHEDIR="${NFDEV_OUT_ROOT}/cache/conda/envs"
                       --env CONDA_PKGS_DIRS="${NFDEV_OUT_ROOT}/cache/conda/pkgs" )
+        # The devkit ships micromamba, not conda: tell Nextflow through the
+        # NXF_HOME config, so that the pipeline's own conda profile stays unchanged
+        mkdir -p "${NFDEV_OUT_ROOT}/cache/nextflow"
+        grep -qs '^conda.useMicromamba' "${NFDEV_OUT_ROOT}/cache/nextflow/config" \
+            || echo 'conda.useMicromamba = true' >> "${NFDEV_OUT_ROOT}/cache/nextflow/config"
         ;;
     *) die "engine '${ENGINE}' is not implemented yet" ;;
 esac
@@ -238,6 +245,16 @@ case "${COMMAND}" in
     dind-stop)
         docker rm --force "${DIND_NAME}" >/dev/null 2>&1 || true
         echo "stopped ${DIND_NAME} (the image store volume nfdev-dind-storage is kept)"
+        ;;
+    clean)
+        [[ "${NFDEV_OUT_ROOT}" == /* && -d "${NFDEV_OUT_ROOT}/cache" ]] || die "NFDEV_OUT_ROOT does not look like an nfdev output root: ${NFDEV_OUT_ROOT}"
+        find "${NFDEV_OUT_ROOT}" -mindepth 1 -maxdepth 1 \( -name 'work*' -o -name '.nextflow' -o -name '.nextflow.log*' -o -name '.nf-test.log' \) -exec rm -rf {} +
+        find "${NFDEV_OUT_ROOT}/tests" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+        # Download caches duplicated by the Apptainer images and conda environments kept in cache/
+        rm -rf "${NFDEV_OUT_ROOT}/cache/apptainer/cache"
+        find "${NFDEV_OUT_ROOT}/cache/conda/pkgs" -maxdepth 1 -type f \( -name '*.conda' -o -name '*.tar.bz2' \) -delete 2>/dev/null || true
+        find "${NFDEV_OUT_ROOT}/logs" -maxdepth 1 -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | tail -n +11 | cut -d' ' -f2- | xargs -r rm -f
+        du -sh "${NFDEV_OUT_ROOT}"
         ;;
     -h|--help|help)
         usage

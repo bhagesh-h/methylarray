@@ -1,3 +1,3 @@
-sample,fastq_1,fastq_2
-SAMPLE_PAIRED_END,/path/to/fastq/files/AEG588A1_S1_L002_R1_001.fastq.gz,/path/to/fastq/files/AEG588A1_S1_L002_R2_001.fastq.gz
-SAMPLE_SINGLE_END,/path/to/fastq/files/AEG588A4_S4_L003_R1_001.fastq.gz,
+sample,idat_red,idat_grn,plate,reported_sex,reported_age
+S001,/path/to/idat/207059430159/207059430159_R01C01_Red.idat,/path/to/idat/207059430159/207059430159_R01C01_Grn.idat,P01,F,52
+S002,/path/to/idat/207059430159/207059430159_R02C01_Red.idat,/path/to/idat/207059430159/207059430159_R02C01_Grn.idat,P01,M,47

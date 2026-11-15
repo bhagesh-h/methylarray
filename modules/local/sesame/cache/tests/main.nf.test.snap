@@ -1,0 +1,55 @@
+{
+    "EPICv2 - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        
+                    ]
+                ],
+                "1": [
+                    "sesame_resources.tsv:md5,628c18ba5e4c1cf2dfffa6520468fb4d"
+                ],
+                "2": [
+                    "versions.yml:md5,27f32b3cc54c296b45d479bbb7876162"
+                ],
+                "cache": [
+                    [
+                        
+                    ]
+                ],
+                "resources": [
+                    "sesame_resources.tsv:md5,628c18ba5e4c1cf2dfffa6520468fb4d"
+                ],
+                "versions": [
+                    "versions.yml:md5,27f32b3cc54c296b45d479bbb7876162"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-14T23:40:21.075119323",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "EPICv2 - downloads the resources": {
+        "content": [
+            [
+                "title\teh_id",
+                "idatSignature\tEH8552",
+                "probeIDSignature\tEH8553",
+                "EPICv2.address\tEH8078",
+                "KYCG.EPICv2.Mask.20230314\tEH8070",
+                "HM450.address\tEH7317"
+            ],
+            [
+                "versions.yml:md5,095f619269fca6bd2df95fb34394e25e"
+            ]
+        ],
+        "timestamp": "2026-11-14T23:40:17.520144408",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}
