@@ -1,0 +1,25 @@
+cell	measure	rho	p	n	q
+B	HorvathS2013 acceleration	0.00177	0.9877	78	0.9906
+B	HannumG2013 acceleration	-0.06366	0.5798	78	0.8929
+B	DunedinPACE acceleration	0.0283	0.8057	78	0.9906
+B	dnam_smoking	-0.06074	0.5973	78	0.8929
+CD4T	HorvathS2013 acceleration	0.09157	0.4253	78	0.8929
+CD4T	HannumG2013 acceleration	0.162	0.1564	78	0.5361
+CD4T	DunedinPACE acceleration	-0.006399	0.9557	78	0.9906
+CD4T	dnam_smoking	0.2546	0.02448	78	0.2937
+CD8T	HorvathS2013 acceleration	0.1829	0.1089	78	0.4928
+CD8T	HannumG2013 acceleration	-0.176	0.1232	78	0.4928
+CD8T	DunedinPACE acceleration	-0.147	0.199	78	0.5971
+CD8T	dnam_smoking	0.0904	0.4312	78	0.8929
+NK	HorvathS2013 acceleration	-0.055	0.6325	78	0.8929
+NK	HannumG2013 acceleration	0.07444	0.5171	78	0.8929
+NK	DunedinPACE acceleration	0.005324	0.9631	78	0.9906
+NK	dnam_smoking	0.06726	0.5585	78	0.8929
+Mono	HorvathS2013 acceleration	-0.2123	0.06203	78	0.4928
+Mono	HannumG2013 acceleration	-0.1912	0.0935	78	0.4928
+Mono	DunedinPACE acceleration	0.001353	0.9906	78	0.9906
+Mono	dnam_smoking	-0.02768	0.8099	78	0.9906
+Gran	HorvathS2013 acceleration	-0.06633	0.564	78	0.8929
+Gran	HannumG2013 acceleration	-0.0137	0.9053	78	0.9906
+Gran	DunedinPACE acceleration	0.05682	0.6212	78	0.8929
+Gran	dnam_smoking	-0.3063	0.006377	78	0.153
