@@ -30,6 +30,8 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 
 ### `Changed`
 
+- `MINFI_PREPROCESS` reads and corrects the arrays in chunks (hidden `--minfi_chunk_size`, default 40) and writes each chunk to HDF5 at once, so a run of about 300 arrays fits in about 40 GB of memory. Results are unchanged: Noob, detection p-values, ENmix oob/RELIC/RCP and SWAN work array by array; Funnorm, quantile normalisation and the ENmix quantile step run on all arrays in a second pass, and the ENmix low-quality flag is computed over all arrays.
+
 - minfi (Noob) is the default preprocessing route (`--preprocessing minfi`); SeSAMe stays available with `--preprocessing sesame`.
 - Task images come from Seqera Containers (`community.wave.seqera.io`), built by Wave from each module's `environment.yml`, with separate Docker and Singularity images. The minfi module keeps its Docker Hub image, because installing the EPIC v2 annotation packages exceeds the Wave build time limit.
 

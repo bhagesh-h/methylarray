@@ -112,6 +112,15 @@
                     "description": "Minimum number of beads per probe; probes with fewer beads are masked.",
                     "fa_icon": "fas fa-braille"
                 },
+                "minfi_chunk_size": {
+                    "type": "integer",
+                    "default": 40,
+                    "minimum": 2,
+                    "description": "Arrays read and corrected together by the minfi-based routes.",
+                    "help_text": "Lower values use less memory. Funnorm, quantile normalisation and the ENmix quantile step still read all arrays at once.",
+                    "fa_icon": "fas fa-layer-group",
+                    "hidden": true
+                },
                 "detection_pval": {
                     "type": "number",
                     "default": 0.05,
