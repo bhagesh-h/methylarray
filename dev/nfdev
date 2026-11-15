@@ -38,8 +38,12 @@ Commands:
   lint               Lint an export of the staged tree (\$NFDEV_OUT_ROOT/tests/lint/<time>) with
                      nf-core pipelines lint and nextflow lint, then run prek in the repository
   metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
+  container <module> [--write]
+                     Build the Docker and Singularity images of a local module from its
+                     environment.yml with Wave (community.wave.seqera.io) and print, or
+                     with --write set, the module's container directive
   dind-stop          Stop and remove the Docker-in-Docker daemon container (dind engine)
-  clean              Delete work directories, test results, download caches and old logs under
+  clean              Delete work and results directories, test results, download caches and old logs under
                      \$NFDEV_OUT_ROOT; keep images, environments and the 10 newest logs
 
 Engines:
@@ -249,6 +253,9 @@ case "${COMMAND}" in
         run_in_devkit "${lint_dir}" bash -c 'nf-core pipelines lint && nextflow lint .'
         run_in_devkit "${REPO}" prek run --all-files
         ;;
+    container)
+        run_in_devkit "${REPO}" python3 dev/wave_container.py "$@"
+        ;;
     metro)
         run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd -o docs/images/metro_map.svg --embed-font --validate \
             && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_light_1000px.png' --mode light --raster-width 1000 \
@@ -260,7 +267,7 @@ case "${COMMAND}" in
         ;;
     clean)
         [[ "${NFDEV_OUT_ROOT}" == /* && -d "${NFDEV_OUT_ROOT}/cache" ]] || die "NFDEV_OUT_ROOT does not look like an nfdev output root: ${NFDEV_OUT_ROOT}"
-        find "${NFDEV_OUT_ROOT}" -mindepth 1 -maxdepth 1 \( -name 'work*' -o -name '.nextflow' -o -name '.nextflow.log*' -o -name '.nf-test.log' \) -exec rm -rf {} +
+        find "${NFDEV_OUT_ROOT}" -mindepth 1 -maxdepth 1 \( -name 'work*' -o -name 'results*' -o -name '.nextflow' -o -name '.nextflow.log*' -o -name '.nf-test.log' \) -exec rm -rf {} +
         find "${NFDEV_OUT_ROOT}/tests" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
         # Download caches duplicated by the Apptainer images and conda environments kept in cache/
         rm -rf "${NFDEV_OUT_ROOT}/cache/apptainer/cache"

@@ -1,0 +1,71 @@
+name: ewastools_qc
+description: Sample QC with ewastools on all arrays - Illumina control metrics, X/Y intensities and predicted sex, SNP probe genotypes with contamination scores, inferred donors and identity conflicts
+keywords:
+  - dna methylation
+  - illumina
+  - methylation array
+  - quality control
+  - genotyping
+  - contamination
+tools:
+  - ewastools:
+      description: "Quality control and preprocessing of DNA methylation microarray data"
+      homepage: https://github.com/hhhh5/ewastools
+      documentation: https://hhhh5.github.io/ewastools/
+      doi: 10.1186/s13148-018-0504-1
+      licence: ["Unlicense"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with an id for the run
+          e.g. [ id:'ewastools' ]
+    - samples:
+        type: file
+        description: Sample metadata, one row per array, with 'sample', 'reported_sex', 'replicate_group' and 'idat_prefix' columns
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - idats:
+        type: file
+        description: Red and green IDAT files of every array
+        pattern: "*_{Red,Grn}.idat{,.gz}"
+        ontologies: []
+  - ewastools_source:
+      type: file
+      description: ewastools source package (tar.gz of a pinned GitHub commit), installed into the task directory
+      pattern: "*.tar.gz"
+      ontologies: []
+output:
+  qc:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_qc.tsv":
+          type: file
+          description: One row per array - control metrics and failures, X/Y intensities, predicted sex, SNP outlier score, inferred donor, identity conflict flag
+          pattern: "*_qc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  conflicts:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_snp_conflicts.tsv":
+          type: file
+          description: Pairs of arrays whose SNP genotypes contradict the expected donors (header only when there are none)
+          pattern: "*_snp_conflicts.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

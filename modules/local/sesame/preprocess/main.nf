@@ -3,9 +3,9 @@ process SESAME_PREPROCESS {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    // bhagesh/methylarray-sesame:1.28.1, built from environment.yml with containers/sesame/Dockerfile.
-    // Pinned by digest only: Singularity and Apptainer reject a reference with both tag and digest.
-    container 'docker.io/bhagesh/methylarray-sesame@sha256:75cf491e12071a0c3eca3479b227ecedaa35e521d8b6266b53497c5681716ea9'
+    container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/bioconductor-experimenthub_bioconductor-hdf5array_bioconductor-sesame_bioconductor-sesamedata_pruned:0c0cc322759e48bc' :
+        'community.wave.seqera.io/library/bioconductor-experimenthub_bioconductor-hdf5array_bioconductor-sesame_bioconductor-sesamedata_pruned:8ca814a29ce1f4ed' }"
 
     input:
     tuple val(meta), path(idat_red), path(idat_grn)
@@ -25,7 +25,8 @@ process SESAME_PREPROCESS {
     """
     touch ${prefix}.sesame.rds
     printf 'sample\\tplatform\\n${meta.id}\\tEPICv2\\n' > ${prefix}.qc.tsv
-    echo | gzip > ${prefix}.controls.tsv.gz
+    # an empty gzip stream: the Singularity image has no gzip command
+    printf '\\x1f\\x8b\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x03\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00' > ${prefix}.controls.tsv.gz
     printf '"%s":\\n    sesame: stub\\n    sesameData: stub\\n' "${task.process}" > versions.yml
     """
 }

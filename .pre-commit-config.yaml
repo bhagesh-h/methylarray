@@ -10,12 +10,14 @@ repos:
     hooks:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
+        # Trailing tabs in TSV files are empty columns, not whitespace
         exclude: |
           (?x)^(
               .*ro-crate-metadata.json$|
               modules/(?!local/).*|
               subworkflows/(?!local/).*|
-              .*\.snap$
+              .*\.snap$|
+              .*\.tsv$
           )$
       - id: end-of-file-fixer
         exclude: |

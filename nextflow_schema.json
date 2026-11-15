@@ -135,6 +135,43 @@
                 }
             }
         },
+        "sample_qc_options": {
+            "title": "Sample QC options",
+            "type": "object",
+            "fa_icon": "fas fa-clipboard-check",
+            "description": "Thresholds for the per-array quality control.",
+            "properties": {
+                "skip_ewastools": {
+                    "type": "boolean",
+                    "description": "Skip the ewastools QC (control metrics, X/Y sex check, SNP genotypes).",
+                    "help_text": "ewastools computes the Illumina BeadArray Controls Reporter metrics, normalised X and Y intensities and SNP probe genotypes for the contamination and identity checks.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "ewastools_source": {
+                    "type": "string",
+                    "default": "https://github.com/hhhh5/ewastools/archive/d7d0a3295177b2528248966012f635be881f78ab.tar.gz",
+                    "description": "Source package of ewastools (URL or local path).",
+                    "help_text": "ewastools is not on conda or CRAN, so the QC step installs it from this source tarball. The default is version 1.8.2 at a fixed GitHub commit. For runs without network access, download the file once and give its local path.",
+                    "fa_icon": "fas fa-box"
+                },
+                "max_undetected_fraction": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Arrays with a larger fraction of undetected probes fail QC.",
+                    "help_text": "A probe is undetected when its detection p-value (pOOBAH for `sesame`, minfi or SeSAMe detection p-values for the other routes) is above `--detection_pval`.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "snp_outlier_threshold": {
+                    "type": "number",
+                    "default": -4,
+                    "description": "Arrays with an ewastools SNP outlier score above this value fail QC as possibly contaminated.",
+                    "help_text": "The score is the average log odds that the SNP probe beta values belong to none of the three genotype clusters. The ewastools authors recommend -4. Only arrays below the threshold enter the identity check.",
+                    "fa_icon": "fas fa-vial"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -292,6 +329,9 @@
         },
         {
             "$ref": "#/$defs/preprocessing_options"
+        },
+        {
+            "$ref": "#/$defs/sample_qc_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

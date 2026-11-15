@@ -1,0 +1,8 @@
+sample	reported_sex	replicate_group	exclude
+A1	F		
+A2	M		
+A3	F		
+A4	M	D1	
+A5	F	D1	
+A6	F		true
+A7			

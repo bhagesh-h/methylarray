@@ -1,0 +1,211 @@
+{
+    "all checks - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc.tsv:md5,2f0638a9c17a82d2a7dd883687300b81"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_retained.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_mqc.tsv:md5,c2d7946986b742d67ef0169ef404dcaa"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,1fa4c8d8f52e785850affcafe4ede388"
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_mqc.tsv:md5,c2d7946986b742d67ef0169ef404dcaa"
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc.tsv:md5,2f0638a9c17a82d2a7dd883687300b81"
+                    ]
+                ],
+                "retained": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_retained.txt:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,1fa4c8d8f52e785850affcafe4ede388"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T09:02:44.453578842",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "without ewastools": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc.tsv:md5,971ac33dee1e20974898e7801c282c4c"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_retained.txt:md5,ae8978e79429d4718d168372e27bc391"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        [
+                            "sample_qc_mqc.tsv:md5,d55b00a21c32435043fda3498d3cfe1f",
+                            "sample_qc_status_mqc.tsv:md5,3f0b13e5988e99f9c85a9a22c821d8a2"
+                        ]
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,66859b5d153ea4459d581a5eff3b1639"
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        [
+                            "sample_qc_mqc.tsv:md5,d55b00a21c32435043fda3498d3cfe1f",
+                            "sample_qc_status_mqc.tsv:md5,3f0b13e5988e99f9c85a9a22c821d8a2"
+                        ]
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc.tsv:md5,971ac33dee1e20974898e7801c282c4c"
+                    ]
+                ],
+                "retained": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_retained.txt:md5,ae8978e79429d4718d168372e27bc391"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,66859b5d153ea4459d581a5eff3b1639"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T09:02:41.036336687",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "all checks": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc.tsv:md5,3676cbc889e9cbf26a19f655e60c333a"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_retained.txt:md5,ae8978e79429d4718d168372e27bc391"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        [
+                            "sample_qc_mqc.tsv:md5,ef172504f2b341375bd67436ceb3ecc7",
+                            "sample_qc_sex_mqc.json:md5,0e99c7f3f69bed47584a8a5498020a57",
+                            "sample_qc_status_mqc.tsv:md5,080e13cc32e415ee05f9bc195ffd3439"
+                        ]
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,66859b5d153ea4459d581a5eff3b1639"
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        [
+                            "sample_qc_mqc.tsv:md5,ef172504f2b341375bd67436ceb3ecc7",
+                            "sample_qc_sex_mqc.json:md5,0e99c7f3f69bed47584a8a5498020a57",
+                            "sample_qc_status_mqc.tsv:md5,080e13cc32e415ee05f9bc195ffd3439"
+                        ]
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc.tsv:md5,3676cbc889e9cbf26a19f655e60c333a"
+                    ]
+                ],
+                "retained": [
+                    [
+                        {
+                            "id": "sample_qc"
+                        },
+                        "sample_qc_retained.txt:md5,ae8978e79429d4718d168372e27bc391"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,66859b5d153ea4459d581a5eff3b1639"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T09:02:37.451284158",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

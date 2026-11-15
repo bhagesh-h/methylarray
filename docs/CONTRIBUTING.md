@@ -162,4 +162,4 @@ If you update images or graphics, follow the nf-core [style guidelines](https://
 
 ## Pipeline specific contribution guidelines
 
-<!-- TODO nf-core: Add any pipeline specific contribution guidelines here, such as coding styles, procedures, checklists etc. -->
+See the [developer guide](developer.md): running and testing the pipeline in Docker with `dev/nfdev`, the module structure, building task images with Wave, and the nf-test and pull request workflow.

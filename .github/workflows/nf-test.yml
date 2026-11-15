@@ -68,13 +68,16 @@ jobs:
         shard: ${{ fromJson(needs.nf-test-changes.outputs.shard) }}
         profile: [conda, docker, singularity]
         isMain:
-          - ${{ github.base_ref == 'master' || github.base_ref == 'main' }}
-        # Exclude conda and singularity on dev
+          - ${{ github.base_ref == 'master' || github.base_ref == 'main' || github.event_name == 'release' }}
+        # PRs into dev: docker with the minimum Nextflow version only. Conda,
+        # Singularity and the latest Nextflow run for main and releases.
         exclude:
           - isMain: false
             profile: "conda"
           - isMain: false
             profile: "singularity"
+          - isMain: false
+            NXF_VER: "latest-everything"
         NXF_VER:
           - "26.04.2"
           - "latest-everything"

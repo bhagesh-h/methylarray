@@ -3,6 +3,7 @@ process MINFI_PREPROCESS {
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
+    // Not built by Wave: installing the EPIC v2 annotation packages exceeds its build time limit.
     // bhagesh/methylarray-minfi:1.56.0, built from environment.yml with containers/minfi/Dockerfile.
     container 'docker.io/bhagesh/methylarray-minfi@sha256:fbbd3f2e40d24e5ed33807f34367919ccba2e3a37e9b64e0edd80ced7793cbdc'
 

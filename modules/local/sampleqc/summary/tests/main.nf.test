@@ -1,0 +1,104 @@
+nextflow_process {
+
+    name "Test Process SAMPLEQC_SUMMARY"
+    script "../main.nf"
+    process "SAMPLEQC_SUMMARY"
+
+    tag "modules"
+    tag "modules_local"
+    tag "sampleqc"
+    tag "sampleqc/summary"
+
+    // Made-up QC tables that exercise every rule:
+    //   A1 clean; A2 15% undetected and failed controls; A3 sex mismatch and SNP
+    //   outliers; A4/A5 one replicate group with different genotypes, A5 between
+    //   the sex clusters; A6 excluded in the samplesheet; A7 no reported sex
+
+    test("all checks") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'sample_qc' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/preprocessing_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ewastools_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/snp_conflicts.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }.collectEntries { row -> [row.sample, row] }
+            assertAll(
+                { assert process.success },
+                { assert rows.collectEntries { id, row -> [id, row.status] } == [A1: 'PASS', A2: 'FAIL', A3: 'FAIL', A4: 'FLAG', A5: 'FLAG', A6: 'EXCLUDED', A7: 'PASS'] },
+                { assert rows.A2.reasons.contains('15.0% of probes undetected') },
+                { assert rows.A2.reasons.contains('control metrics below Illumina thresholds: Bisulfite Conversion II, Extension Red') },
+                { assert rows.A3.sex_check == 'mismatch' && rows.A3.reasons.contains('possible contamination') },
+                { assert rows.A4.reasons == 'genotypes differ from A5 in the same replicate group (agreement 0.41)' },
+                { assert rows.A5.reasons.contains('outside the male and female clusters') },
+                { assert rows.A7.sex_check == 'not_reported' },
+                { assert path(process.out.retained[0][1]).readLines() == ['A1', 'A4', 'A5', 'A7'] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("without ewastools") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'sample_qc' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/preprocessing_qc.tsv", checkIfExists: true),
+                    [],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }.collectEntries { row -> [row.sample, row] }
+            assertAll(
+                { assert process.success },
+                { assert rows.collectEntries { id, row -> [id, row.status] } == [A1: 'PASS', A2: 'FAIL', A3: 'FAIL', A4: 'PASS', A5: 'PASS', A6: 'EXCLUDED', A7: 'PASS'] },
+                { assert process.out.multiqc[0][1].collect { f -> file(f).name }.sort() == ['sample_qc_mqc.tsv', 'sample_qc_status_mqc.tsv'] },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("all checks - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'sample_qc' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/preprocessing_qc.tsv", checkIfExists: true),
+                    [],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

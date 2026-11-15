@@ -168,6 +168,25 @@ filePorter.maxRetries = 10
 
 Nextflow prints an "Unrecognized config option" warning for these two settings, but applies them.
 
+## Sample QC
+
+After preprocessing, every array gets a QC status (`PASS`, `FLAG`, `FAIL` or `EXCLUDED`) with the reasons, in `qc/sample_qc.tsv`. No array is removed without a recorded reason. The checks:
+
+- **Detection**: the fraction of probes with a detection p-value above `--detection_pval`. More than `--max_undetected_fraction` (default 10%) fails the array.
+- **Sex**: the sex predicted by the preprocessing method and by ewastools from the normalised X and Y intensities, against `reported_sex`. If every prediction contradicts the reported sex, the array fails, since this usually means a sample swap. If the predictions disagree, or the X and Y intensities fall between the male and female clusters (possible sex chromosome aneuploidy or contamination), the array is flagged. The ewastools prediction needs at least one reported female and one reported male.
+- **Control probes**: the 21 Illumina BeadArray Controls Reporter metrics (bisulfite conversion, extension, hybridisation, staining, specificity, target removal, non-polymorphic) against Illumina's thresholds. Arrays below a threshold are flagged, not failed: the thresholds are guidance for troubleshooting the assay, and arrays with good data can miss a single background ratio.
+- **Contamination**: the ewastools SNP outlier score, the average log odds that the SNP probe beta values fit none of the three genotypes. Arrays above `--snp_outlier_threshold` (default -4, as recommended by the ewastools authors) fail.
+- **Identity**: SNP genotypes of all arrays below the contamination threshold are compared. Arrays of one `replicate_group` with different genotypes, and arrays of different donors with the same genotypes (agreement above 0.9), are flagged.
+
+| Parameter                   | Default                | Meaning                                                                |
+| --------------------------- | ---------------------- | ---------------------------------------------------------------------- |
+| `--max_undetected_fraction` | `0.1`                  | Largest fraction of undetected probes for a passing array              |
+| `--snp_outlier_threshold`   | `-4`                   | Arrays with a higher SNP outlier score fail as possibly contaminated   |
+| `--skip_ewastools`          | `false`                | Skip the control-probe, X/Y sex, contamination and identity checks     |
+| `--ewastools_source`        | ewastools 1.8.2 source | ewastools source package (URL or local path), installed by the QC task |
+
+ewastools is not available from conda or CRAN. The QC task installs it from its source package (a fixed GitHub commit) into the task directory, so it works with every profile. For runs without network access, download the file given by `--ewastools_source` once and pass its local path.
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
