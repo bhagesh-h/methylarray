@@ -46,6 +46,7 @@ Nothing is installed on the host. The repository is never written to by a run: N
 | `dev/nfdev test <args>`                  | Runs `nf-test test <args>` in the repository; test work directories go to `NFDEV_OUT_ROOT/tests/nf-test`              |
 | `dev/nfdev lint`                         | Exports the staged tree and runs `nf-core pipelines lint` and `nextflow lint` on it, then prek on the repository      |
 | `dev/nfdev container <module> [--write]` | Builds the module images from its `environment.yml` with Wave and prints or writes the `container` directive          |
+| `dev/nfdev image <module> <name:tag>`    | Builds a module image locally from its `environment.yml` (`containers/conda.Dockerfile`) when Wave cannot             |
 | `dev/nfdev metro`                        | Renders `assets/metro_map.mmd` to `docs/images/metro_map.svg` and two preview PNGs                                    |
 | `dev/nfdev exec <cmd>`                   | Runs any command in the devkit, for example `dev/nfdev exec nf-core pipelines schema lint`                            |
 | `dev/nfdev shell`                        | Interactive shell in the devkit                                                                                       |
@@ -210,6 +211,16 @@ docker build -f containers/minfi/Dockerfile -t bhagesh/methylarray-minfi:<minfi 
 docker push bhagesh/methylarray-minfi:<minfi version>
 docker images --digests bhagesh/methylarray-minfi   # the digest to pin in main.nf
 ```
+
+When Wave cannot build an image (an environment over its build time limit, or Wave rate-limiting anonymous requests), build it locally from the same `environment.yml` and push it to Docker Hub:
+
+```bash
+dev/nfdev image modules/local/exploration/pca bhagesh/methylarray-exploration:1.0.0
+docker push bhagesh/methylarray-exploration:1.0.0
+docker images --digests bhagesh/methylarray-exploration   # pin this digest in main.nf
+```
+
+Reference the image by digest only (`docker.io/bhagesh/<name>@sha256:<digest>`): Apptainer and Singularity refuse a tag together with a digest, and convert the Docker image themselves.
 
 A package that is not on conda but is plain R (no compiled code) is installed by the module from a staged source file instead, as `EWASTOOLS_QC` does with `--ewastools_source`: the source tarball is a pinned input file, so it is cached, works offline from a local copy, and the image only holds the conda dependencies.
 

@@ -38,6 +38,10 @@ Commands:
   lint               Lint an export of the staged tree (\$NFDEV_OUT_ROOT/tests/lint/<time>) with
                      nf-core pipelines lint and nextflow lint, then run prek in the repository
   metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
+  image <module> <name:tag>
+                     Build a module's Docker image from its environment.yml with
+                     containers/conda.Dockerfile (when Wave cannot build it), then print
+                     the push command
   container <module> [--write]
                      Build the Docker and Singularity images of a local module from its
                      environment.yml with Wave (community.wave.seqera.io) and print, or
@@ -255,6 +259,13 @@ case "${COMMAND}" in
         ;;
     container)
         run_in_devkit "${REPO}" python3 dev/wave_container.py "$@"
+        ;;
+    image)
+        [[ $# -eq 2 && -f "${REPO}/${1%/}/environment.yml" ]] || die "usage: dev/nfdev image <module folder> <name:tag>"
+        DOCKER_BUILDKIT=0 docker build -f "${REPO}/containers/conda.Dockerfile" \
+            --build-arg ENVIRONMENT="${1%/}/environment.yml" -t "$2" "${REPO}" 2>&1 | tee "${LOG}"
+        echo "Push with: docker push $2"
+        echo "Then pin the digest shown by: docker images --digests ${2%%:*}"
         ;;
     metro)
         run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd -o docs/images/metro_map.svg --embed-font --validate \
