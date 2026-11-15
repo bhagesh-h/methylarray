@@ -208,7 +208,7 @@ The command requests a Docker image and a Singularity image, waits for both (a f
 ```bash
 docker build -f containers/minfi/Dockerfile -t bhagesh/methylarray-minfi:<minfi version> .
 docker push bhagesh/methylarray-minfi:<minfi version>
-docker inspect --format '{{json .RepoDigests}}' bhagesh/methylarray-minfi:<minfi version>
+docker images --digests bhagesh/methylarray-minfi   # the digest to pin in main.nf
 ```
 
 A package that is not on conda but is plain R (no compiled code) is installed by the module from a staged source file instead, as `EWASTOOLS_QC` does with `--ewastools_source`: the source tarball is a pinned input file, so it is cached, works offline from a local copy, and the image only holds the conda dependencies.
