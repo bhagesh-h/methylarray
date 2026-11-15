@@ -390,7 +390,8 @@ def toolCitationText() {
     def clocks = params.skip_clocks ? '' : "Epigenetic clocks were computed with dnaMethyAge (Wang et al. 2024)${params.clocks.tokenize(',').contains('DunedinPACE') ? ' and DunedinPACE (Belsky et al. 2022)' : ''} on the detection-masked beta values averaged per CpG; values that failed detection were set to the CpG mean over the other arrays."
     def exploration = "Technical variation was summarised with principal components of the control-probe intensities (Lehne et al. 2015), and the principal components of the most variable CpGs were tested for association with technical and biological variables${params.n_pcs == 'auto' ? ', their number estimated by random matrix theory (isva, Teschendorff et al. 2011)' : ''}."
     def ewas = params.models ? "Each association model was fitted at every CpG with limma (Ritchie et al. 2015) on M-values with eBayes moderation (trend and robust), effect sizes were taken from the same model on beta values, and test statistics were corrected for bias and inflation with bacon (van Iterson et al. 2017). CpGs were reported at FDR < 0.05 and at P < ${params.p_epigenome_wide} (Mansell et al. 2019)." : ''
-    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, exploration, ewas, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+    def dmr = params.models && !params.skip_dmr ? "Differentially methylated regions were called with DMRcate (Peters et al. 2015; lambda ${params.dmr_lambda}, C ${params.dmr_c}) and dmrff (Suderman et al. 2018) from the same model statistics, and regions found by both methods in the same direction were reported as consensus regions." : ''
+    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, exploration, ewas, dmr, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
 }
 
 //
@@ -424,6 +425,8 @@ def toolBibliographyText() {
         limma: referenceHtml('Ritchie, M. E., Phipson, B., Wu, D., et al.', 2015, 'limma powers differential expression analyses for RNA-sequencing and microarray studies', 'Nucleic Acids Research, 43(7), e47', '10.1093/nar/gkv007'),
         bacon: referenceHtml('van Iterson, M., van Zwet, E. W., the BIOS Consortium, & Heijmans, B. T.', 2017, 'Controlling bias and inflation in epigenome- and transcriptome-wide association studies using the empirical null distribution', 'Genome Biology, 18, 19', '10.1186/s13059-016-1131-9'),
         mansell2019: referenceHtml('Mansell, G., Gorrie-Stone, T. J., Bao, Y., et al.', 2019, 'Guidance for DNA methylation studies: statistical insights from the Illumina EPIC array', 'BMC Genomics, 20, 366', '10.1186/s12864-019-5761-7'),
+        dmrcate: referenceHtml('Peters, T. J., Buckley, M. J., Statham, A. L., et al.', 2015, 'De novo identification of differentially methylated regions in the human genome', 'Epigenetics & Chromatin, 8, 6', '10.1186/1756-8935-8-6'),
+        dmrff: referenceHtml('Suderman, M., Staley, J. R., French, R., Arathimos, R., Simpkin, A., & Tilling, K.', 2018, 'dmrff: identifying differentially methylated regions efficiently with power and control', 'bioRxiv', '10.1101/508556'),
         multiqc: referenceHtml('Ewels, P., Magnusson, M., Lundin, S., & Käller, M.', 2016, 'MultiQC: summarize analysis results for multiple tools and samples in a single report', 'Bioinformatics, 32(19), 3047-3048', '10.1093/bioinformatics/btw354')
     ]
     def minfi_norm_refs = [ noob: ['noob'], funnorm: ['funnorm'], quantile: ['quantile'], swan: ['swan', 'noob'] ]
@@ -437,7 +440,7 @@ def toolBibliographyText() {
     def cell_keys = params.tissue == 'blood' ? ['epidish', 'luo2023'] : []
     def clock_keys = params.skip_clocks ? [] : ['dnamethyage'] + (params.clocks.tokenize(',').contains('DunedinPACE') ? ['dunedinpace'] : [])
     def exploration_keys = ['lehne2015'] + (params.n_pcs == 'auto' ? ['rmt'] : [])
-    def ewas_keys = params.models ? ['limma', 'bacon', 'mansell2019'] : []
+    def ewas_keys = params.models ? ['limma', 'bacon', 'mansell2019'] + (params.skip_dmr ? [] : ['dmrcate', 'dmrff']) : []
     return (keys + qc_keys + ['peters2024', 'zhou2017'] + cell_keys + clock_keys + exploration_keys + ewas_keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
 }
 

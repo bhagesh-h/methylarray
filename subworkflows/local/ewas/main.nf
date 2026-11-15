@@ -39,7 +39,8 @@ workflow EWAS {
     EWAS_SUMMARY(EWAS_LIMMA.out.summary.map { _meta, summary -> summary }.collect())
 
     emit:
-    stats   = EWAS_LIMMA.out.stats    // channel: [ meta, full statistics per model ]
+    stats    = EWAS_LIMMA.out.stats    // channel: [ meta, full statistics per model ]
+    resolved = EWAS_LIMMA.out.resolved // channel: [ meta, resolved model ]
     top     = EWAS_LIMMA.out.top      // channel: [ meta, top CpGs per model ]
     summary = EWAS_SUMMARY.out.summary // channel: summary table across models
     multiqc = EWAS_SUMMARY.out.multiqc // channel: MultiQC table

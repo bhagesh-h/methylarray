@@ -9,6 +9,10 @@
                     "impute": "stub",
                     "preprocessCore": "stub"
                 },
+                "DMR_CALL": {
+                    "DMRcate": "stub",
+                    "dmrff": "stub"
+                },
                 "EPIDISH_RPC": {
                     "EpiDISH": "stub",
                     "HDF5Array": "stub",
@@ -72,6 +76,13 @@
                 "clocks",
                 "clocks/clocks.tsv",
                 "clocks/clocks_coverage.tsv",
+                "dmr",
+                "dmr/age",
+                "dmr/age/dmr_age_consensus.bed",
+                "dmr/age/dmr_age_consensus.tsv",
+                "dmr/age/dmr_age_dmrcate.tsv",
+                "dmr/age/dmr_age_dmrff.tsv",
+                "dmr/age/dmr_age_summary.json",
                 "ewas",
                 "ewas/age",
                 "ewas/age/ewas_age_design_check.tsv",
@@ -130,6 +141,11 @@
                 "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5",
                 "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4",
                 "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9",
+                "dmr_age_consensus.bed:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_consensus.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_dmrcate.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_dmrff.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
                 "ewas_age_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_age_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11",
                 "ewas_age_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -155,7 +171,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T14:38:47.215916896",
+        "timestamp": "2026-11-15T15:26:12.310755071",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

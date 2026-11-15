@@ -239,6 +239,15 @@ Each model of `--models` is tested at every CpG of the filtered data with limma:
 - Before testing, the trait is checked for association with plate and Sentrix row, and every covariate for collinearity (VIF). Confounding is flagged in `ewas_<model>_design_check.tsv`.
 - Thresholds: FDR < 0.05, `--p_epigenome_wide` (default 9e-8, the EPIC threshold of Mansell et al. 2019) and `--p_suggestive` (default 1e-5).
 
+## Differentially methylated regions
+
+For every tested model, regions are called from the same statistics as the CpG-level analysis, by two methods:
+
+- DMRcate (Peters et al. 2015): kernel smoothing of the moderated t-statistics along the genome (`--dmr_lambda` 1000 bp, `--dmr_c` 2). DMRcate's own EPIC v2 annotation step is not used, because it downloads the probe manifest and gene annotation during the run; the pipeline's probe annotation provides the positions and genes. Cross-hybridising probes, which DMRcate can remap to their off-target locus, are removed by the probe filter by default.
+- dmrff (Suderman et al. 2018): regions of neighbouring CpGs (at most 500 bp apart) whose combined effect is significant after Bonferroni correction, accounting for the correlation between CpGs.
+
+Region-level statistics are optimistic; the consensus of both methods is the more reliable result. `--skip_dmr` skips regions for every model, `skip_dmr: true` in the models file for one model. dmrff is not on conda or CRAN: the region task installs it from its source package at a fixed GitHub commit (`--dmrff_source`).
+
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
