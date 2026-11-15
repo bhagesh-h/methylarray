@@ -13,6 +13,10 @@
                     "DMRcate": "stub",
                     "dmrff": "stub"
                 },
+                "DNAM_SCORES": {
+                    "SummarizedExperiment": "stub",
+                    "data.table": "stub"
+                },
                 "ENRICHMENT_MISSMETHYL": {
                     "GO.db": "stub",
                     "missMethyl": "stub",
@@ -88,6 +92,9 @@
                 "dmr/age/dmr_age_dmrcate.tsv",
                 "dmr/age/dmr_age_dmrff.tsv",
                 "dmr/age/dmr_age_summary.json",
+                "dnam_scores",
+                "dnam_scores/dnam_scores.tsv",
+                "dnam_scores/dnam_scores_coverage.tsv",
                 "enrichment",
                 "enrichment/age",
                 "enrichment/age/enrichment_age.tsv",
@@ -155,6 +162,8 @@
                 "dmr_age_dmrcate.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "dmr_age_dmrff.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "dmr_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
+                "dnam_scores.tsv:md5,96281eaf2f130f426ffbd363cc7e12e3",
+                "dnam_scores_coverage.tsv:md5,d9ef34f02ce7dc8e688d44ea13bd9ada",
                 "enrichment_age.tsv:md5,adbf0efb474ed273fc10b48b133a9c58",
                 "enrichment_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
                 "ewas_age_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -182,7 +191,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T16:36:52.897337275",
+        "timestamp": "2026-11-15T17:02:10.711326519",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

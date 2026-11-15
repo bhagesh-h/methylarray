@@ -1,0 +1,5 @@
+score	file	cpgs	reference	doi	source_table	licence
+smoking	mccartney2018_smoking.tsv	233	McCartney DL et al. Epigenetic prediction of complex traits and death. Genome Biol. 2018;19:136	10.1186/s13059-018-1514-1	Additional file 1, Table S2	CC BY 4.0
+alcohol	mccartney2018_alcohol.tsv	450	McCartney DL et al. Epigenetic prediction of complex traits and death. Genome Biol. 2018;19:136	10.1186/s13059-018-1514-1	Additional file 1, Table S3	CC BY 4.0
+bmi	mccartney2018_bmi.tsv	1109	McCartney DL et al. Epigenetic prediction of complex traits and death. Genome Biol. 2018;19:136	10.1186/s13059-018-1514-1	Additional file 1, Table S1	CC BY 4.0
+il6	stevenson2021_il6.tsv	35	Stevenson AJ et al. Creating and validating a DNA methylation-based proxy for interleukin-6. J Gerontol A Biol Sci Med Sci. 2021;76(12):2284-2292	10.1093/gerona/glab046	Supplementary material, table of elastic net coefficients	CC BY 4.0

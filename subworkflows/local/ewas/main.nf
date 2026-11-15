@@ -17,6 +17,7 @@ workflow EWAS {
     ch_phenotypes     // channel: phenotype table, or []
     ch_cell_fractions // channel: cell fraction table, or []
     ch_ctrl_pcs       // channel: control-probe PCs table
+    ch_dnam_scores    // channel: DNA methylation scores table, or []
 
     main:
     def ch_model_files = ch_models
@@ -31,8 +32,9 @@ workflow EWAS {
             .combine(ch_phenotypes.map { phenotypes -> [ phenotypes ] })
             .combine(ch_cell_fractions.map { fractions -> [ fractions ] })
             .combine(ch_ctrl_pcs)
-            .map { meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs ->
-                [ meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs ]
+            .combine(ch_dnam_scores.map { scores -> [ scores ] })
+            .map { meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs, scores ->
+                [ meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs, scores ]
             }
     )
 

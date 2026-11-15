@@ -1,0 +1,89 @@
+name: dnam_scores
+description: DNA methylation scores as weighted sums over published CpG sets (smoking, alcohol, BMI, IL-6) on the detection-masked CpG-level betas of the arrays that passed QC, with legacy-ID matching and coverage per score
+keywords:
+  - dna methylation
+  - methylation array
+  - methylation score
+  - smoking
+tools:
+  - r:
+      description: "R language and environment for statistical computing"
+      homepage: https://www.r-project.org
+      documentation: https://www.r-project.org
+      licence: ["GPL-2.0-or-later"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the preprocessing method as id
+          e.g. [ id:'minfi' ]
+    - se:
+        type: directory
+        description: SummarizedExperiment of the preprocessing route (assay beta, detection-masked)
+    - retained:
+        type: file
+        description: Arrays that passed sample QC, one name per line
+        pattern: "*.txt"
+        ontologies:
+          - edam: http://edamontology.org/format_2330
+    - annotation:
+        type: file
+        description: Probe annotation table (cpg_id, epicv1_id, hm450_id)
+        pattern: "*.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+  - weights:
+      type: file
+      description: Score weights (cpg_id, weight), one file per score, from assets/dnam_scores
+      pattern: "*.tsv"
+      ontologies:
+        - edam: http://edamontology.org/format_3475
+  - sources:
+      type: file
+      description: assets/dnam_scores/sources.tsv - score name, weight file, CpG count, reference, DOI, table and licence
+      pattern: "sources.tsv"
+      ontologies:
+        - edam: http://edamontology.org/format_3475
+output:
+  scores:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}.tsv":
+          type: file
+          description: One row per array, one dnam_<score> column per score
+          pattern: "*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  coverage:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_coverage.tsv":
+          type: file
+          description: Per score the CpGs, present CpGs (and found by old ID), share present, filled values and reference
+          pattern: "*_coverage.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_coverage_mqc.tsv":
+          type: file
+          description: MultiQC table of the score coverage
+          pattern: "*_mqc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

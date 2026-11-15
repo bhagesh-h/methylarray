@@ -272,9 +272,11 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Wielscher M, Mandaviya PR, Kuehnel B, et al. DNA methylation signature of chronic low-grade inflammation and its role in cardio-respiratory diseases. Nat Commun. 2022;13:2408.
 
-- DNA methylation IL-6 score
+- [DNA methylation IL-6 score](https://doi.org/10.1093/gerona/glab046)
 
   > Stevenson AJ, Gadd DA, Hillary RF, et al. Creating and validating a DNA methylation-based proxy for interleukin-6. J Gerontol A Biol Sci Med Sci. 2021;76(12):2284-2292.
+
+  The smoking, alcohol, BMI and IL-6 weights in `assets/dnam_scores` are taken from the supplementary tables of McCartney et al. (2018) and Stevenson et al. (2021), both published under CC BY 4.0; `assets/dnam_scores/sources.tsv` names each table.
 
 - [EpiScores](https://doi.org/10.7554/eLife.71802)
 

@@ -11,7 +11,7 @@
 #   5. Thresholds: FDR < 0.05, P < 9e-8 (EPIC) and P < 1e-5
 # Token expansion: @cells = cc_CD4T, cc_CD8T, cc_B, cc_NK, cc_Mono (granulocytes
 # as reference); @ctrlpcs = the kept control-probe PCs (ctrlpc1..k); @technical =
-# plate, sentrix_row; @sex = predicted_sex.
+# plate, sentrix_row; @sex = predicted_sex; @smoking = dnam_smoking (McCartney et al. 2018).
 #
 
 prefix <- "${prefix}"
@@ -22,6 +22,7 @@ sample_qc_file <- "${sample_qc}"
 phenotypes_file <- "${phenotypes}"
 cells_file <- "${cell_fractions}"
 ctrl_file <- "${ctrl_pcs}"
+scores_file <- "${dnam_scores}"
 
 defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000")
 parse_args <- function(x, defaults) {
@@ -85,6 +86,7 @@ if (nzchar(ctrl_file)) {
     pcs <- grep("^ctrl_PC", names(ctrl), value = TRUE)
     if (length(pcs) > 0) join(setnames(ctrl[, c("sample", pcs), with = FALSE], pcs, sub("^ctrl_PC", "ctrlpc", pcs)))
 }
+if (nzchar(scores_file)) join(read_table(scores_file))
 if (nzchar(phenotypes_file)) join(read_table(phenotypes_file))
 
 # Covariate tokens
@@ -102,7 +104,10 @@ expand <- function(covariate) {
         },
         "@technical" = c("plate", "sentrix_row"),
         "@sex" = "predicted_sex",
-        "@smoking" = stop("Model '", model[["name"]], "' uses @smoking, but the DNA methylation smoking score is not available yet"),
+        "@smoking" = {
+            if (!"dnam_smoking" %in% names(covariates)) stop("Model '", model[["name"]], "' uses @smoking, but no DNA methylation smoking score is available (--skip_dnam_scores, or smoking not in --dnam_scores)")
+            "dnam_smoking"
+        },
         covariate)
 }
 covariate_names <- unique(unlist(lapply(as.character(unlist(model[["covariates"]])), expand)))

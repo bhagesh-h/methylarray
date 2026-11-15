@@ -312,9 +312,6 @@ def validateModels(models, samplesheet_rows, phenotype_columns) {
         if (model.trait in fixed) {
             problems << "model '${model.name}' lists its trait '${model.trait}' as a covariate"
         }
-        if ('dnam_smoking' in fixed || model.trait == 'dnam_smoking') {
-            problems << "model '${model.name}' uses the DNA methylation smoking score (@smoking or dnam_smoking), which is not available yet"
-        }
         if (model.block && model.block in fixed) {
             problems << "model '${model.name}' uses '${model.block}' both as block and as covariate"
         }
@@ -392,7 +389,8 @@ def toolCitationText() {
     def ewas = params.models ? "Each association model was fitted at every CpG with limma (Ritchie et al. 2015) on M-values with eBayes moderation (trend and robust), effect sizes were taken from the same model on beta values, and test statistics were corrected for bias and inflation with bacon (van Iterson et al. 2017). CpGs were reported at FDR < 0.05 and at P < ${params.p_epigenome_wide} (Mansell et al. 2019)." : ''
     def dmr = params.models && !params.skip_dmr ? "Differentially methylated regions were called with DMRcate (Peters et al. 2015; lambda ${params.dmr_lambda}, C ${params.dmr_c}) and dmrff (Suderman et al. 2018) from the same model statistics, and regions found by both methods in the same direction were reported as consensus regions." : ''
     def enrichment = params.models && !params.skip_enrichment ? "Gene set enrichment of the CpGs at FDR < 0.05 against all tested CpGs was tested with missMethyl (Maksimovic et al. 2021), which accounts for the number of CpGs per gene, for Gene Ontology and KEGG terms and the MSigDB gene set collections." : ''
-    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, exploration, ewas, dmr, enrichment, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+    def scores = params.skip_dnam_scores ? '' : "DNA methylation scores for smoking, alcohol and BMI (McCartney et al. 2018) and IL-6 (Stevenson et al. 2021) were computed as weighted sums of the published CpG sets."
+    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, scores, exploration, ewas, dmr, enrichment, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
 }
 
 //
@@ -429,6 +427,8 @@ def toolBibliographyText() {
         dmrcate: referenceHtml('Peters, T. J., Buckley, M. J., Statham, A. L., et al.', 2015, 'De novo identification of differentially methylated regions in the human genome', 'Epigenetics & Chromatin, 8, 6', '10.1186/1756-8935-8-6'),
         dmrff: referenceHtml('Suderman, M., Staley, J. R., French, R., Arathimos, R., Simpkin, A., & Tilling, K.', 2018, 'dmrff: identifying differentially methylated regions efficiently with power and control', 'bioRxiv', '10.1101/508556'),
         missmethyl: referenceHtml('Maksimovic, J., Oshlack, A., & Phipson, B.', 2021, 'Gene set enrichment analysis for genome-wide DNA methylation data', 'Genome Biology, 22, 173', '10.1186/s13059-021-02388-x'),
+        mccartney2018: referenceHtml('McCartney, D. L., Hillary, R. F., Stevenson, A. J., et al.', 2018, 'Epigenetic prediction of complex traits and death', 'Genome Biology, 19, 136', '10.1186/s13059-018-1514-1'),
+        stevenson2021: referenceHtml('Stevenson, A. J., Gadd, D. A., Hillary, R. F., et al.', 2021, 'Creating and validating a DNA methylation-based proxy for interleukin-6', 'The Journals of Gerontology: Series A, 76(12), 2284-2292', '10.1093/gerona/glab046'),
         multiqc: referenceHtml('Ewels, P., Magnusson, M., Lundin, S., & Käller, M.', 2016, 'MultiQC: summarize analysis results for multiple tools and samples in a single report', 'Bioinformatics, 32(19), 3047-3048', '10.1093/bioinformatics/btw354')
     ]
     def minfi_norm_refs = [ noob: ['noob'], funnorm: ['funnorm'], quantile: ['quantile'], swan: ['swan', 'noob'] ]
@@ -441,7 +441,7 @@ def toolBibliographyText() {
     def qc_keys = params.skip_ewastools ? [] : ['ewastools']
     def cell_keys = params.tissue == 'blood' ? ['epidish', 'luo2023'] : []
     def clock_keys = params.skip_clocks ? [] : ['dnamethyage'] + (params.clocks.tokenize(',').contains('DunedinPACE') ? ['dunedinpace'] : [])
-    def exploration_keys = ['lehne2015'] + (params.n_pcs == 'auto' ? ['rmt'] : [])
+    def exploration_keys = (params.skip_dnam_scores ? [] : ['mccartney2018', 'stevenson2021']) + ['lehne2015'] + (params.n_pcs == 'auto' ? ['rmt'] : [])
     def ewas_keys = params.models ? ['limma', 'bacon', 'mansell2019'] + (params.skip_dmr ? [] : ['dmrcate', 'dmrff']) + (params.skip_enrichment ? [] : ['missmethyl']) : []
     return (keys + qc_keys + ['peters2024', 'zhou2017'] + cell_keys + clock_keys + exploration_keys + ewas_keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
 }

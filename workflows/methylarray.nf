@@ -10,6 +10,7 @@ include { SAMPLE_QC              } from '../subworkflows/local/sample_qc'
 include { PROBE_FILTER           } from '../subworkflows/local/probe_filter'
 include { CELL_COMPOSITION       } from '../subworkflows/local/cell_composition'
 include { CLOCKS                 } from '../subworkflows/local/clocks'
+include { DNAM_SCORE             } from '../subworkflows/local/dnam_scores'
 include { EXPLORATION            } from '../subworkflows/local/exploration'
 include { EWAS                   } from '../subworkflows/local/ewas'
 include { DMR                    } from '../subworkflows/local/dmr'
@@ -102,6 +103,16 @@ workflow METHYLARRAY {
     }
 
     //
+    // SUBWORKFLOW: DNA methylation scores (smoking, alcohol, BMI, IL-6)
+    //
+    def ch_dnam_scores = channel.value([])
+    if (!params.skip_dnam_scores) {
+        DNAM_SCORE(ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation)
+        ch_dnam_scores = DNAM_SCORE.out.scores.map { _meta, scores -> scores }
+        ch_multiqc_files = ch_multiqc_files.mix(DNAM_SCORE.out.multiqc.map { _meta, table -> table })
+    }
+
+    //
     // SUBWORKFLOW: Exploratory analysis (control-probe PCs, PCA associations)
     //
     EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
@@ -111,7 +122,7 @@ workflow METHYLARRAY {
     // SUBWORKFLOW: Epigenome-wide association, one model per entry of --models
     //
     EWAS(ch_models, ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, ch_phenotypes, ch_cell_fractions,
-        EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs })
+        EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_dnam_scores)
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
 
     //
