@@ -1,0 +1,9 @@
+{
+    "model": { "name": "score", "trait": "score", "trait_type": "continuous", "skip_dmr": false },
+    "covariates": [],
+    "n": 38,
+    "dropped": [
+        { "sample": "S03", "reason": "missing score" },
+        { "sample": "S17", "reason": "missing score" }
+    ]
+}

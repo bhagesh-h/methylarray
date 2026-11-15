@@ -372,6 +372,48 @@
                 }
             }
         },
+        "region_options": {
+            "title": "Region options",
+            "type": "object",
+            "fa_icon": "fas fa-map",
+            "description": "Differentially methylated regions with DMRcate and dmrff.",
+            "properties": {
+                "skip_dmr": {
+                    "type": "boolean",
+                    "description": "Skip the region analysis for every model (single models: `skip_dmr: true` in the models file).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "dmr_lambda": {
+                    "type": "integer",
+                    "default": 1000,
+                    "minimum": 1,
+                    "description": "DMRcate kernel bandwidth in base pairs (lambda).",
+                    "help_text": "The DMRcate default; Peters et al. (2015) recommend lambda = 1000 with C = 2.",
+                    "fa_icon": "fas fa-arrows-alt-h"
+                },
+                "dmr_c": {
+                    "type": "number",
+                    "default": 2,
+                    "minimum": 0.2,
+                    "description": "DMRcate scaling factor of the kernel bandwidth (C).",
+                    "fa_icon": "fas fa-sliders-h"
+                },
+                "dmr_min_cpgs": {
+                    "type": "integer",
+                    "default": 2,
+                    "minimum": 2,
+                    "description": "Minimum number of CpGs in a region (DMRcate and dmrff).",
+                    "fa_icon": "fas fa-sort-numeric-up"
+                },
+                "dmrff_source": {
+                    "type": "string",
+                    "default": "https://github.com/perishky/dmrff/archive/8e0469e5238c4c2de84746af143a733600537be4.tar.gz",
+                    "description": "dmrff source package (URL or local path), installed by the region task.",
+                    "help_text": "dmrff is not on conda or CRAN. The default is version 1.1.2 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
+                    "fa_icon": "fas fa-box"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -547,6 +589,9 @@
         },
         {
             "$ref": "#/$defs/association_options"
+        },
+        {
+            "$ref": "#/$defs/region_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

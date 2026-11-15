@@ -16,6 +16,7 @@ The directories listed below will be created in the results directory after the 
 - [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration and clock coverage per array
 - [Exploratory analysis](#exploratory-analysis): control-probe PCs, PCA of the methylation data and its associations with technical and biological variables
 - [Association models](#association-models): epigenome-wide association results per model of `--models`
+- [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
@@ -128,6 +129,16 @@ Only with `--models`.
   - `ewas_<model>_design_check.tsv`: association of the trait with plate and Sentrix row (`confounded` below P = 0.01), and the variance inflation factor of each design column (`collinear` above 10).
   - `ewas_<model>_resolved.json`: the model with its covariate tokens expanded, the number of complete cases, and every array left out with its reason.
   - `ewas_<model>_summary.json`: the per-model values of `ewas_summary.tsv`.
+
+### Differentially methylated regions
+
+Only with `--models`, for the tested models without `skip_dmr`, and not with `--skip_dmr`.
+
+- `dmr/<model>/`
+  - `dmr_<model>_dmrcate.tsv`: DMRcate regions per contrast: position, number of CpGs, minimum smoothed FDR, Stouffer, harmonic mean FDR and Fisher P, maximum and mean delta-beta, and the genes of the CpGs in the region.
+  - `dmr_<model>_dmrff.tsv`: dmrff regions per contrast at Bonferroni-adjusted P < 0.05 with at least `--dmr_min_cpgs` CpGs: position, number of CpGs, combined estimate (M-value scale), SE, z, P, adjusted P and genes.
+  - `dmr_<model>_consensus.tsv` and `.bed`: regions found by both methods that overlap and change in the same direction. Regions found by one method only are in the method tables and have lower confidence.
+  - `dmr_<model>_summary.json`: the number of CpGs, CpGs at FDR < 0.05 and regions per method and contrast, or why the analysis did not run.
 
 ### Reference resources
 

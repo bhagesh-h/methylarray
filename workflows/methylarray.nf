@@ -12,6 +12,7 @@ include { CELL_COMPOSITION       } from '../subworkflows/local/cell_composition'
 include { CLOCKS                 } from '../subworkflows/local/clocks'
 include { EXPLORATION            } from '../subworkflows/local/exploration'
 include { EWAS                   } from '../subworkflows/local/ewas'
+include { DMR                    } from '../subworkflows/local/dmr'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -111,6 +112,13 @@ workflow METHYLARRAY {
     EWAS(ch_models, ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, ch_phenotypes, ch_cell_fractions,
         EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs })
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
+
+    //
+    // SUBWORKFLOW: Differentially methylated regions of every model
+    //
+    if (!params.skip_dmr) {
+        DMR(EWAS.out.stats, EWAS.out.resolved, PROBE_FILTER.out.se, params.dmrff_source)
+    }
 
     //
     // Collate and save software versions
