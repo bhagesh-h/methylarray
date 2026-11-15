@@ -26,6 +26,10 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - GEO submission files (#32, `--export_geo`): processed matrix (normalised beta values with detection p-values), unnormalised methylated and unmethylated signal from the IDAT files, and a sample table with the IDAT file names, for the arrays that passed sample QC (`EXPORT_GEO`).
 - Study-wide threshold across models (#32): `EWAS_SUMMARY` reports the effective number of independent tests over the tested models and contrasts (Meff, Galwey 2009, from the correlation of their t statistics), `p_study_wide` and its hits; shown in the report.
 - PCA outlier flags (#32): `EXPLORATION_PCA` writes `pca_outliers.tsv`, a robust Mahalanobis distance on PC1 and PC2 with a flag above the chi-square 0.999 quantile. Report only; shown in MultiQC and the report.
+- Clock, score and cell associations (`BIOMARKERS_ASSOCIATE`): agreement of the accelerations and scores, cell fractions against them and against age, sex and the phenotypes, accelerations against the DNA plate and BeadChip, every acceleration and score against every phenotype (plain and with cells held), and quartile groups of acceleration with trend tests; aggregates only (`biomarkers/`), with MultiQC heatmaps.
+- Standardised weights of every weighted-sum clock and DNA methylation score (`clocks_weights.tsv`, `dnam_scores_weights.tsv`) and the number of clock CpGs with a common SNP.
+- SNP genotype summaries from the ewastools SNP probes (`ewastools_snp_summary.tsv`, `ewastools_snp_histograms.tsv`): heterozygosity at autosomal and X-like SNPs, highest pairwise genotype agreement; MultiQC table.
+- Report: SNP genotypes, clock and score weights, agreement and cell, batch, phenotype and quartile-group plots, R-squared heatmap of the principal components with their variance shares, and gene set enrichment dot plots; MultiQC tables of the top gene sets per model.
 - Developer guide (`docs/developer.md`) and `dev/nfdev container`, which builds a module's images from its `environment.yml` with Wave.
 
 ### `Changed`

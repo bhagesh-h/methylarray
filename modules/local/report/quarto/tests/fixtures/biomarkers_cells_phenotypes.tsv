@@ -1,0 +1,25 @@
+cell	trait	type	estimate	p	n	q
+B	Age	continuous	-0.01231	0.9166	78	0.9821
+B	Men	binary	-0.0299	0.8987	78	0.9821
+B	bmi	continuous	0.07929	0.4991	78	0.9821
+B	mets (yes)	binary	0.273	0.2536	78	0.9821
+CD4T	Age	continuous	0.02146	0.855	78	0.9821
+CD4T	Men	binary	0.08665	0.7119	78	0.9821
+CD4T	bmi	continuous	-0.07016	0.5495	78	0.9821
+CD4T	mets (yes)	binary	-0.1904	0.4266	78	0.9821
+CD8T	Age	continuous	-0.07456	0.5247	78	0.9821
+CD8T	Men	binary	-0.08622	0.7125	78	0.9821
+CD8T	bmi	continuous	-0.1569	0.1774	78	0.9821
+CD8T	mets (yes)	binary	-0.1655	0.4885	78	0.9821
+NK	Age	continuous	0.06898	0.5569	78	0.9821
+NK	Men	binary	-0.06178	0.792	78	0.9821
+NK	bmi	continuous	-0.002631	0.9821	78	0.9821
+NK	mets (yes)	binary	-0.04053	0.8657	78	0.9821
+Mono	Age	continuous	0.08036	0.4936	78	0.9821
+Mono	Men	binary	-0.01087	0.963	78	0.9821
+Mono	bmi	continuous	-0.1585	0.1735	78	0.9821
+Mono	mets (yes)	binary	-0.2753	0.2482	78	0.9821
+Gran	Age	continuous	-0.0362	0.7579	78	0.9821
+Gran	Men	binary	-0.04503	0.8478	78	0.9821
+Gran	bmi	continuous	0.1772	0.1282	78	0.9821
+Gran	mets (yes)	binary	0.3134	0.1891	78	0.9821

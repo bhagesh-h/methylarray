@@ -100,6 +100,7 @@ if (length(male) > 0 && length(female) > 0) {
 # SNP genotypes
 raw <- correct_dye_bias(mask(detectionP(raw), 0.01))
 snp_rows <- raw[["manifest"]][probe_type == "rs", index]
+snp_ids <- raw[["manifest"]][probe_type == "rs", probe_id]
 snps <- beta_values(raw)[snp_rows, , drop = FALSE]
 rm(raw)
 invisible(gc())
@@ -144,6 +145,62 @@ qc <- data.frame(
     check.names = FALSE
 )
 write.table(qc, paste0(prefix, "_qc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, na = "")
+
+# SNP summaries (aggregates only, no genotypes are written): genotypes called
+# from the SNP probe betas (below 0.2, 0.2 to 0.8, above 0.8 = 0, 1, 2 B
+# alleles). SNPs at which men are almost never heterozygous (below 2%) and
+# women often are (above 10%) behave as X-chromosome SNPs; sex is the reported
+# sex, or the predicted sex where none is reported. Per array: share of
+# heterozygous calls at the autosomal and the X-like SNPs, and the highest share
+# of identical autosomal genotypes with any other array. Histograms of the SNP
+# betas and of the pairwise agreement.
+geno <- ifelse(snps < 0.2, 0L, ifelse(snps > 0.8, 2L, 1L))
+rs <- sub("_.*", "", snp_ids)
+sex <- ifelse(samples[["reported_sex"]] %in% c("M", "F"), samples[["reported_sex"]], c(male = "M", female = "F")[predicted])
+x_like <- rep(FALSE, nrow(geno))
+if (sum(sex %in% "M") >= 5 && sum(sex %in% "F") >= 5) {
+    het_men <- rowMeans(geno[, sex %in% "M", drop = FALSE] == 1L, na.rm = TRUE)
+    het_women <- rowMeans(geno[, sex %in% "F", drop = FALSE] == 1L, na.rm = TRUE)
+    x_like <- !is.na(het_men) & !is.na(het_women) & het_men < 0.02 & het_women > 0.10
+}
+autosomal <- !x_like & !duplicated(rs)
+g <- geno[autosomal, , drop = FALSE]
+g[is.na(g)] <- -1L
+agreement <- (crossprod(g == 0L) + crossprod(g == 1L) + crossprod(g == 2L)) / max(1, nrow(g))
+diag(agreement) <- NA
+max_agreement <- if (n > 1) apply(agreement, 2, max, na.rm = TRUE) else rep(NA_real_, n)
+x_rows <- x_like & !duplicated(rs)
+snp_summary <- data.frame(
+    sample = samples[["sample"]],
+    sex_used = sex,
+    snp_outlier = round(snp_outlier, 3),
+    het_share_autosomal = round(colMeans(geno[autosomal, , drop = FALSE] == 1L, na.rm = TRUE), 4),
+    het_share_x = if (any(x_rows)) round(colMeans(geno[x_rows, , drop = FALSE] == 1L, na.rm = TRUE), 4) else NA_real_,
+    max_agreement = round(max_agreement, 4),
+    snps_autosomal = sum(autosomal),
+    snps_x_like = sum(x_rows)
+)
+write.table(snp_summary, paste0(prefix, "_snp_summary.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, na = "")
+histogram <- function(x, breaks, kind) {
+    h <- hist(x[is.finite(x)], breaks = breaks, plot = FALSE)
+    data.frame(histogram = kind, bin_start = head(breaks, -1), bin_end = tail(breaks, -1), count = h[["counts"]])
+}
+write.table(rbind(histogram(c(snps[autosomal, ]), seq(0, 1, by = 0.02), "snp_beta"),
+                  histogram(agreement[upper.tri(agreement)], seq(0, 1, by = 0.02), "pair_agreement")),
+            paste0(prefix, "_snp_histograms.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE)
+
+# MultiQC: SNP summary per array
+writeLines(c(
+    "# id: 'snp_genotypes'",
+    "# section_name: 'SNP genotypes'",
+    "# description: 'From the SNP probes of the array (ewastools). Outlier: contamination score, higher (towards 0) is worse. Heterozygous: share of heterozygous calls at the autosomal SNPs and at the SNPs that behave as X-chromosome SNPs (near 0 in men). Max agreement: highest share of identical autosomal genotypes with any other array; values near 1 mean the same person.'",
+    "# plot_type: 'table'"
+), paste0(prefix, "_snp_mqc.tsv"))
+write.table(data.frame(Sample = snp_summary[["sample"]], `SNP outlier` = snp_summary[["snp_outlier"]],
+                       `Heterozygous (%)` = round(100 * snp_summary[["het_share_autosomal"]], 1),
+                       `Heterozygous X (%)` = round(100 * snp_summary[["het_share_x"]], 1),
+                       `Max agreement (%)` = round(100 * snp_summary[["max_agreement"]], 1), check.names = FALSE),
+            paste0(prefix, "_snp_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")
 write.table(conflict_table, paste0(prefix, "_snp_conflicts.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE)
 
 # Software versions

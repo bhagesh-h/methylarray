@@ -19,6 +19,7 @@ The directories listed below will be created in the results directory after the 
 - [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
 - [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment of the significant CpGs per model
 - [DNA methylation scores](#dna-methylation-scores): smoking, alcohol, BMI and IL-6 scores per array
+- [Clocks, scores and cell fractions](#clocks-scores-and-cell-fractions): their agreement, their relation to the cell fractions, the batches and the phenotypes, and quartile groups of acceleration
 - [GEO submission files](#geo-submission-files): processed matrix, signal intensities and a sample table, when `--export_geo` is set
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [Analysis report](#analysis-report): one HTML report of the run
@@ -75,6 +76,8 @@ Rows are probes (EPIC v2 probe IDs such as `cg00000029_TC21`; `rowData(se)$cpg_i
 - `qc/ewastools/` (not with `--skip_ewastools`)
   - `ewastools_qc.tsv`: per array, the 21 Illumina BeadArray Controls Reporter metrics (`ctrl_*`), the metrics below Illumina's thresholds (`failed_controls`), X and Y intensities, the ewastools sex prediction, the SNP outlier score, the number of SNP probes, the inferred donor and whether the array is part of an identity conflict.
   - `ewastools_controls.tsv.gz`: raw intensities of every control probe in both channels: one row per probe and channel (`channel`, `group`, `name`), one column per array. The non-negative controls are the input of the control-probe PCs (see [Exploratory analysis](#exploratory-analysis)).
+  - `ewastools_snp_summary.tsv`: per array, from the SNP probes: the sex used (reported, or predicted where none is reported), the SNP outlier score, the share of heterozygous calls at the autosomal SNPs and at the SNPs that behave as X-chromosome SNPs (men almost never heterozygous), the highest share of identical autosomal genotypes with any other array (near 1: the same person), and the number of autosomal and X-like SNPs. No genotypes are written.
+  - `ewastools_snp_histograms.tsv`: counts of the autosomal SNP probe betas and of the pairwise genotype agreement, in bins of 0.02, for the report.
   - `ewastools_snp_conflicts.tsv`: pairs of arrays whose genotypes contradict the samplesheet: arrays from the same `replicate_group` with different genotypes, or arrays from different donors with the same genotypes. Each pair has its genotype agreement (0 to 1); pairs in the same `group` form one connected conflict.
 
 How the status is set:
@@ -112,7 +115,8 @@ Only with `--tissue blood` (default).
 Not with `--skip_clocks`.
 
 - `clocks/clocks.tsv`: one row per array that passed QC, with the reported age (`age`) and one column per clock of `--clocks`. With at least six reported ages, `eaa_<clock>` holds the age acceleration (residual of the clock on age) of the clocks that estimate age, and, with at least 14 such arrays, `ieaa_<clock>` the intrinsic age acceleration (also adjusted for six of the seven `centDHSbloodDMC` cell fractions).
-- `clocks/clocks_coverage.tsv`: for each clock, its CpGs, how many are in the data (`present`) and how many of those only under their EPIC v1 or 450K ID (`present_by_legacy_id`), the share present, the values that failed detection and were set to the CpG mean (`filled_values`), and notes.
+- `clocks/clocks_coverage.tsv`: for each clock, its CpGs, how many are in the data (`present`), how many have a common SNP (minor allele frequency 1% or more) at the CpG or extension base (`snp_cpgs`), how many are present only under their EPIC v1 or 450K ID (`present_by_legacy_id`), the share present, the values that failed detection and were set to the CpG mean (`filled_values`), and notes.
+- `clocks/clocks_weights.tsv`: for each clock that is a weighted sum of CpGs (not the principal-component clocks or epiTOC2), every CpG with its gene, published weight, SD of its beta value in these arrays, standardised weight (weight times SD, in the clock's units per SD of methylation; sorted by its size) and whether it has a common SNP.
 
 ### Exploratory analysis
 
@@ -160,7 +164,19 @@ Only with `--models`, and not with `--skip_enrichment`. Every model gets a folde
 Not with `--skip_dnam_scores`.
 
 - `dnam_scores/dnam_scores.tsv`: one row per array that passed QC, one column `dnam_<score>` per score of `--dnam_scores`: the weighted sum of the beta values of the score's CpGs present on the array. Higher values mean more smoking, alcohol, BMI or IL-6 as predicted from methylation; the scale is that of the published weights, so compare scores within a study.
+- `dnam_scores/dnam_scores_weights.tsv`: for each score, every CpG present with its weight, the SD of its beta value and the standardised weight.
 - `dnam_scores/dnam_scores_coverage.tsv`: per score, its CpGs, how many are in the data (and how many only under their EPIC v1 or 450K ID), the share present, the values that failed detection and were set to the CpG mean, and the reference.
+
+### Clocks, scores and cell fractions
+
+Not with both `--skip_clocks` and `--skip_dnam_scores`. Only aggregates are written, never values of single arrays. Acceleration is a clock's residual on reported age; with cells held, it is also adjusted for the cell lineages other than granulocytes. Phenotype columns with more than two numeric values are continuous, columns with two values binary (reference `no`, `0`, `false` or the first in sort order); other columns and columns with fewer than 20 values are left out. P-values are adjusted with Benjamini-Hochberg (`q`).
+
+- `biomarkers/biomarkers_agreement.tsv`: Spearman correlation of every pair of accelerations and scores.
+- `biomarkers/biomarkers_cells_measures.tsv`: Spearman correlation of each EpiDISH cell lineage with each acceleration and score.
+- `biomarkers/biomarkers_cells_phenotypes.tsv`: each cell lineage against age, sex and every phenotype, with age and sex held: the estimate in SD of the fraction per SD of a continuous trait, or with a binary one.
+- `biomarkers/biomarkers_batch.tsv`: each acceleration and score against the DNA plate, the BeadChip and the Sentrix row (adjusted R-squared and F-test).
+- `biomarkers/biomarkers_phenotypes.tsv`: each acceleration and score against every phenotype, plain and with cells held: Spearman correlation for a continuous phenotype, difference in SD between the groups of a binary one (t-test).
+- `biomarkers/biomarkers_quartiles.tsv`: for each acceleration, the bottom quarter (decelerated), middle half (normal) and top quarter (accelerated): the median of every characteristic (percentage for binary ones), its mean z per group, and a trend test across the ordered groups (Kendall's tau, equivalent to the Jonckheere-Terpstra test).
 
 ### GEO submission files
 
@@ -184,7 +200,7 @@ Columns are named after the samplesheet sample names. Rename them before submiss
 
 Not with `--skip_report`.
 
-- `report/methylarray_report.html`: a self-contained HTML report (Quarto) of the run: run summary, sample QC with the flagged and failed arrays, probe attrition, cell composition, clock and score coverage with the agreement of the clocks with age, the PCA variance and associations, the association models (summary, QQ and Manhattan plots, top CpGs), consensus DMRs, the top gene sets per collection, the methods text with references and software versions, and limitations. It prints aggregates and plots, not individual phenotype values; sections of steps that did not run are left out.
+- `report/methylarray_report.html`: a self-contained HTML report (Quarto) of the run: run summary, sample QC with the flagged and failed arrays, probe attrition, cell composition, SNP genotypes (genotype groups, pairwise agreement, X-chromosome heterozygosity by sex, contamination), clock and score coverage with the agreement of the clocks with age, the largest standardised weights of each clock and score and the share of clock CpGs with a SNP, the agreement of the accelerations and scores, their relation to the cell fractions, the batches and the phenotypes, the quartile groups of acceleration, the PCA variance and the R-squared of each variable for each component, the association models (summary, QQ and Manhattan plots, top CpGs), consensus DMRs, dot plots and tables of the top gene sets per collection (GO, KEGG, MSigDB), the methods text with references and software versions, and limitations. It prints aggregates and plots, not individual phenotype values; sections of steps that did not run are left out.
 
 ### MultiQC
 
@@ -195,7 +211,7 @@ Not with `--skip_report`.
 
 [MultiQC](http://multiqc.info) is a visualization tool that generates a single HTML report summarising all samples in your project. Most of the pipeline QC results are visualised in the report and further statistics are available in the report data directory.
 
-The general statistics table shows, for every array, the QC status, the sex check, the SNP outlier score (with ewastools), and from the preprocessing route the percentage of detected and masked probes and the predicted sex, with the median log2 methylated intensity (minfi-based routes) or the mean intensity and red/green ratio (`sesame`). The Sample QC status table lists the reasons for every `FLAG` and `FAIL`, and the Sex check plot shows the X and Y intensities coloured by reported sex. Further sections follow the pipeline order: probe attrition, cell composition, clocks, DNA methylation scores, the PCA associations, variance and PC1 against PC2 (with the PCA outliers named), and the association summary. The report also lists the software versions of every step and a methods description with references. For more information about how to use MultiQC reports, see <http://multiqc.info>.
+The general statistics table shows, for every array, the QC status, the sex check, the SNP outlier score (with ewastools), and from the preprocessing route the percentage of detected and masked probes and the predicted sex, with the median log2 methylated intensity (minfi-based routes) or the mean intensity and red/green ratio (`sesame`). The Sample QC status table lists the reasons for every `FLAG` and `FAIL`, and the Sex check plot shows the X and Y intensities coloured by reported sex. Further sections follow the pipeline order: probe attrition, cell composition, clocks, DNA methylation scores, the SNP genotype table, the agreement of the accelerations and scores and their relation to the cell fractions and the phenotypes (heatmaps), the PCA associations, variance and PC1 against PC2 (with the PCA outliers named), the association summary, and one table of the top gene sets per model. The report also lists the software versions of every step and a methods description with references. For more information about how to use MultiQC reports, see <http://multiqc.info>.
 
 ### Pipeline information
 

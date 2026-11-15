@@ -242,6 +242,10 @@ Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked bet
 
 PCGrimAge needs the reported age and sex (`reported_age`, `reported_sex` in the samplesheet); arrays without them get NA. Age acceleration is computed when at least six arrays have a reported age. GrimAge, GrimAge2 and FitAge need licensed coefficients and are not available. BernabeuE2023c (cAge) is not in the default list: dnaMethyAge 0.2.0 fails for it when an array's estimate is below 20 years. A clock that fails gives NA, with the error in the notes of `clocks/clocks_coverage.tsv`. Intrinsic age acceleration needs at least five residual degrees of freedom after adjusting for age and six cell fractions, so at least 14 arrays with ages. Neither dnaMethyAge nor DunedinPACE is on conda or CRAN: the clock task installs them from their source packages at fixed GitHub commits. For runs without network access, download the two files once and pass their local paths.
 
+## Clocks, scores and cell fractions
+
+After the clocks, scores and cell composition, the pipeline relates them to each other and to the data it has: how the accelerations of the clocks (residuals on reported age) and the scores agree, how they follow the cell fractions, whether the DNA plate or BeadChip explains part of them, how each goes with every phenotype column (plain, and with the cell fractions held), and what characterises the bottom and top quarters of each acceleration. Phenotype columns are used as they are: numeric columns with more than two values as continuous, two-value columns as binary. Code categorical traits with more levels as separate yes/no columns if they should be included. The tables are in `biomarkers/` and the plots in the report; neither shows values of single arrays.
+
 ## Exploratory analysis
 
 The arrays that passed QC are summarised with two principal component analyses:

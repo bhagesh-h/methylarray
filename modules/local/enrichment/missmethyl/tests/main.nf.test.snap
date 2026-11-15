@@ -19,6 +19,9 @@
                     ]
                 ],
                 "2": [
+                    
+                ],
+                "3": [
                     "versions.yml:md5,f46892d57a56811b124895dfd7ea3f41"
                 ],
                 "enrichment": [
@@ -28,6 +31,9 @@
                         },
                         "enrichment_score.tsv:md5,adbf0efb474ed273fc10b48b133a9c58"
                     ]
+                ],
+                "multiqc": [
+                    
                 ],
                 "summary": [
                     [
@@ -42,7 +48,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T16:20:38.756613462",
+        "timestamp": "2026-11-15T23:17:24.740388187",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

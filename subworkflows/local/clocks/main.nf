@@ -32,5 +32,6 @@ workflow CLOCKS {
     emit:
     clocks   = CLOCKS_COMPUTE.out.clocks   // channel: [ meta, clock values per array ]
     coverage = CLOCKS_COMPUTE.out.coverage // channel: [ meta, CpG coverage per clock ]
+    weights  = CLOCKS_COMPUTE.out.weights  // channel: [ meta, standardised CpG weights per clock ]
     multiqc  = CLOCKS_COMPUTE.out.multiqc  // channel: [ meta, MultiQC custom content ]
 }

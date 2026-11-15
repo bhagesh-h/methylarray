@@ -78,8 +78,16 @@ rm(present, se)
 invisible(gc())
 
 # Old IDs of renamed CpGs (fread reads .gz files only with R.utils; base R decompresses instead)
+annotation_header <- names(fread(text = readLines(gzfile(annotation_file), n = 2), nrows = 0))
 annotation <- fread(text = readLines(gzfile(annotation_file)), na.strings = "",
-                    select = c("cpg_id", "epicv1_id", "hm450_id"), colClasses = "character")
+                    select = intersect(c("cpg_id", "epicv1_id", "hm450_id", "gene", "snp_common_1pt"), annotation_header),
+                    colClasses = "character")
+for (column in setdiff(c("gene", "snp_common_1pt"), names(annotation))) annotation[, (column) := NA_character_]
+# Per CpG: its first gene and whether any of its probes has a common SNP
+# (minor allele frequency 1% or more) at the CpG or the extension base
+cpg_info <- annotation[, .(gene = sub(";.*", "", na.omit(gene)[1]),
+                           snp = if (all(is.na(snp_common_1pt))) NA else any(toupper(snp_common_1pt) %in% "TRUE")),
+                       by = cpg_id]
 aliases <- unique(rbind(
     annotation[!is.na(epicv1_id) & epicv1_id != cpg_id, .(alias = epicv1_id, cpg_id)],
     annotation[!is.na(hm450_id) & hm450_id != cpg_id, .(alias = hm450_id, cpg_id)]
@@ -106,10 +114,12 @@ coefficient_cpgs <- function(clock) {
            else as.character(as.data.frame(coefs)[[1]])
     setdiff(unique(sub("_2\$", "", ids)), c("Intercept", "(Intercept)"))
 }
+to_cpg <- function(ids) ifelse(ids %in% aliases[["alias"]], aliases[["cpg_id"]][match(ids, aliases[["alias"]])], ids)
 coverage <- rbindlist(lapply(clocks, function(clock) {
     ids <- coefficient_cpgs(clock)
     on_data <- ids %in% rownames(beta)
     data.table(clock = clock, cpgs = length(ids), present = sum(on_data),
+               snp_cpgs = sum(cpg_info[["snp"]][match(to_cpg(ids), cpg_info[["cpg_id"]])] %in% TRUE),
                present_by_legacy_id = sum(ids %in% aliases[["alias"]]),
                share_present = round(mean(on_data), 4),
                filled_values = sum(is.na(beta[intersect(ids, rownames(beta)), , drop = FALSE])))
@@ -119,6 +129,38 @@ coverage <- rbindlist(lapply(clocks, function(clock) {
 beta <- beta[rowSums(!is.na(beta)) > 0, , drop = FALSE]
 missing <- which(is.na(beta), arr.ind = TRUE)
 if (nrow(missing) > 0) beta[missing] <- rowMeans(beta, na.rm = TRUE)[missing[, 1]]
+
+# Standardised weights: each CpG's coefficient times the SD of its beta value in
+# these arrays, in the clock's own units per SD (the clocks that are weighted
+# sums of CpGs; principal-component clocks and epiTOC2 have no per-CpG weights)
+clock_weights <- function(clock) {
+    if (clock == "DunedinPACE") {
+        w <- DunedinPACE:::mPACE_Models[["model_weights"]][[1]]
+        return(data.table(cpg = names(w), weight = unname(w)))
+    }
+    if (grepl("^PC[A-Z]", clock)) return(NULL)
+    env <- new.env()
+    data(list = clock, package = "dnaMethyAge", envir = env)
+    coefs <- get("coefs", env)
+    if (!is.data.frame(coefs) || !all(c("Probe", "Coefficient") %in% names(coefs))) return(NULL)
+    data.table(cpg = sub("_2\$", "", as.character(coefs[["Probe"]])), weight = as.numeric(coefs[["Coefficient"]]))[!cpg %in% c("Intercept", "(Intercept)")]
+}
+weights <- rbindlist(lapply(clocks, function(clock) {
+    w <- clock_weights(clock)
+    if (is.null(w) || nrow(w) == 0) return(NULL)
+    w <- w[weight != 0]
+    sds <- matrixStats::rowSds(beta[intersect(w[["cpg"]], rownames(beta)), , drop = FALSE])
+    w[, sd_beta := unname(sds[match(cpg, names(sds))])]
+    w[, standardised := weight * sd_beta]
+    info <- cpg_info[match(to_cpg(w[["cpg"]]), cpg_id)]
+    w[, `:=`(clock = clock, gene = info[["gene"]], snp = info[["snp"]])]
+    setcolorder(w, c("clock", "cpg", "gene", "weight", "sd_beta", "standardised", "snp"))
+    w[order(-abs(standardised))]
+}), fill = TRUE)
+if (nrow(weights) == 0) weights <- data.table(clock = character(), cpg = character(), gene = character(), weight = numeric(),
+                                              sd_beta = numeric(), standardised = numeric(), snp = logical())
+weights[, `:=`(weight = signif(weight, 6), sd_beta = signif(sd_beta, 4), standardised = signif(standardised, 4))]
+fwrite(weights, paste0(prefix, "_weights.tsv"), sep = "\\t", na = "")
 
 # Reported age and sex, and the cell fractions
 samples <- read.delim(samples_file, colClasses = "character", na.strings = c("", "NA"), check.names = FALSE)
@@ -190,11 +232,11 @@ fwrite(coverage, paste0(prefix, "_coverage.tsv"), sep = "\\t", na = "")
 writeLines(c(
     "# id: 'clock_coverage'",
     "# section_name: 'Epigenetic clocks'",
-    "# description: 'CpGs of each clock in the data (EPIC v2 does not measure every CpG of clocks trained on 450K or EPIC v1). Missing CpGs take the reference means of dnaMethyAge; values that failed detection take the CpG mean over the other arrays.'",
+    "# description: 'CpGs of each clock in the data (EPIC v2 does not measure every CpG of clocks trained on 450K or EPIC v1). Missing CpGs take the reference means of dnaMethyAge; values that failed detection take the CpG mean over the other arrays. SNP CpGs: clock CpGs with a common SNP at the CpG or extension base.'",
     "# plot_type: 'table'"
 ), paste0(prefix, "_coverage_mqc.tsv"))
 write.table(data.frame(Clock = coverage[["clock"]], CpGs = coverage[["cpgs"]], Present = coverage[["present"]],
-                       `Found by old ID` = coverage[["present_by_legacy_id"]], `Share present` = coverage[["share_present"]],
+                       `Found by old ID` = coverage[["present_by_legacy_id"]], `Share present` = coverage[["share_present"]], `SNP CpGs` = coverage[["snp_cpgs"]],
                        `Filled values` = coverage[["filled_values"]], check.names = FALSE),
             paste0(prefix, "_coverage_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE)
 

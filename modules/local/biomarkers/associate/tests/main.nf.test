@@ -1,0 +1,83 @@
+nextflow_process {
+
+    name "Test Process BIOMARKERS_ASSOCIATE"
+    script "../main.nf"
+    process "BIOMARKERS_ASSOCIATE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "biomarkers"
+    tag "biomarkers/associate"
+
+    // Simulated data (make_fixture.py): 80 arrays, two failed sample QC; the
+    // Horvath acceleration rises with BMI and plate P3 shifts the Hannum
+    // acceleration
+
+    test("clocks, scores, cells and phenotypes") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'biomarkers' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/clocks.tsv", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
+                    file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def read = { channel -> def t = path(channel[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+                t.drop(1).collect { values -> [t[0], values].transpose().collectEntries() } }
+            def phenotypes = read(process.out.phenotypes)
+            def batch = read(process.out.batch)
+            def quartiles = read(process.out.quartiles)
+            assertAll(
+                { assert process.success },
+                // the three-level 'group' column is left out, 'mets' is binary
+                { assert phenotypes.collect { row -> row.trait }.unique().sort() == ['Age', 'Men', 'bmi', 'mets (yes)'] },
+                { assert phenotypes.find { row -> row.measure == 'HorvathS2013 acceleration' && row.trait == 'bmi' && row.version == 'plain' }.q as double < 0.05 },
+                { assert batch.find { row -> row.measure == 'HannumG2013 acceleration' && row.batch == 'DNA plate' }.p as double < 0.05 },
+                { assert quartiles.find { row -> row.measure == 'HorvathS2013 acceleration' && row.trait == 'bmi' && row.group == 'accelerated' }.p_trend as double < 0.05 },
+                { assert read(process.out.agreement).size() == 6 },
+                { assert process.out.multiqc[0][1].size() == 3 },
+                { assert snapshot(process.out.agreement, process.out.cells_measures, process.out.cells_phenotypes, process.out.batch,
+                                  process.out.phenotypes, process.out.quartiles, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("clocks only - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'biomarkers' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/clocks.tsv", checkIfExists: true),
+                    [], [], []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

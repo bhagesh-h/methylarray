@@ -1,0 +1,13 @@
+measure	batch	adj_r2	p	levels	n
+HorvathS2013 acceleration	DNA plate	-0.02526	0.7766	4	78
+HorvathS2013 acceleration	BeadChip	-0.01203	0.5318	10	78
+HorvathS2013 acceleration	Sentrix row	-0.05134	0.8581	8	78
+HannumG2013 acceleration	DNA plate	0.2191	8.78e-05	4	78
+HannumG2013 acceleration	BeadChip	0.01544	0.3514	10	78
+HannumG2013 acceleration	Sentrix row	0.1781	0.003622	8	78
+DunedinPACE acceleration	DNA plate	-0.03399	0.9254	4	78
+DunedinPACE acceleration	BeadChip	0.02655	0.2898	10	78
+DunedinPACE acceleration	Sentrix row	-0.02797	0.6712	8	78
+dnam_smoking	DNA plate	-0.01293	0.5718	4	78
+dnam_smoking	BeadChip	-0.0541	0.8241	10	78
+dnam_smoking	Sentrix row	-0.03133	0.7001	8	78

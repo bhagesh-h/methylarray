@@ -179,8 +179,9 @@ results/
 ├── qc/                 preprocessing QC, ewastools QC, sample QC status
 ├── probe_filter/       filtered data (CpG and probe level), attrition and exclusion tables
 ├── cell_composition/   cell-type fractions and reference coverage
-├── clocks/             epigenetic clocks, age acceleration and coverage
-├── dnam_scores/        DNA methylation scores and coverage
+├── clocks/             epigenetic clocks, age acceleration, coverage and standardised weights
+├── dnam_scores/        DNA methylation scores, coverage and standardised weights
+├── biomarkers/         clocks, scores and cell fractions against each other, the batches and the phenotypes
 ├── exploration/        control-probe PCs, PCA scores, variance, associations, outlier flags
 ├── ewas/               statistics, top CpGs and design checks per model, summary across models
 ├── dmr/                DMRcate, dmrff and consensus regions per model

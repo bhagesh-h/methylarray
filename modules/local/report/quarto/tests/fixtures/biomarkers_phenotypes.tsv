@@ -1,0 +1,27 @@
+measure	trait	type	version	estimate	p	n	q
+HorvathS2013 acceleration	Men	binary	plain	-0.1537	0.5031	78	0.5031
+HorvathS2013 acceleration	bmi	continuous	plain	0.4194	0.0001324	78	0.0002649
+HorvathS2013 acceleration	mets (yes)	binary	plain	0.4428	0.05273	78	0.1055
+HannumG2013 acceleration	Men	binary	plain	0.532	0.01843	78	0.05793
+HannumG2013 acceleration	bmi	continuous	plain	0.1463	0.2013	78	0.2684
+HannumG2013 acceleration	mets (yes)	binary	plain	0.1112	0.6305	78	0.6305
+DunedinPACE acceleration	Men	binary	plain	0.4943	0.02897	78	0.05793
+DunedinPACE acceleration	bmi	continuous	plain	0.6267	8.346e-10	78	3.338e-09
+DunedinPACE acceleration	mets (yes)	binary	plain	0.7638	0.0006046	78	0.002418
+dnam_smoking	Age	continuous	plain	0.03012	0.7935	78	0.7935
+dnam_smoking	Men	binary	plain	-0.3088	0.1765	78	0.2354
+dnam_smoking	bmi	continuous	plain	0.08421	0.4636	78	0.4636
+dnam_smoking	mets (yes)	binary	plain	0.2808	0.2227	78	0.297
+HorvathS2013 acceleration	Men	binary	cells held	-0.1869	0.4151	78	0.4151
+HorvathS2013 acceleration	bmi	continuous	cells held	0.4907	5.105e-06	78	1.021e-05
+HorvathS2013 acceleration	mets (yes)	binary	cells held	0.5278	0.02026	78	0.04052
+HannumG2013 acceleration	Men	binary	cells held	0.4782	0.03477	78	0.06954
+HannumG2013 acceleration	bmi	continuous	cells held	0.1158	0.3127	78	0.3127
+HannumG2013 acceleration	mets (yes)	binary	cells held	0.1452	0.53	78	0.53
+DunedinPACE acceleration	Men	binary	cells held	0.4919	0.02976	78	0.06954
+DunedinPACE acceleration	bmi	continuous	cells held	0.5805	2.537e-08	78	1.015e-07
+DunedinPACE acceleration	mets (yes)	binary	cells held	0.6988	0.001827	78	0.007308
+dnam_smoking	Age	continuous	cells held	0.02198	0.8485	78	0.8485
+dnam_smoking	Men	binary	cells held	-0.3246	0.1552	78	0.2069
+dnam_smoking	bmi	continuous	cells held	0.1899	0.09588	78	0.1278
+dnam_smoking	mets (yes)	binary	cells held	0.4245	0.06356	78	0.08475
