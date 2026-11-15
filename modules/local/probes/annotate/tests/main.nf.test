@@ -1,0 +1,65 @@
+nextflow_process {
+
+    name "Test Process PROBES_ANNOTATE"
+    script "../main.nf"
+    process "PROBES_ANNOTATE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "probes"
+    tag "probes/annotate"
+
+    // The pinned sources: Peters et al. 2024 manifest (AnnotationHub AH116484)
+    // and the Zhou lab EPIC v2 mask
+
+    test("EPICv2 - Peters manifest and Zhou mask") {
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'EPICv2' ],
+                    file(params.probe_manifest_source, checkIfExists: true),
+                    file(params.probe_mask_source, checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def summary = path(process.out.summary[0][1]).readLines().drop(1).collectEntries { line ->
+                def f = line.split('\t'); [ f[0], f[1] as int ]
+            }
+            assertAll(
+                { assert process.success },
+                // counts published with the two sources
+                { assert summary.type_cg == 933252 && summary.type_ch == 2914 },
+                { assert summary.ch_wgbs == 11878 && summary.ch_blat == 30627 },
+                { assert summary.mismatch_pos == 7516 },
+                { assert summary.zhou_general == 31983 },
+                { assert summary.probes == 936166 },
+                { assert snapshot(process.out.summary, process.out.resources, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("EPICv2 - stub") {
+
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [ [ id: 'EPICv2' ], [], [] ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

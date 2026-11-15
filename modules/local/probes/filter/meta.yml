@@ -1,0 +1,99 @@
+name: probes_filter
+description: Removes probes by type, position, sex chromosome, detection, bead count, SNP, general mask and cross-hybridisation on the arrays that passed sample QC, counts every step, keeps report-only flags, collapses replicate probes to CpGs and computes M-values
+keywords:
+  - dna methylation
+  - methylation array
+  - probe filtering
+  - quality control
+tools:
+  - summarizedexperiment:
+      description: "SummarizedExperiment container for assays with row and column annotation"
+      homepage: https://bioconductor.org/packages/SummarizedExperiment
+      documentation: https://bioconductor.org/packages/SummarizedExperiment
+      licence: ["Artistic-2.0"]
+      identifier: ""
+  - hdf5array:
+      description: "HDF5 backend for DelayedArray objects"
+      homepage: https://bioconductor.org/packages/HDF5Array
+      documentation: https://bioconductor.org/packages/HDF5Array
+      licence: ["Artistic-2.0"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the preprocessing method as id
+          e.g. [ id:'minfi' ]
+    - se:
+        type: directory
+        description: HDF5-backed SummarizedExperiment of the preprocessing route (assays beta, beta_unmasked, detp)
+    - retained:
+        type: file
+        description: Arrays that passed sample QC, one name per line
+        pattern: "*.txt"
+        ontologies:
+          - edam: http://edamontology.org/format_2330
+    - annotation:
+        type: file
+        description: Probe annotation table from PROBES_ANNOTATE
+        pattern: "*.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  se:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_se":
+          type: directory
+          description: Filtered SummarizedExperiment, one row per CpG (or probe with --replicate_probe_strategy none); assays beta, mvalue, beta_unmasked
+          pattern: "*_se"
+  se_uncollapsed:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_uncollapsed_se":
+          type: directory
+          description: Filtered SummarizedExperiment with one row per probe and the cross-hybridising probes kept, for DMR callers that remap them
+          pattern: "*_uncollapsed_se"
+  attrition:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_attrition.tsv":
+          type: file
+          description: Probes removed at each filter step, remaining probes, probes with each reason, and the report-only flags
+          pattern: "*_attrition.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  exclusions:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_exclusions.tsv.gz":
+          type: file
+          description: Every removed probe with the step that removed it and all reasons that apply
+          pattern: "*_exclusions.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_attrition_mqc.tsv":
+          type: file
+          description: MultiQC bar plot of the probes removed per step
+          pattern: "*_mqc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

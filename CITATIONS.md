@@ -80,6 +80,14 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Zhou W, Laird PW, Shen H. Comprehensive characterization, annotation and innovative use of Infinium DNA methylation BeadChip probes. Nucleic Acids Res. 2017;45(4):e22.
 
+- [EPICv2manifest](https://doi.org/10.18129/B9.bioc.EPICv2manifest)
+
+  > Peters T. EPICv2manifest: Illumina Infinium MethylationEPIC v2.0 extended manifest from Peters et al. 2024. Bioconductor package. The pipeline reads AnnotationHub resource AH116484.
+
+- [InfiniumAnnotation](https://github.com/zhou-lab/InfiniumAnnotationV1)
+
+  > Zhou lab probe annotation and masks for Infinium arrays. The pipeline reads the EPIC v2 hg38 mask table (`EPICv2.hg38.mask.tsv.gz`) at a fixed commit.
+
 - [EPIC v1 probe evaluation](https://doi.org/10.1186/s13059-016-1066-1)
 
   > Pidsley R, Zotenko E, Peters TJ, et al. Critical evaluation of the Illumina MethylationEPIC BeadChip microarray for whole-genome DNA methylation profiling. Genome Biol. 2016;17:208.

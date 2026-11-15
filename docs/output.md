@@ -11,7 +11,8 @@ The directories listed below will be created in the results directory after the 
 - [Preprocessing](#preprocessing): one HDF5-backed SummarizedExperiment with the preprocessed arrays
 - [Preprocessing QC](#preprocessing-qc): per-array QC statistics of the preprocessing method, with the sample metadata
 - [Sample QC](#sample-qc): control metrics, sex check, SNP genotypes and one status per array
-- [Reference resources](#reference-resources): the sesameData cache, when `--save_reference` is set
+- [Probe filtering](#probe-filtering): filtered data for analysis, one row per CpG and one row per probe, with the probe attrition
+- [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
 
@@ -74,9 +75,21 @@ How the status is set:
 | `PASS`     | none of the above                                                                                                                                                  |
 | `EXCLUDED` | `exclude` set in the samplesheet; the array was not processed                                                                                                      |
 
+### Probe filtering
+
+- `probe_filter/`
+  - `<method>_filtered_se/`: the arrays with QC status `PASS` or `FLAG` and the probes that passed every filter, as an HDF5-backed SummarizedExperiment. With the default `--replicate_probe_strategy mean`, rows are CpGs (`cg########`, the mean of the replicate probes; `rowData` column `n_probes`). Assays: `beta` (failed values `NA`), `mvalue` (log2 of beta / (1 - beta), with beta clipped to [1e-4, 1 - 1e-4]) and `beta_unmasked`. `rowData` has the position, design, gene and CpG island context and the EPIC v1 and 450K IDs.
+  - `<method>_filtered_uncollapsed_se/`: one row per probe, with the cross-hybridising probes kept so that DMR callers can remap them to their off-target locus. Assays `beta` and `beta_unmasked`.
+  - `<method>_filtered_attrition.tsv`: probes removed at each step (`removed`), probes left (`remaining`), and probes carrying each reason in any order (`n_with_reason`). The `report_only_*` rows count flagged probes that were kept.
+  - `<method>_filtered_exclusions.tsv.gz`: every removed probe with the step that removed it (`first_reason`), all reasons that apply, and its undetected and masked fractions.
+
+The filters, in order: rs, nv and control probes; non-CG probes; probes without an hg38 position; chrX and chrY (kept with `--keep_sex_chr`); detection failure in more than `--probe_fail_fraction` of arrays; other masked values (bead count, quality mask) in more than `--bead_fail_fraction` of arrays; the SNP mask of `--snp_mask`; the Zhou general mask; cross-hybridisation (`--crosshyb_filter`). Manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poor titration (Zhou) are counted but never removed.
+
 ### Reference resources
 
 - `references/` (only with `--save_reference`)
+  - `probe_annotation.tsv.gz`: one row per probe with the Peters et al. 2024 manifest columns and the Zhou mask flags used by the probe filter. Pass it to `--probe_annotation` to skip building it.
+  - `probe_annotation_summary.tsv`, `probe_annotation_resources.tsv`: probes per flag, and the source files with their MD5 checksums.
   - `sesame_cache/`: ExperimentHub cache with the sesameData resources for the platform. Pass it to `--sesame_cache` to run without network access.
   - `sesame_resources.tsv`: title, ExperimentHub ID, cached file and MD5 checksum of each resource.
 

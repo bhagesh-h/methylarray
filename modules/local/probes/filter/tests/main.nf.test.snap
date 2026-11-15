@@ -1,0 +1,164 @@
+{
+    "replicate probes kept": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_filtered_attrition.tsv:md5,736e2a18bcdf772f928a6b5a36df0cd6"
+                ]
+            ]
+        ],
+        "timestamp": "2026-11-15T11:08:41.314296715",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "every filter rule - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_filtered_exclusions.tsv.gz:md5,c6cc1cc059afd2343a237bf1880d2041"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_filtered_attrition_mqc.tsv:md5,986c5fb9964a9894fc041cef6529a49a"
+                    ]
+                ],
+                "5": [
+                    "versions.yml:md5,cf6cdaf1bb24579c6deebabe796fa288"
+                ],
+                "attrition": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31"
+                    ]
+                ],
+                "exclusions": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_filtered_exclusions.tsv.gz:md5,c6cc1cc059afd2343a237bf1880d2041"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_filtered_attrition_mqc.tsv:md5,986c5fb9964a9894fc041cef6529a49a"
+                    ]
+                ],
+                "se": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "se_uncollapsed": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,cf6cdaf1bb24579c6deebabe796fa288"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T11:06:25.660825724",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "every filter rule, replicate probes collapsed": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_filtered_attrition.tsv:md5,736e2a18bcdf772f928a6b5a36df0cd6"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_filtered_exclusions.tsv.gz:md5,4bbeec7929fa625107dc6392507edf82"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_filtered_attrition_mqc.tsv:md5,5edd43cba21036ea7cef52a3786a8312"
+                ]
+            ],
+            [
+                "versions.yml:md5,798d59e19ca3205e15e6e4c6311604c1"
+            ]
+        ],
+        "timestamp": "2026-11-15T11:08:03.810720345",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

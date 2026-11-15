@@ -46,12 +46,13 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
    Every exclusion is recorded with a reason.
 
-5. Filter probes, in order:
+5. Filter probes on the arrays that passed QC, in order:
+   - `rs`, `nv` and non-CpG probes, and probes without an hg38 position
+   - sex chromosomes (kept with `--keep_sex_chr`)
    - detection failure and low bead count
-   - cross-hybridising, SNP-affected, `nv`, `rs` and non-CpG probes
-   - sex chromosomes (optional)
+   - SNP-affected probes (population-specific masks), the Zhou general mask and cross-hybridising probes (Peters et al. 2024)
 
-   EPIC v2 replicate probes are then collapsed to one value per CpG. A probe attrition table documents each step.
+   Manifest position mismatches and poorly titrating probes are reported but kept. EPIC v2 replicate probes are then collapsed to one value per CpG. A probe attrition table documents each step.
 
 6. Estimate leukocyte proportions with EpiDISH.
 7. Compute epigenetic clocks (Horvath, Hannum, skin and blood, PhenoAge, PC clocks, DunedinPACE and others) and DNAm scores (CRP, IL-6, smoking, alcohol, BMI), reporting the probe coverage of each on the array.
