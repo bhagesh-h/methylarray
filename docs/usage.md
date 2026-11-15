@@ -123,20 +123,31 @@ A model stops the run before any task starts when it names a column found in non
 
 ## Preprocessing
 
-`--preprocessing sesame` (the default) runs SeSAMe on each array on its own, so the result for one array does not depend on the others in the run.
+Select the method with `--preprocessing`. Every method writes the same SummarizedExperiment (see [docs/output.md](output.md)), so later steps do not depend on the choice.
+
+| Method             | Steps                                                                                                                                                      | Masking                                              |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `sesame` (default) | SeSAMe `prepSesame` per array (`--sesame_prep`, default `QCDPB`)                                                                                           | SeSAMe quality mask, pOOBAH detection, bead count    |
+| `minfi`            | minfi import, `preprocessNoob` or `--minfi_norm funnorm`, `quantile` or `swan`                                                                             | minfi detection p-value, bead count                  |
+| `enmix`            | minfi import, ENmix out-of-band background with RELIC dye-bias correction, optional quantile normalisation (`--enmix_quantile`), RCP probe-type correction | ENmix detection p-value, bead count                  |
+| `combined`         | the `enmix` steps, with the SeSAMe result computed on the same arrays                                                                                      | SeSAMe quality mask and pOOBAH detection, bead count |
+
+SeSAMe processes each array on its own, so its results do not change when arrays are added to or removed from a run. The other methods read all arrays together. minfi detection p-values mask far fewer values than SeSAMe, which also removes probes with known design problems; the `combined` method keeps the ENmix correction and applies the SeSAMe masks.
 
 | Parameter          | Default  | Meaning                                                                                                   |
 | ------------------ | -------- | --------------------------------------------------------------------------------------------------------- |
 | `--platform`       | `EPICv2` | Array platform. The platform of every array is detected from its IDATs and must match                     |
 | `--sesame_prep`    | `QCDPB`  | `prepSesame` steps in order: quality mask, channel inference, non-linear dye bias, pOOBAH detection, noob |
-| `--detection_pval` | `0.05`   | pOOBAH threshold; probes above it are set to `NA`                                                         |
-| `--min_beads`      | `3`      | Probes measured by fewer beads are set to `NA`                                                            |
+| `--minfi_norm`     | `noob`   | Normalisation of the `minfi` method: `noob`, `funnorm`, `quantile` or `swan`                              |
+| `--enmix_quantile` | `false`  | Add ENmix quantile normalisation to the `enmix` and `combined` methods                                    |
+| `--detection_pval` | `0.05`   | Detection p-value threshold; values above it are set to `NA`                                              |
+| `--min_beads`      | `3`      | Values measured by fewer beads are set to `NA`                                                            |
 
-The masked beta values are used for association testing. The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution and epigenetic clocks.
+The masked beta values are used for association testing. The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution and epigenetic clocks. No array or probe is removed during preprocessing; ENmix quality flags are reported in the QC table (`enmix_low_quality`) instead of being applied.
 
 ### Offline runs
 
-SeSAMe needs probe manifests, masks and platform signatures from Bioconductor's ExperimentHub (about 45 MB for EPIC v2). By default the first task of each run downloads them. To run without network access, save them once and pass them to later runs:
+The `sesame` and `combined` methods need probe manifests, masks and platform signatures from Bioconductor's ExperimentHub (about 45 MB for EPIC v2). By default the first task of each run downloads them. The `minfi` and `enmix` methods use the manifest and annotation packages in their container and need no download. To run without network access, save them once and pass them to later runs:
 
 ```bash
 # once, with network access

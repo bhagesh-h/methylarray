@@ -1,0 +1,84 @@
+name: minfi_preprocess
+description: Read all arrays with minfi and preprocess them with minfi (Noob, Funnorm, quantile or SWAN), ENmix (oob background, RELIC, RCP) or ENmix with the SeSAMe masks, into one HDF5-backed SummarizedExperiment
+keywords:
+  - dna methylation
+  - illumina
+  - methylation array
+  - idat
+  - preprocessing
+  - normalisation
+tools:
+  - minfi:
+      description: "Analyze Illumina Infinium DNA methylation arrays"
+      homepage: https://bioconductor.org/packages/minfi
+      documentation: https://bioconductor.org/packages/minfi
+      doi: 10.1093/bioinformatics/btu049
+      licence: ["Artistic-2.0"]
+      identifier: biotools:minfi
+  - enmix:
+      description: "Quality control and analysis tools for Illumina DNA methylation BeadChip"
+      homepage: https://bioconductor.org/packages/ENmix
+      documentation: https://bioconductor.org/packages/ENmix
+      doi: 10.1093/nar/gkv907
+      licence: ["Artistic-2.0"]
+      identifier: biotools:enmix
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the method as id
+          e.g. [ id:'minfi' ]
+    - samples:
+        type: file
+        description: Sample metadata, one row per array, with 'sample' and 'idat_prefix' columns
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - idats:
+        type: file
+        description: Red and green IDAT files of every array
+        pattern: "*_{Red,Grn}.idat{,.gz}"
+        ontologies: []
+    - sesame_se:
+        type: directory
+        description: SeSAMe SummarizedExperiment whose masks the combined route applies; [] for the other routes
+output:
+  se:
+    - - meta:
+          type: map
+          description: Groovy Map with the method as id
+      - "${prefix}_se":
+          type: directory
+          description: HDF5-backed SummarizedExperiment (assays beta, beta_unmasked, detp, meth, unmeth); load with HDF5Array::loadHDF5SummarizedExperiment()
+          pattern: "*_se"
+  qc:
+    - - meta:
+          type: map
+          description: Groovy Map with the method as id
+      - "${prefix}_qc.tsv":
+          type: file
+          description: Sample metadata joined to the QC statistics, one row per array
+          pattern: "*_qc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the method as id
+      - "${prefix}_qc_mqc.tsv":
+          type: file
+          description: MultiQC general statistics table
+          pattern: "*_qc_mqc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

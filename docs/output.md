@@ -16,9 +16,11 @@ The directories listed below will be created in the results directory after the 
 
 ### Preprocessing
 
-- `preprocessing/sesame/sesame_se/`
+- `preprocessing/<method>/<method>_se/`, where `<method>` is the value of `--preprocessing`
   - `assays.h5`: the assays, stored on disk.
   - `se.rds`: the SummarizedExperiment that refers to `assays.h5` by a relative path.
+
+With `--preprocessing combined`, `preprocessing/sesame/` also holds the SeSAMe result whose masks were applied.
 
 Load the directory in R, wherever it has been copied to:
 
@@ -35,15 +37,16 @@ Rows are probes (EPIC v2 probe IDs such as `cg00000029_TC21`; `rowData(se)$cpg_i
 | `detp`           | pOOBAH detection p-values, computed on the signal after the steps before `P`                                                   |
 | `meth`, `unmeth` | Methylated and unmethylated intensities after preprocessing                                                                    |
 
-`colData(se)` holds the samplesheet metadata and the QC statistics described below. `metadata(se)` records the platform, the preprocessing method, the `prepSesame` code and the SeSAMe version.
+`colData(se)` holds the samplesheet metadata and the QC statistics described below. `metadata(se)` records the platform, the preprocessing method, its settings and the software versions.
 
 ### Sample QC
 
-- `qc/sesame/sesame_qc.tsv`: one row per array with the samplesheet metadata (`sample`, Sentrix ID, position, row and column, plate, well, batch, reported sex and age, replicate group) followed by:
+- `qc/<method>/<method>_qc.tsv`: one row per array with the samplesheet metadata (`sample`, Sentrix ID, position, row and column, plate, well, batch, reported sex and age, replicate group) followed by:
   - `platform`, `prep`: detected platform and the `prepSesame` code used
-  - `predicted_sex`: sex predicted by SeSAMe `inferSex`
+  - `predicted_sex`: sex predicted by SeSAMe `inferSex`, or with the minfi `getSex` rule
   - `num_masked`, `frac_masked`: probes set to `NA` in `beta`
-  - the SeSAMe QC statistics from `sesameQC_calcStats` on the raw signal: detection (`frac_dt`, by probe type), intensity (`mean_intensity`, in-band and out-of-band means), channel and dye bias (`RGratio`, `RGdistort`, Infinium I channel switches) and the beta distribution (`mean_beta`, `frac_meth`, `frac_unmeth`, `frac_na`)
+  - for `sesame`: the SeSAMe QC statistics from `sesameQC_calcStats` on the raw signal: detection (`frac_dt`, by probe type), intensity (`mean_intensity`, in-band and out-of-band means), channel and dye bias (`RGratio`, `RGdistort`, Infinium I channel switches) and the beta distribution (`mean_beta`, `frac_meth`, `frac_unmeth`, `frac_na`)
+  - for `minfi`, `enmix` and `combined`: `normalisation`, `x_med` and `y_med` (median chrX and chrY copy number used for the sex call), `median_log2_meth` and `median_log2_unmeth` (minfi `getQC`), `frac_detected`, `num_low_beads`, `bisulfite_intensity` and `enmix_low_quality` (ENmix `QCinfo` flag, reported only)
 
 ### Reference resources
 

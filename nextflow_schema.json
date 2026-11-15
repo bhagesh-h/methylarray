@@ -79,9 +79,9 @@
                 "preprocessing": {
                     "type": "string",
                     "default": "sesame",
-                    "enum": ["sesame"],
+                    "enum": ["sesame", "minfi", "enmix", "combined"],
                     "description": "Preprocessing method.",
-                    "help_text": "`sesame`: SeSAMe per-sample preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays in the run.",
+                    "help_text": "`sesame` (default): SeSAMe per-array preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays. `minfi`: minfi import, detection p-values and Noob (or `--minfi_norm`). `enmix`: minfi import, ENmix out-of-band background with RELIC dye-bias correction and RCP probe-type correction. `combined`: the `enmix` route with the SeSAMe quality and pOOBAH masks applied last.",
                     "fa_icon": "fas fa-cogs"
                 },
                 "sesame_prep": {
@@ -91,6 +91,19 @@
                     "description": "SeSAMe preprocessing code passed to `prepSesame`.",
                     "help_text": "Each letter is one step, applied in order. The default `QCDPB` applies the probe quality mask (Q), infers the colour channel of Infinium I probes (C), corrects non-linear dye bias (D), masks probes that fail pOOBAH detection (P) and applies noob background correction (B). See `sesame::prepSesameList()` for all codes.",
                     "fa_icon": "fas fa-code"
+                },
+                "minfi_norm": {
+                    "type": "string",
+                    "default": "noob",
+                    "enum": ["noob", "funnorm", "quantile", "swan"],
+                    "description": "Normalisation of the `minfi` route.",
+                    "help_text": "`noob`: background and dye-bias correction per array. `funnorm`: functional normalisation with control-probe principal components (Noob background first). `quantile`: stratified quantile normalisation. `swan`: subset-quantile within-array normalisation on the Noob intensities. The `meth` and `unmeth` assays always hold the Noob-corrected intensities.",
+                    "fa_icon": "fas fa-balance-scale"
+                },
+                "enmix_quantile": {
+                    "type": "boolean",
+                    "description": "Add ENmix between-array quantile normalisation (`norm.quantile`) to the `enmix` and `combined` routes, before RCP.",
+                    "fa_icon": "fas fa-sort-amount-down"
                 },
                 "min_beads": {
                     "type": "integer",

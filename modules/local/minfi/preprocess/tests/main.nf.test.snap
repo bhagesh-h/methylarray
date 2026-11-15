@@ -1,0 +1,129 @@
+{
+    "minfi route - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "minfi_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "minfi_qc_mqc.tsv:md5,c9aa8a5ac6841ffb3a6cc2de45b44797"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,f750ef34efbfdd6fbf701a4f3d46fc6d"
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "minfi_qc_mqc.tsv:md5,c9aa8a5ac6841ffb3a6cc2de45b44797"
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "minfi_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
+                    ]
+                ],
+                "se": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,f750ef34efbfdd6fbf701a4f3d46fc6d"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T01:06:40.070924488",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "minfi route - Noob": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "minfi_qc.tsv:md5,cc444e52864dd3bf5d12cffcb71dcade"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "minfi_qc_mqc.tsv:md5,1974d8994615e5fcb1cbedf3ca5c35a8"
+                ]
+            ],
+            [
+                "versions.yml:md5,aabcd4a6983e77c178b3e8f9fda51934"
+            ]
+        ],
+        "timestamp": "2026-11-15T01:11:30.005699864",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "enmix route - oob, RELIC, RCP": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "enmix"
+                    },
+                    "enmix_qc.tsv:md5,d4b0f14e7684c0c4533dd49c06743766"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "enmix"
+                    },
+                    "enmix_qc_mqc.tsv:md5,091b5290a8ba6d05f458aa3a7ad97b27"
+                ]
+            ],
+            [
+                "versions.yml:md5,aabcd4a6983e77c178b3e8f9fda51934"
+            ]
+        ],
+        "timestamp": "2026-11-15T01:13:58.959208873",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}
