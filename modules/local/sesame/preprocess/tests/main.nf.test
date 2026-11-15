@@ -54,6 +54,8 @@ nextflow_process {
 
     test("EPICv2 array - stub") {
 
+        tag "fast"
+
         options "-stub"
 
         when {

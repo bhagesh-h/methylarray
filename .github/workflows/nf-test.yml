@@ -18,6 +18,9 @@ concurrency:
 
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # Pull requests into dev run only the tests tagged "fast" (stubs, fixtures,
+  # input validation); the real-data tests run for main, releases and manual runs
+  NFT_TAGS: ${{ (github.event_name == 'pull_request' && github.base_ref != 'main' && github.base_ref != 'master') && 'fast' || '' }}
   NFT_VER: "0.9.4"
   NFT_WORKDIR: "~"
   NXF_ANSI_LOG: false
@@ -50,6 +53,7 @@ jobs:
           NFT_VER: ${{ env.NFT_VER }}
         with:
           max_shards: 7
+          tags: ${{ env.NFT_TAGS }}
 
       - name: debug
         run: |
@@ -101,6 +105,7 @@ jobs:
           profile: ${{ matrix.profile }}
           shard: ${{ matrix.shard }}
           total_shards: ${{ env.TOTAL_SHARDS }}
+          tags: ${{ env.NFT_TAGS }}
 
       - name: Report test status
         if: ${{ always() }}

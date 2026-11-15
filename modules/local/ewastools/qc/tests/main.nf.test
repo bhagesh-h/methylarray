@@ -57,6 +57,8 @@ nextflow_process {
 
     test("control metrics, sex and SNP genotypes - stub") {
 
+        tag "fast"
+
         options "-stub"
 
         when {

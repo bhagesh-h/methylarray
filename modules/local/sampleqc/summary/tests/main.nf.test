@@ -17,6 +17,8 @@ nextflow_process {
 
     test("all checks") {
 
+        tag "fast"
+
         when {
             process {
                 """
@@ -51,6 +53,8 @@ nextflow_process {
 
     test("without ewastools") {
 
+        tag "fast"
+
         when {
             process {
                 """
@@ -78,6 +82,8 @@ nextflow_process {
     }
 
     test("all checks - stub") {
+
+        tag "fast"
 
         options "-stub"
 

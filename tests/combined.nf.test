@@ -10,6 +10,8 @@ nextflow_pipeline {
     // pipeline test process real arrays; keeping this one a stub keeps CI short.
     test("-profile test --preprocessing combined - stub") {
 
+        tag "fast"
+
         options "-stub"
 
         when {
