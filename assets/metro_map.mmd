@@ -47,13 +47,15 @@ graph LR
         masks -->|minfi,sesame,enmix,combined| matrices_out
     end
 
-    subgraph biology [Cells and clocks]
+    subgraph biology [Cells, clocks and PCA]
         epidish[EpiDISH]
         clocks[dnaMethyAge]
         pace[DunedinPACE]
+        isva[isva]
 
         epidish -->|minfi,sesame,enmix,combined| clocks
         clocks -->|minfi,sesame,enmix,combined| pace
+        pace -->|minfi,sesame,enmix,combined| isva
     end
 
     subgraph association [Association]
@@ -65,6 +67,9 @@ graph LR
         dmrcate[DMRcate]
         dmrff[dmrff]
         missmethyl[missMethyl]
+        go[GO]
+        kegg[KEGG]
+        msigdb[MSigDB]
 
         models_in -->|minfi,sesame,enmix,combined| limma
         limma -->|minfi,sesame,enmix,combined| bacon
@@ -73,6 +78,9 @@ graph LR
         bacon -->|minfi,sesame,enmix,combined| dmrff
         dmrcate -->|minfi,sesame,enmix,combined| missmethyl
         dmrff -->|minfi,sesame,enmix,combined| missmethyl
+        missmethyl -->|minfi,sesame,enmix,combined| go
+        go -->|minfi,sesame,enmix,combined| kegg
+        kegg -->|minfi,sesame,enmix,combined| msigdb
     end
 
     subgraph report [Report]
@@ -90,5 +98,5 @@ graph LR
     sesame -->|sesame| ewastools
     enmix -->|enmix,combined| ewastools
     masks -->|minfi,sesame,enmix,combined| epidish
-    pace -->|minfi,sesame,enmix,combined| limma
-    missmethyl -->|minfi,sesame,enmix,combined| multiqc
+    isva -->|minfi,sesame,enmix,combined| limma
+    msigdb -->|minfi,sesame,enmix,combined| multiqc

@@ -17,6 +17,7 @@ The directories listed below will be created in the results directory after the 
 - [Exploratory analysis](#exploratory-analysis): control-probe PCs, PCA of the methylation data and its associations with technical and biological variables
 - [Association models](#association-models): epigenome-wide association results per model of `--models`
 - [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
+- [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment of the significant CpGs per model
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
@@ -139,6 +140,13 @@ Only with `--models`, for the tested models without `skip_dmr`, and not with `--
   - `dmr_<model>_dmrff.tsv`: dmrff regions per contrast at Bonferroni-adjusted P < 0.05 with at least `--dmr_min_cpgs` CpGs: position, number of CpGs, combined estimate (M-value scale), SE, z, P, adjusted P and genes.
   - `dmr_<model>_consensus.tsv` and `.bed`: regions found by both methods that overlap and change in the same direction. Regions found by one method only are in the method tables and have lower confidence.
   - `dmr_<model>_summary.json`: the number of CpGs, CpGs at FDR < 0.05 and regions per method and contrast, or why the analysis did not run.
+
+### Gene set enrichment
+
+Only with `--models`, for the tested models without `skip_enrichment`, and not with `--skip_enrichment`.
+
+- `enrichment/<model>/enrichment_<model>.tsv`: one row per collection, contrast and gene set: `collection` (`GO`, `KEGG`, or the GMT file name such as `h.all.v2025.1.Hs`), `set` (GO or KEGG identifier, or gene set name), `term`, `ontology` (GO only: BP, CC, MF), `n` (genes in the set), `de` (genes with a significant CpG, weighted for CpGs in several genes), `p_value` and `fdr`, sorted by P.
+- `enrichment/<model>/enrichment_<model>_summary.json`: significant and tested CpGs per contrast, whether enrichment ran, and why a collection did not run (for example KEGG without network access).
 
 ### Reference resources
 

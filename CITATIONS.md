@@ -344,6 +344,18 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Liberzon A, Birger C, Thorvaldsdóttir H, Ghandi M, Mesirov JP, Tamayo P. The Molecular Signatures Database hallmark gene set collection. Cell Syst. 2015;1(6):417-425.
 
+- [Reactome](https://doi.org/10.1093/nar/gkad1025)
+
+  > Milacic M, Beavers D, Conley P, et al. The Reactome Pathway Knowledgebase 2024. Nucleic Acids Res. 2024;52(D1):D672-D678.
+
+- [KEGG](https://doi.org/10.1093/nar/28.1.27)
+
+  > Kanehisa M, Goto S. KEGG: Kyoto Encyclopedia of Genes and Genomes. Nucleic Acids Res. 2000;28(1):27-30.
+
+- [Gene Ontology](https://doi.org/10.1093/genetics/iyad031)
+
+  > The Gene Ontology Consortium. The Gene Ontology knowledgebase in 2023. Genetics. 2023;224(1):iyad031.
+
 - KnowYourCG
 
   > CpG-centric enrichment testing distributed with SeSAMe (see the SeSAMe citation).

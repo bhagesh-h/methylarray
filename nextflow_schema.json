@@ -414,6 +414,41 @@
                 }
             }
         },
+        "enrichment_options": {
+            "title": "Enrichment options",
+            "type": "object",
+            "fa_icon": "fas fa-sitemap",
+            "description": "Gene set enrichment of the significant CpGs with missMethyl.",
+            "properties": {
+                "skip_enrichment": {
+                    "type": "boolean",
+                    "description": "Skip gene set enrichment for every model (single models: `skip_enrichment: true` in the models file).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "enrichment_min_hits": {
+                    "type": "integer",
+                    "default": 10,
+                    "minimum": 1,
+                    "description": "Run enrichment for a contrast only with at least this many CpGs at FDR < 0.05.",
+                    "fa_icon": "fas fa-sort-numeric-up"
+                },
+                "enrichment_collections": {
+                    "type": "string",
+                    "default": "GO,KEGG",
+                    "pattern": "^((GO|KEGG)(,(GO|KEGG))?|none)$",
+                    "description": "missMethyl gometh collections: `GO`, `KEGG`, both, or `none`.",
+                    "help_text": "GO uses the org.Hs.eg.db and GO.db packages in the container. KEGG pathways are downloaded from the KEGG REST service at run time; without network access the KEGG test is recorded as not run and the other collections still run.",
+                    "fa_icon": "fas fa-list"
+                },
+                "gene_set_gmts": {
+                    "type": "string",
+                    "default": "https://data.broadinstitute.org/gsea-msigdb/msigdb/release/2025.1.Hs/h.all.v2025.1.Hs.entrez.gmt,https://data.broadinstitute.org/gsea-msigdb/msigdb/release/2025.1.Hs/c2.cp.reactome.v2025.1.Hs.entrez.gmt",
+                    "description": "Comma-separated GMT files of gene sets with Entrez gene IDs (URLs or local paths), tested with gsameth. Empty to skip.",
+                    "help_text": "The default is MSigDB release 2025.1: the Hallmark collection and the Reactome pathways. Other MSigDB collections or custom GMT files with Entrez IDs work the same way. Download the files once and give local paths for runs without network access.",
+                    "fa_icon": "fas fa-file-alt"
+                }
+            }
+        },
         "institutional_config_options": {
             "title": "Institutional config options",
             "type": "object",
@@ -592,6 +627,9 @@
         },
         {
             "$ref": "#/$defs/region_options"
+        },
+        {
+            "$ref": "#/$defs/enrichment_options"
         },
         {
             "$ref": "#/$defs/institutional_config_options"

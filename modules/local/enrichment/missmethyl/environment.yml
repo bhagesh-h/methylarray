@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bioconductor-go.db=3.22.0
+  - bioconda::bioconductor-missmethyl=1.44.0
+  - bioconda::bioconductor-org.hs.eg.db=3.22.0
+  # Reference BLAS: preprocessCore (a missMethyl dependency through minfi) cannot
+  # start its threads next to OpenBLAS on recent glibc ('pthread_create() is 22')
+  - conda-forge::libblas=3.11.0=*_netlib
+  - conda-forge::liblapack=3.11.0=*_netlib
+  - conda-forge::procps-ng=4.0.6
+  - conda-forge::r-base=4.5.3
+  - conda-forge::r-data.table=1.18.6.1
+  - conda-forge::r-jsonlite=2.0.0
