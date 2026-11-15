@@ -110,14 +110,14 @@ Columns can come from the samplesheet, the phenotype table or the covariates the
 | Name or token   | Meaning                                                      |
 | --------------- | ------------------------------------------------------------ |
 | `predicted_sex` | Sex predicted from the sex chromosomes                       |
-| `dnam_smoking`  | DNA methylation smoking score (not available yet)            |
+| `dnam_smoking`  | DNA methylation smoking score (McCartney et al. 2018)        |
 | `cc_<celltype>` | Estimated proportion of one cell type, for example `cc_Mono` |
 | `ctrlpc<k>`     | Principal component `k` of the control-probe intensities     |
 | `@cells`        | The configured cell-composition covariates                   |
 | `@ctrlpcs`      | The selected control-probe principal components              |
 | `@technical`    | `plate` and `sentrix_row`                                    |
 | `@sex`          | `predicted_sex`                                              |
-| `@smoking`      | `dnam_smoking` (not available yet)                           |
+| `@smoking`      | `dnam_smoking`                                               |
 
 A model stops the run before any task starts when it names a column found in none of these sources, lists its trait among its covariates (directly or through a token), or uses its `block` column as a covariate as well. Without `--models` the pipeline runs preprocessing, QC, cell composition, biomarkers and the exploratory analysis, and no association models.
 
@@ -234,7 +234,7 @@ The arrays that passed QC are summarised with two principal component analyses:
 
 Each model of `--models` is tested at every CpG of the filtered data with limma: a linear model on M-values with the trait and the covariates, moderated with `eBayes(trend = TRUE, robust = TRUE)`, and `duplicateCorrelation` when `block` is set. The same model on beta values gives the effect as a difference in beta (`delta_beta`). Test statistics are corrected for bias and inflation with bacon, and the genomic lambda is reported before and after.
 
-- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference), `@ctrlpcs` the kept control-probe PCs, `@technical` plate and Sentrix row, `@sex` the predicted sex. `@smoking` (DNA methylation smoking score) is not available yet, and a model that uses it stops the run at start-up.
+- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference), `@ctrlpcs` the kept control-probe PCs, `@technical` plate and Sentrix row, `@sex` the predicted sex, `@smoking` the DNA methylation smoking score (`dnam_smoking`).
 - Arrays with a missing trait or covariate are left out of that model and listed with their reason. A model with fewer complete cases than its `min_n` is reported as not tested.
 - Before testing, the trait is checked for association with plate and Sentrix row, and every covariate for collinearity (VIF). Confounding is flagged in `ewas_<model>_design_check.tsv`.
 - Thresholds: FDR < 0.05, `--p_epigenome_wide` (default 9e-8, the EPIC threshold of Mansell et al. 2019) and `--p_suggestive` (default 1e-5).
@@ -262,6 +262,10 @@ For every tested model, the CpGs at FDR < 0.05 are tested for enrichment against
 | `--gene_set_gmts`          | MSigDB Hallmark, Reactome | Comma-separated GMT files with Entrez IDs (URLs or paths); empty to skip |
 | `--enrichment_min_hits`    | `10`                      | Minimum number of CpGs at FDR < 0.05 for a contrast to be tested         |
 | `--skip_enrichment`        | `false`                   | Skip enrichment for every model (`skip_enrichment: true` for one model)  |
+
+## DNA methylation scores
+
+Scores are weighted sums of the beta values of published CpG sets, computed like the clocks on the detection-masked beta values of the arrays that passed QC: smoking, alcohol and BMI (McCartney et al. 2018; 233, 450 and 1,109 CpGs) and IL-6 (Stevenson et al. 2021; 35 CpGs). The weights are stored in `assets/dnam_scores` with their sources and licences. Select scores with `--dnam_scores` or skip them with `--skip_dnam_scores`. The smoking score (`dnam_smoking`) is the `@smoking` model covariate.
 
 ## Running the pipeline
 

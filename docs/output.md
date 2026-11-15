@@ -18,6 +18,7 @@ The directories listed below will be created in the results directory after the 
 - [Association models](#association-models): epigenome-wide association results per model of `--models`
 - [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
 - [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment of the significant CpGs per model
+- [DNA methylation scores](#dna-methylation-scores): smoking, alcohol, BMI and IL-6 scores per array
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [MultiQC](#multiqc): report with the sample QC table and software versions
 - [Pipeline information](#pipeline-information): execution reports and parameters
@@ -147,6 +148,13 @@ Only with `--models`, for the tested models without `skip_enrichment`, and not w
 
 - `enrichment/<model>/enrichment_<model>.tsv`: one row per collection, contrast and gene set: `collection` (`GO`, `KEGG`, or the GMT file name such as `h.all.v2025.1.Hs`), `set` (GO or KEGG identifier, or gene set name), `term`, `ontology` (GO only: BP, CC, MF), `n` (genes in the set), `de` (genes with a significant CpG, weighted for CpGs in several genes), `p_value` and `fdr`, sorted by P.
 - `enrichment/<model>/enrichment_<model>_summary.json`: significant and tested CpGs per contrast, whether enrichment ran, and why a collection did not run (for example KEGG without network access).
+
+### DNA methylation scores
+
+Not with `--skip_dnam_scores`.
+
+- `dnam_scores/dnam_scores.tsv`: one row per array that passed QC, one column `dnam_<score>` per score of `--dnam_scores`: the weighted sum of the beta values of the score's CpGs present on the array. Higher values mean more smoking, alcohol, BMI or IL-6 as predicted from methylation; the scale is that of the published weights, so compare scores within a study.
+- `dnam_scores/dnam_scores_coverage.tsv`: per score, its CpGs, how many are in the data (and how many only under their EPIC v1 or 450K ID), the share present, the values that failed detection and were set to the CpG mean, and the reference.
 
 ### Reference resources
 

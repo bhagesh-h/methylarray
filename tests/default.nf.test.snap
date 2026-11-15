@@ -9,6 +9,10 @@
                     "impute": "1.84.0",
                     "preprocessCore": "1.72.0"
                 },
+                "DNAM_SCORES": {
+                    "SummarizedExperiment": "1.40.0",
+                    "data.table": "1.18.6.1"
+                },
                 "EPIDISH_RPC": {
                     "EpiDISH": "2.26.0",
                     "HDF5Array": "1.38.0",
@@ -51,6 +55,9 @@
                 "clocks",
                 "clocks/clocks.tsv",
                 "clocks/clocks_coverage.tsv",
+                "dnam_scores",
+                "dnam_scores/dnam_scores.tsv",
+                "dnam_scores/dnam_scores_coverage.tsv",
                 "exploration",
                 "exploration/pca_associations.tsv",
                 "exploration/pca_ctrl_pca_variance.tsv",
@@ -67,6 +74,7 @@
                 "multiqc/multiqc_data/multiqc_citations.txt",
                 "multiqc/multiqc_data/multiqc_clock_coverage.txt",
                 "multiqc/multiqc_data/multiqc_data.json",
+                "multiqc/multiqc_data/multiqc_dnam_scores_coverage.txt",
                 "multiqc/multiqc_data/multiqc_general_stats.txt",
                 "multiqc/multiqc_data/multiqc_pca_associations_plot.txt",
                 "multiqc/multiqc_data/multiqc_pca_scatter_plot.txt",
@@ -80,6 +88,7 @@
                 "multiqc/multiqc_plots/pdf",
                 "multiqc/multiqc_plots/pdf/cell_fractions_plot.pdf",
                 "multiqc/multiqc_plots/pdf/clock_coverage.pdf",
+                "multiqc/multiqc_plots/pdf/dnam_scores_coverage.pdf",
                 "multiqc/multiqc_plots/pdf/pca_associations_plot.pdf",
                 "multiqc/multiqc_plots/pdf/pca_scatter_plot.pdf",
                 "multiqc/multiqc_plots/pdf/pca_scree_plot.pdf",
@@ -90,6 +99,7 @@
                 "multiqc/multiqc_plots/png",
                 "multiqc/multiqc_plots/png/cell_fractions_plot.png",
                 "multiqc/multiqc_plots/png/clock_coverage.png",
+                "multiqc/multiqc_plots/png/dnam_scores_coverage.png",
                 "multiqc/multiqc_plots/png/pca_associations_plot.png",
                 "multiqc/multiqc_plots/png/pca_scatter_plot.png",
                 "multiqc/multiqc_plots/png/pca_scree_plot.png",
@@ -100,6 +110,7 @@
                 "multiqc/multiqc_plots/svg",
                 "multiqc/multiqc_plots/svg/cell_fractions_plot.svg",
                 "multiqc/multiqc_plots/svg/clock_coverage.svg",
+                "multiqc/multiqc_plots/svg/dnam_scores_coverage.svg",
                 "multiqc/multiqc_plots/svg/pca_associations_plot.svg",
                 "multiqc/multiqc_plots/svg/pca_scatter_plot.svg",
                 "multiqc/multiqc_plots/svg/pca_scree_plot.svg",
@@ -139,6 +150,8 @@
                 "cell_fractions_reference_coverage.tsv:md5,2cd8e8a09cc98bc50e4b17c393423844",
                 "clocks.tsv:md5,a70c87fd0874e9f8b2cbd1460cbe08ce",
                 "clocks_coverage.tsv:md5,37f6024d8c54121d68bb733433743bab",
+                "dnam_scores.tsv:md5,ef022be2e40df8c4fb2ba7b5bdf288ca",
+                "dnam_scores_coverage.tsv:md5,689f98a395ada5a353a679a4bcfe5da2",
                 "pca_associations.tsv:md5,5c40823a855d2833f7bef2a5e7edb7a9",
                 "pca_ctrl_pca_variance.tsv:md5,07795144a3a8f98882c2f26b672f28c9",
                 "pca_ctrl_pcs.tsv:md5,1c4434415ef7374778930d76ef3ac785",
@@ -148,6 +161,7 @@
                 "multiqc_cell_fractions_plot.txt:md5,0ae9e09b8bb2126f4aafa3a7619cee9f",
                 "multiqc_citations.txt:md5,4c806e63a283ec1b7e78cdae3a923d4f",
                 "multiqc_clock_coverage.txt:md5,0cc7a30b6e9e32b45a40345f55443ca3",
+                "multiqc_dnam_scores_coverage.txt:md5,89f2bee3f5f4ec6f2029d43f3bc3d067",
                 "multiqc_general_stats.txt:md5,4d2448c93dd797b6dcd62dd199ef2ad6",
                 "multiqc_pca_associations_plot.txt:md5,a8ffffb19e2937560c4dc64c0f73f06e",
                 "multiqc_pca_scatter_plot.txt:md5,2c1af20088668216a7239a2e6f3c1105",
@@ -165,7 +179,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-15T14:21:11.836117156",
+        "timestamp": "2026-11-15T17:08:43.72903603",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

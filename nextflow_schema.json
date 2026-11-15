@@ -274,10 +274,10 @@
             }
         },
         "clock_options": {
-            "title": "Epigenetic clock options",
+            "title": "Epigenetic clock and DNA methylation score options",
             "type": "object",
             "fa_icon": "fas fa-clock",
-            "description": "Epigenetic clocks computed with dnaMethyAge and DunedinPACE.",
+            "description": "Epigenetic clocks (dnaMethyAge, DunedinPACE) and DNA methylation scores.",
             "properties": {
                 "skip_clocks": {
                     "type": "boolean",
@@ -313,6 +313,20 @@
                     "description": "DunedinPACE source package (URL or local path), installed by the clock task.",
                     "help_text": "DunedinPACE is not on conda or CRAN. The default is version 0.99.0 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
                     "fa_icon": "fas fa-box"
+                },
+                "skip_dnam_scores": {
+                    "type": "boolean",
+                    "description": "Skip the DNA methylation scores (smoking, alcohol, BMI, IL-6).",
+                    "help_text": "Models that use `@smoking` need the smoking score.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "dnam_scores": {
+                    "type": "string",
+                    "default": "smoking,alcohol,bmi,il6",
+                    "pattern": "^(smoking|alcohol|bmi|il6)(,(smoking|alcohol|bmi|il6))*$",
+                    "description": "Comma-separated DNA methylation scores: weighted sums of published CpG sets.",
+                    "help_text": "`smoking`, `alcohol` and `bmi`: McCartney et al. (2018; 233, 450 and 1,109 CpGs). `il6`: Stevenson et al. (2021; 35 CpGs). The weights are in `assets/dnam_scores` with their sources. Scores are written as `dnam_<score>`; `dnam_smoking` is the `@smoking` model covariate.",
+                    "fa_icon": "fas fa-list"
                 }
             }
         },

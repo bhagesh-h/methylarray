@@ -27,7 +27,8 @@ nextflow_process {
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
                     file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
-                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true)
+                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    []
                 ]
                 """
             }
@@ -67,7 +68,8 @@ nextflow_process {
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
                     [],
-                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true)
+                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    []
                 ]
                 """
             }
@@ -87,6 +89,37 @@ nextflow_process {
         }
     }
 
+    test("@smoking from the DNA methylation scores") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'score_smoking' ],
+                    file("$moduleTestDir/model_smoking_cov.json", checkIfExists: true),
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
+                    [],
+                    [],
+                    file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def summary = new groovy.json.JsonSlurper().parse(path(process.out.summary[0][1]).toFile())
+            assertAll(
+                { assert process.success },
+                { assert summary.covariates == ['age', 'dnam_smoking'] && summary.status == 'tested' }
+            )
+        }
+    }
+
     test("fewer complete cases than min_n") {
 
         tag "fast"
@@ -101,6 +134,7 @@ nextflow_process {
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
+                    [],
                     [],
                     []
                 ]
@@ -134,6 +168,7 @@ nextflow_process {
                     file("$moduleTestDir/test_se", checkIfExists: true),
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    [],
                     [],
                     [],
                     []
