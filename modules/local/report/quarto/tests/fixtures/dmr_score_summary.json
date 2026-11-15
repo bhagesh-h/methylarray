@@ -1,0 +1,5 @@
+{
+    "model": "score",
+    "contrasts": { "score": { "cpgs": 2000, "cpgs_fdr": 20, "dmrcate": 1, "dmrff": 1, "consensus": 1 } },
+    "status": "run"
+}

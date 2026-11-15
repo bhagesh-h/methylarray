@@ -20,7 +20,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("$projectDir/assets/report/methylarray_report.qmd", checkIfExists: true)
-                input[1] = files("$moduleTestDir/inputs/*")
+                input[1] = files("$moduleTestDir/fixtures/*")
                 """
             }
         }

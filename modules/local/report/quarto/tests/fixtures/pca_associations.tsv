@@ -1,0 +1,16 @@
+variable	group	pc	test	n	r_squared	p_value
+batch	technical	PC1	Kruskal-Wallis	6	0.9647	0.06408
+sentrix_id	technical	PC1	Kruskal-Wallis	6	0.9647	0.06408
+sentrix_row	technical	PC1	Kruskal-Wallis	6	0.213	0.5433
+frac_detected	technical	PC1	linear regression	6	0.8541	0.008412
+ctrl_PC1	technical	PC1	linear regression	6	0.8579	0.007962
+ctrl_PC2	technical	PC1	linear regression	6	0.1155	0.5098
+ctrl_PC3	technical	PC1	linear regression	6	7e-04	0.9607
+predicted_sex	biological	PC1	Kruskal-Wallis	6	0.2918	0.3545
+age	biological	PC1	linear regression	6	0.3329	0.2306
+B	biological	PC1	linear regression	6	0.0124	0.8338
+CD4T	biological	PC1	linear regression	6	0.0995	0.5425
+CD8T	biological	PC1	linear regression	6	0.412	0.1694
+NK	biological	PC1	linear regression	6	0.0234	0.7722
+Mono	biological	PC1	linear regression	6	0.4063	0.1734
+Gran	biological	PC1	linear regression	6	0.0906	0.5621
