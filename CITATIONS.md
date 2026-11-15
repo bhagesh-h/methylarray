@@ -228,7 +228,7 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. Bioinformatics. 2024.
 
-- [dnaMethyAge](https://github.com/yiluyucheng/dnaMethyAge)
+- [dnaMethyAge](https://doi.org/10.1007/s11357-023-00871-w) ([GitHub](https://github.com/yiluyucheng/dnaMethyAge))
 
   > Wang Y, Grant OA, Zhai X, McDonald-Maier KD, Schalkwyk LC. Insights into ageing rates comparison across tissues from recalibrating cerebellum DNA methylation clock. GeroScience. 2024;46:39-56.
 

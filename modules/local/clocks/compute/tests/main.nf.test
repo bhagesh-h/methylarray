@@ -1,0 +1,89 @@
+nextflow_process {
+
+    name "Test Process CLOCKS_COMPUTE"
+    script "../main.nf"
+    process "CLOCKS_COMPUTE"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "clocks"
+    tag "clocks/compute"
+
+    // The probe rows that four clocks need, from the minfi route of the six
+    // public whole-blood test arrays, with their reported ages and sexes and
+    // cell fractions (make_fixture.R)
+
+    test("Horvath, Hannum, PhenoAge and DunedinPACE") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true)
+                ]
+                input[1] = file(params.dnamethyage_source, checkIfExists: true)
+                input[2] = file(params.dunedinpace_source, checkIfExists: true)
+                """
+            }
+        }
+
+        then {
+            def table = path(process.out.clocks[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def rows = table.drop(1).collect { values -> [table[0], values].transpose().collectEntries() }.collectEntries { row -> [row.sample, row] }
+            def cov = path(process.out.coverage[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def coverage = cov.drop(1).collect { values -> [cov[0], values].transpose().collectEntries() }.collectEntries { row -> [row.clock, row] }
+            assertAll(
+                { assert process.success },
+                { assert rows.size() == 6 },
+                // EPIC v2 coverage as published: DunedinPACE 144 of 173 CpGs, PhenoAge 495 of 513
+                { assert coverage.DunedinPACE.present == '144' && coverage.LevineM2018.present == '495' },
+                // the Horvath clock tracks age in these adults, and DunedinPACE is near one year per year
+                { assert rows.values().every { row -> Math.abs((row.HorvathS2013 as double) - (row.age as double)) < 15 } },
+                { assert rows.values().every { row -> (row.DunedinPACE as double) > 0.6 && (row.DunedinPACE as double) < 1.4 } },
+                // technical replicates agree
+                { assert Math.abs((rows.CALERIE_1.HorvathS2013 as double) - (rows.CALERIE_1_rep.HorvathS2013 as double)) < 3 },
+                // age acceleration with six ages; intrinsic age acceleration needs more arrays
+                { assert table[0].contains('eaa_HorvathS2013') && !table[0].contains('ieaa_HorvathS2013') },
+                { assert snapshot(process.out.coverage, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("Horvath, Hannum, PhenoAge and DunedinPACE - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    []
+                ]
+                input[1] = []
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

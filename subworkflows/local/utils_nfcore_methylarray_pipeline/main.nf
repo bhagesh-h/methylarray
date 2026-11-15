@@ -384,7 +384,8 @@ def toolCitationText() {
         snp, "probes in the general mask of Zhou et al. (2017)", crosshyb ].findAll { item -> item }
     def probe_filter = "Probes were annotated with the extended EPIC v2 manifest (Peters et al. 2024) and the InfiniumAnnotation masks (Zhou et al. 2017). The following were removed: ${removed.join('; ')}.${params.replicate_probe_strategy == 'mean' ? ' Replicate probes were averaged per CpG.' : ''} Association tests use M-values."
     def cells = params.tissue == 'blood' ? "Leukocyte fractions were estimated with EpiDISH robust partial correlations (Teschendorff et al. 2017) using the 12-cell-type reference of Luo et al. (2023)." : ''
-    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+    def clocks = params.skip_clocks ? '' : "Epigenetic clocks were computed with dnaMethyAge (Wang et al. 2024)${params.clocks.tokenize(',').contains('DunedinPACE') ? ' and DunedinPACE (Belsky et al. 2022)' : ''} on the detection-masked beta values averaged per CpG; values that failed detection were set to the CpG mean over the other arrays."
+    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
 }
 
 //
@@ -411,6 +412,8 @@ def toolBibliographyText() {
         zhou2017: referenceHtml('Zhou, W., Laird, P. W., & Shen, H.', 2017, 'Comprehensive characterization, annotation and innovative use of Infinium DNA methylation BeadChip probes', 'Nucleic Acids Research, 45(4), e22', '10.1093/nar/gkw967'),
         epidish: referenceHtml('Teschendorff, A. E., Breeze, C. E., Zheng, S. C., & Beck, S.', 2017, 'A comparison of reference-based algorithms for correcting cell-type heterogeneity in Epigenome-Wide Association Studies', 'BMC Bioinformatics, 18, 105', '10.1186/s12859-017-1511-5'),
         luo2023: referenceHtml('Luo, Q., Dwaraka, V. B., Chen, Q., et al.', 2023, 'A meta-analysis of immune-cell fractions at high resolution reveals novel associations with common phenotypes and health outcomes', 'Genome Medicine, 15, 59', '10.1186/s13073-023-01211-5'),
+        dnamethyage: referenceHtml('Wang, Y., Grant, O. A., Zhai, X., McDonald-Maier, K. D., & Schalkwyk, L. C.', 2024, 'Insights into ageing rates comparison across tissues from recalibrating cerebellum DNA methylation clock', 'GeroScience, 46, 39-56', '10.1007/s11357-023-00871-w'),
+        dunedinpace: referenceHtml('Belsky, D. W., Caspi, A., Corcoran, D. L., et al.', 2022, 'DunedinPACE, a DNA methylation biomarker of the pace of aging', 'eLife, 11, e73420', '10.7554/eLife.73420'),
         multiqc: referenceHtml('Ewels, P., Magnusson, M., Lundin, S., & Käller, M.', 2016, 'MultiQC: summarize analysis results for multiple tools and samples in a single report', 'Bioinformatics, 32(19), 3047-3048', '10.1093/bioinformatics/btw354')
     ]
     def minfi_norm_refs = [ noob: ['noob'], funnorm: ['funnorm'], quantile: ['quantile'], swan: ['swan', 'noob'] ]
@@ -422,7 +425,8 @@ def toolBibliographyText() {
     ][params.preprocessing] ?: []
     def qc_keys = params.skip_ewastools ? [] : ['ewastools']
     def cell_keys = params.tissue == 'blood' ? ['epidish', 'luo2023'] : []
-    return (keys + qc_keys + ['peters2024', 'zhou2017'] + cell_keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
+    def clock_keys = params.skip_clocks ? [] : ['dnamethyage'] + (params.clocks.tokenize(',').contains('DunedinPACE') ? ['dunedinpace'] : [])
+    return (keys + qc_keys + ['peters2024', 'zhou2017'] + cell_keys + clock_keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
 }
 
 def methodsDescriptionText(mqc_methods_yaml) {
