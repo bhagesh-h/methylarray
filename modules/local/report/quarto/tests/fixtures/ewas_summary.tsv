@@ -1,0 +1,2 @@
+model	trait	n	status	contrast	n_cpgs	lambda	lambda_bacon	bacon_inflation	bacon_bias	hits_fdr	hits_epigenome_wide	hits_suggestive	hits_fdr_bacon	hits_epigenome_wide_bacon	top_cpg	top_p	top_delta_beta
+score	score	38	tested	score	2000	1.02	1.01	0.99	0.01	21	15	20	21	16	cg00000003	1e-15	0.08

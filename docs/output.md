@@ -19,6 +19,7 @@ The directories listed below will be created in the results directory after the 
 - [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
 - [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment of the significant CpGs per model
 - [DNA methylation scores](#dna-methylation-scores): smoking, alcohol, BMI and IL-6 scores per array
+- [GEO submission files](#geo-submission-files): processed matrix, signal intensities and a sample table, when `--export_geo` is set
 - [Reference resources](#reference-resources): the sesameData cache and the probe annotation, when `--save_reference` is set
 - [Analysis report](#analysis-report): one HTML report of the run
 - [MultiQC](#multiqc): report with the sample QC table and software versions
@@ -117,6 +118,7 @@ Not with `--skip_clocks`.
 - `exploration/pca_ctrl_pca_variance.tsv`: share of the control-probe variance per component, and the cumulative share.
 - `exploration/pca_scores.tsv`: the tested principal components (`--n_pcs`) of the most variable CpGs per array.
 - `exploration/pca_variance.tsv`: share of variance per component, the cumulative share, and whether the component was tested.
+- `exploration/pca_outliers.tsv`: per array the robust Mahalanobis distance on PC1 and PC2 (each centred on its median and scaled by its MAD) and `pca_outlier` (`TRUE` above the chi-square 0.999 quantile with 2 degrees of freedom). Report only: flagged arrays stay in the analysis. Needs at least 5 arrays.
 - `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
 
 The MultiQC report shows the associations as a heatmap of -log10 P, the variance per component, and PC1 against PC2 coloured by predicted sex.
@@ -125,7 +127,7 @@ The MultiQC report shows the associations as a heatmap of -log10 P, the variance
 
 Only with `--models`.
 
-- `ewas/ewas_summary.tsv`: one row per model and contrast: status (`tested`, or why not), complete cases, CpGs tested, genomic lambda before and after bacon, bacon inflation and bias, CpGs at FDR < 0.05, at `--p_epigenome_wide` and at `--p_suggestive` (raw, and after bacon), and the top CpG.
+- `ewas/ewas_summary.tsv`: one row per model and contrast: status (`tested`, or why not), complete cases, CpGs tested, genomic lambda before and after bacon, bacon inflation and bias, CpGs at FDR < 0.05, at `--p_epigenome_wide` and at `--p_suggestive` (raw, and after bacon), and the top CpG. With more than one tested model or contrast: `meff`, the effective number of independent tests across them (Galwey 2009, from the correlation of their t statistics over the CpGs), `p_study_wide` (`--p_epigenome_wide` / Meff) and `hits_study_wide`, the CpGs below it.
 - `ewas/<model>/`
   - `ewas_<model>_stats.tsv.gz`: every CpG: `cpg_id`, position and gene context, `contrast`, `logfc_m` and `se_m` (coefficient and standard error on the M-value scale, per unit of the transformed trait or for the level against the reference), `delta_beta` (the same coefficient on beta values), moderated `t`, `p_value`, `fdr` (Benjamini-Hochberg), `p_bacon` and `fdr_bacon` (after bacon correction of bias and inflation), `mean_beta` and `n`.
   - `ewas_<model>_top.tsv`: the 1,000 CpGs with the smallest P per contrast.
@@ -156,6 +158,16 @@ Not with `--skip_dnam_scores`.
 
 - `dnam_scores/dnam_scores.tsv`: one row per array that passed QC, one column `dnam_<score>` per score of `--dnam_scores`: the weighted sum of the beta values of the score's CpGs present on the array. Higher values mean more smoking, alcohol, BMI or IL-6 as predicted from methylation; the scale is that of the published weights, so compare scores within a study.
 - `dnam_scores/dnam_scores_coverage.tsv`: per score, its CpGs, how many are in the data (and how many only under their EPIC v1 or 450K ID), the share present, the values that failed detection and were set to the CpG mean, and the reference.
+
+### GEO submission files
+
+Only with `--export_geo`. For the arrays that passed sample QC, following the GEO rules for methylation arrays.
+
+- `geo/geo_processed_matrix.tsv.gz`: `ID_REF`, then per array the normalised beta value of the preprocessing route (without detection masking) and `<array> Detection Pval`.
+- `geo/geo_signal_intensities.tsv.gz`: `ID_REF`, then per array `<array> Unmethylated signal` and `<array> Methylated signal` (unnormalised, read from the IDAT files with minfi `preprocessRaw`) and `<array> Detection Pval`.
+- `geo/geo_samples.tsv`: array name, red and green IDAT file names, Sentrix fields and the processing description, as a start for the GEO metadata sheet. No phenotype columns.
+
+Columns are named after the samplesheet sample names. Rename them before submission if they identify participants, and submit the IDAT files themselves as raw data.
 
 ### Reference resources
 

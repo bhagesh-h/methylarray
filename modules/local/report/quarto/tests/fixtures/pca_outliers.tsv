@@ -1,0 +1,6 @@
+sample	robust_distance	pca_outlier
+S1	0.52	FALSE
+S2	1.10	FALSE
+S3	31.7	TRUE
+S4	0.81	FALSE
+S5	2.02	FALSE

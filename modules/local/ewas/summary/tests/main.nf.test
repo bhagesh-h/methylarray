@@ -10,7 +10,8 @@ nextflow_process {
     tag "ewas/summary"
 
     // Summaries of three EWAS_LIMMA test models: continuous, binary, and one with
-    // fewer complete cases than min_n
+    // fewer complete cases than min_n; simulated statistics (make_fixture.py)
+    // with correlated t statistics, so Meff lies between 1 and 2
 
     test("three models") {
 
@@ -24,6 +25,11 @@ nextflow_process {
                     file("$moduleTestDir/ewas_smoker_summary.json", checkIfExists: true),
                     file("$moduleTestDir/ewas_small_summary.json", checkIfExists: true)
                 ]
+                input[1] = [
+                    file("$moduleTestDir/ewas_score_stats.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/ewas_smoker_stats.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/ewas_small_stats.tsv.gz", checkIfExists: true)
+                ]
                 """
             }
         }
@@ -36,6 +42,9 @@ nextflow_process {
                 { assert rows.keySet() == ['score', 'smoker', 'small'] as Set },
                 { assert rows.smoker.contrast == 'yes-no' },
                 { assert rows.small.status.startsWith('not tested') },
+                { assert rows.score.meff == rows.smoker.meff && (rows.smoker.meff as double) > 1 && (rows.smoker.meff as double) < 2 },
+                { assert (rows.smoker.p_study_wide as double) < 9e-8 && (rows.smoker.hits_study_wide as int) == 10 && rows.score.hits_study_wide == '0' },
+                { assert rows.small.meff == '' },
                 { assert path(process.out.multiqc[0]).text.contains("plot_type: 'table'") },
                 { assert snapshot(process.out).match() }
             )
@@ -51,6 +60,7 @@ nextflow_process {
             process {
                 """
                 input[0] = [ file("$moduleTestDir/ewas_score_summary.json", checkIfExists: true) ]
+                input[1] = []
                 """
             }
         }

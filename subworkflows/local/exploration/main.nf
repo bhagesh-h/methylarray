@@ -34,5 +34,6 @@ workflow EXPLORATION {
     variance     = EXPLORATION_PCA.out.variance                                                // channel: [ meta, variance per component ]
     scores       = EXPLORATION_PCA.out.scores                                                  // channel: [ meta, PC scores ]
     associations = EXPLORATION_PCA.out.associations                                            // channel: [ meta, PC associations ]
+    outliers     = EXPLORATION_PCA.out.outliers                                                // channel: [ meta, PCA outlier flags (report only) ]
     multiqc      = EXPLORATION_PCA.out.multiqc.map { _meta, files -> files }.flatten()         // channel: MultiQC custom content
 }

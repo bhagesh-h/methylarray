@@ -1,0 +1,2 @@
+contrast	chr	start	end	dmrcate_min_smoothed_fdr	dmrcate_meandiff	dmrff_p_adjusted	dmrff_estimate	genes
+score	chr1	19900	21300	1.8e-280	0.08	1.8e-28	0.80	GENEA

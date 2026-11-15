@@ -23,9 +23,14 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - Gene set enrichment (#26): missMethyl `gometh` (GO; KEGG downloaded at run time, recorded as not run when unavailable) and `gsameth` on GMT collections (default MSigDB 2025.1 Hallmark and Reactome, staged files) for the CpGs at FDR < 0.05 of every tested model, against all tested CpGs, with the probe annotation passed as `anno` (`ENRICHMENT_MISSMETHYL`).
 - DNA methylation scores (M11): smoking, alcohol and BMI (McCartney et al. 2018) and IL-6 (Stevenson et al. 2021) as weighted sums over the published CpG sets stored in `assets/dnam_scores` (CC BY 4.0, sources listed), on the detection-masked CpG-level betas with legacy-ID matching and coverage per score (`DNAM_SCORES`); `dnam_smoking` is now the `@smoking` model covariate. `--dnam_scores`, `--skip_dnam_scores`.
 - HTML analysis report (#30): `REPORT_QUARTO` renders `report/methylarray_report.html` with Quarto from the result tables, software versions, methods text and parameters (`assets/report/methylarray_report.qmd`); `--skip_report`. MultiQC sections follow the pipeline order.
+- GEO submission files (#32, `--export_geo`): processed matrix (normalised beta values with detection p-values), unnormalised methylated and unmethylated signal from the IDAT files, and a sample table with the IDAT file names, for the arrays that passed sample QC (`EXPORT_GEO`).
+- Study-wide threshold across models (#32): `EWAS_SUMMARY` reports the effective number of independent tests over the tested models and contrasts (Meff, Galwey 2009, from the correlation of their t statistics), `p_study_wide` and its hits; shown in the report.
+- PCA outlier flags (#32): `EXPLORATION_PCA` writes `pca_outliers.tsv`, a robust Mahalanobis distance on PC1 and PC2 with a flag above the chi-square 0.999 quantile. Report only; shown in MultiQC and the report.
 - Developer guide (`docs/developer.md`) and `dev/nfdev container`, which builds a module's images from its `environment.yml` with Wave.
 
 ### `Changed`
+
+- `MINFI_PREPROCESS` reads and corrects the arrays in chunks (hidden `--minfi_chunk_size`, default 40) and writes each chunk to HDF5 at once, so a run of about 300 arrays fits in about 40 GB of memory. Results are unchanged: Noob, detection p-values, ENmix oob/RELIC/RCP and SWAN work array by array; Funnorm, quantile normalisation and the ENmix quantile step run on all arrays in a second pass, and the ENmix low-quality flag is computed over all arrays.
 
 - minfi (Noob) is the default preprocessing route (`--preprocessing minfi`); SeSAMe stays available with `--preprocessing sesame`.
 - Task images come from Seqera Containers (`community.wave.seqera.io`), built by Wave from each module's `environment.yml`, with separate Docker and Singularity images. The minfi module keeps its Docker Hub image, because installing the EPIC v2 annotation packages exceeds the Wave build time limit.

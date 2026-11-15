@@ -11,6 +11,10 @@
 #   - association of each PC with technical and biological variables: linear
 #     regression for numeric variables, Kruskal-Wallis for categorical ones,
 #     with R-squared from the linear model
+#   - outlier flags (report only, no array is removed): robust Mahalanobis
+#     distance on PC1 and PC2, each centred on its median and scaled by its MAD
+#     (the PCs are uncorrelated), flagged above the chi-square (2 df) 0.999
+#     quantile
 # Variables with a single value, and categorical variables with as many levels
 # as arrays (for example the Sentrix ID in a small run), are left out.
 #
@@ -101,6 +105,17 @@ shown <- seq_len(min(length(share), max_pcs))
 variance <- data.table(pc = paste0("PC", shown), variance_explained = round(share[shown], 5),
                        cumulative = round(cumsum(share)[shown], 5), tested = shown <= n_pcs)
 fwrite(variance, paste0(prefix, "_variance.tsv"), sep = "\\t")
+
+# Outlier flags on PC1 and PC2 (report only)
+outliers <- data.table(sample = arrays, robust_distance = NA_real_, pca_outlier = FALSE)
+if (ncol(pca[["x"]]) >= 2 && length(arrays) >= 5) {
+    pc12 <- pca[["x"]][arrays, 1:2, drop = FALSE]
+    scaled <- sweep(sweep(pc12, 2, apply(pc12, 2, median)), 2, pmax(apply(pc12, 2, mad), .Machine[["double.eps"]]), "/")
+    distance <- rowSums(scaled^2)
+    outliers[, robust_distance := round(distance, 4)]
+    outliers[, pca_outlier := distance > qchisq(0.999, df = 2)]
+}
+fwrite(outliers, paste0(prefix, "_outliers.tsv"), sep = "\\t")
 
 # Variables to test, one row per array
 samples <- read_table(samples_file)[match(arrays, sample)]
@@ -203,7 +218,8 @@ if (ncol(pca[["x"]]) >= 2) {
         id = "pca_scatter",
         section_name = "PCA",
         description = paste0("First two principal components of the most variable CpGs (PC1 ", round(100 * share[1], 1),
-                             "%, PC2 ", round(100 * share[2], 1), "% of the variance), coloured by predicted sex (orange female, green male)."),
+                             "%, PC2 ", round(100 * share[2], 1), "% of the variance), coloured by predicted sex (orange female, green male). Flagged as outliers (robust Mahalanobis distance, report only): ",
+                             if (any(outliers[["pca_outlier"]])) paste(outliers[["sample"]][outliers[["pca_outlier"]]], collapse = ", ") else "none", "."),
         plot_type = "scatter",
         pconfig = list(id = "pca_scatter_plot", title = "PCA: PC1 and PC2", xlab = "PC1", ylab = "PC2"),
         data = points

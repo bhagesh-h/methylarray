@@ -1,0 +1,36 @@
+CLOCKS_COMPUTE:
+  dnaMethyAge: 0.2.0
+  DunedinPACE: 0.99.0
+  preprocessCore: 1.72.0
+  impute: 1.84.0
+  RPMM: 1.25
+DNAM_SCORES:
+  SummarizedExperiment: 1.40.0
+  data.table: 1.18.6.1
+EPIDISH_RPC:
+  EpiDISH: 2.26.0
+  SummarizedExperiment: 1.40.0
+  HDF5Array: 1.38.0
+EWASTOOLS_QC:
+  ewastools: 1.8.2
+  illuminaio: 0.52.0
+EXPLORATION_PCA:
+  isva: 1.1
+  SummarizedExperiment: 1.40.0
+  HDF5Array: 1.38.0
+MINFI_PREPROCESS:
+  minfi: 1.56.0
+  ENmix: 1.46.2
+  SummarizedExperiment: 1.40.0
+  HDF5Array: 1.38.0
+PROBES_ANNOTATE:
+  data.table: 1.18.6.1
+PROBES_FILTER:
+  SummarizedExperiment: 1.40.0
+  HDF5Array: 1.38.0
+  data.table: 1.18.6.1
+SAMPLEQC_SUMMARY:
+  R: 4.5.3
+Workflow:
+  bhagesh-h/methylarray: v1.0.0dev
+  Nextflow: 26.10.6

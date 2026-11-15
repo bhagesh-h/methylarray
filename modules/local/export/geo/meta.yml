@@ -1,0 +1,82 @@
+name: export_geo
+description: GEO submission files for the arrays that passed sample QC - a processed matrix (normalised beta values and detection p-values), a matrix of unnormalised methylated and unmethylated signal intensities, and a sample table with the IDAT file names
+keywords:
+  - dna methylation
+  - methylation array
+  - geo
+  - data submission
+tools:
+  - minfi:
+      description: "Analyze Illumina Infinium DNA methylation arrays"
+      homepage: https://bioconductor.org/packages/minfi
+      documentation: https://bioconductor.org/packages/minfi
+      doi: "10.1093/bioinformatics/btu049"
+      licence: ["Artistic-2.0"]
+      identifier: biotools:minfi
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the preprocessing method as id
+          e.g. [ id:'minfi' ]
+    - samples:
+        type: file
+        description: Sample table (sample, samplesheet fields, idat_prefix)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - idats:
+        type: file
+        description: Red and green IDAT files of every array (optionally gzipped)
+        pattern: "*.idat{,.gz}"
+    - se:
+        type: directory
+        description: SummarizedExperiment of the preprocessing route (assays beta_unmasked and detp)
+    - retained:
+        type: file
+        description: Arrays that passed sample QC, one name per line
+        pattern: "*.txt"
+        ontologies:
+          - edam: http://edamontology.org/format_2330
+output:
+  processed:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_processed_matrix.tsv.gz":
+          type: file
+          description: ID_REF, then per array the normalised beta value and its detection p-value
+          pattern: "*_processed_matrix.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  intensities:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_signal_intensities.tsv.gz":
+          type: file
+          description: ID_REF, then per array the unnormalised unmethylated and methylated signal and the detection p-value
+          pattern: "*_signal_intensities.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  samples:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_samples.tsv":
+          type: file
+          description: Array name, IDAT file names, Sentrix fields and the processing description
+          pattern: "*_samples.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

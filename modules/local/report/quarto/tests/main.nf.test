@@ -20,7 +20,7 @@ nextflow_process {
             process {
                 """
                 input[0] = file("$projectDir/assets/report/methylarray_report.qmd", checkIfExists: true)
-                input[1] = files("$moduleTestDir/inputs/*")
+                input[1] = files("$moduleTestDir/fixtures/*")
                 """
             }
         }
@@ -33,6 +33,7 @@ nextflow_process {
                           'Exploratory analysis', 'Association models', 'Differentially methylated regions', 'Gene set enrichment',
                           'Methods', 'Limitations'].every { section -> html.contains(section) } },
                 { assert html.contains('minfi') && html.contains('PLANTED') },
+                { assert html.contains('reported, not removed') && html.contains('S3') },
                 { assert !html.contains('Error in') },
                 { assert snapshot(process.out.versions).match() }
             )

@@ -83,10 +83,18 @@
                         {
                             "id": "minfi"
                         },
-                        "pca_scree_mqc.tsv:md5,95b63210791ceb7b8bcac1b23ce1873f"
+                        "pca_outliers.tsv:md5,9a7a9681db36858bd2bcd7ca0392825d"
                     ]
                 ],
                 "6": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "pca_scree_mqc.tsv:md5,95b63210791ceb7b8bcac1b23ce1873f"
+                    ]
+                ],
+                "7": [
                     "versions.yml:md5,e5c2155c7f5b1b67479509f5b440350e"
                 ],
                 "associations": [
@@ -121,6 +129,14 @@
                         "pca_scree_mqc.tsv:md5,95b63210791ceb7b8bcac1b23ce1873f"
                     ]
                 ],
+                "outliers": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "pca_outliers.tsv:md5,9a7a9681db36858bd2bcd7ca0392825d"
+                    ]
+                ],
                 "scores": [
                     [
                         {
@@ -142,7 +158,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T14:10:50.633178487",
+        "timestamp": "2026-11-15T18:34:38.974063596",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

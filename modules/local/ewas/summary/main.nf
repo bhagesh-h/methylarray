@@ -7,6 +7,7 @@ process EWAS_SUMMARY {
 
     input:
     path summaries, stageAs: 'summaries/*'
+    path stats, stageAs: 'stats/*'
 
     output:
     path "${prefix}.tsv"    , emit: summary
