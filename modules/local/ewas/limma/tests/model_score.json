@@ -1,0 +1,10 @@
+{
+    "name": "score",
+    "trait": "score",
+    "trait_type": "continuous",
+    "transform": "zscore",
+    "covariates": ["age", "@sex", "@cells", "@ctrlpcs", "plate"],
+    "min_n": 20,
+    "skip_dmr": false,
+    "skip_enrichment": false
+}

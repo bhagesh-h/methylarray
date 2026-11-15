@@ -1,0 +1,11 @@
+{
+    "name": "small",
+    "trait": "score",
+    "trait_type": "continuous",
+    "transform": "none",
+    "covariates": ["age"],
+    "subset": { "column": "plate", "equals": "P1" },
+    "min_n": 20,
+    "skip_dmr": false,
+    "skip_enrichment": false
+}

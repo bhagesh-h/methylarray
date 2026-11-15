@@ -1,0 +1,7 @@
+# Models for the stub pipeline test (tests/combined.nf.test): the six test
+# arrays are too few for a real model, so this only checks the wiring
+- name: age
+  trait: reported_age
+  trait_type: continuous
+  covariates: ["@sex", "@cells", "@ctrlpcs"]
+  min_n: 10
