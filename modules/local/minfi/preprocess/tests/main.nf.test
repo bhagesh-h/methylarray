@@ -1,0 +1,127 @@
+nextflow_process {
+
+    name "Test Process MINFI_PREPROCESS"
+    script "../main.nf"
+    process "MINFI_PREPROCESS"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "minfi"
+    tag "minfi/preprocess"
+
+    // Two public EPIC v2 whole-blood arrays (GEO GSE286313): one female, one male
+
+    test("minfi route - Noob") {
+
+        when {
+            params {
+                preprocessing = 'minfi'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    [
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Grn.idat.gz', checkIfExists: true)
+                    ],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).readLines().collect { line -> line.tokenize('\t') }
+            def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.se[0][1]).list().collect { f -> f.fileName.toString() }.sort() == ['assays.h5', 'se.rds'] },
+                { assert rows.collect { row -> row.sample } == ['BeCOME_1', 'CALERIE_1'] },
+                { assert rows.every { row -> row.platform == 'EPICv2' && row.method == 'minfi' } },
+                { assert rows[0].normalisation == 'noob' },
+                { assert rows.collect { row -> row.predicted_sex } == ['female', 'male'] },
+                { assert path(process.out.multiqc[0][1]).text.contains("plot_type: 'generalstats'") },
+                { assert snapshot(process.out.qc, process.out.multiqc, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("enmix route - oob, RELIC, RCP") {
+
+        when {
+            params {
+                preprocessing = 'enmix'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'enmix' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    [
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Grn.idat.gz', checkIfExists: true)
+                    ],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def qc = path(process.out.qc[0][1]).readLines().collect { line -> line.tokenize('\t') }
+            def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.se[0][1]).list().collect { f -> f.fileName.toString() }.sort() == ['assays.h5', 'se.rds'] },
+                { assert rows.collect { row -> row.sample } == ['BeCOME_1', 'CALERIE_1'] },
+                { assert rows.every { row -> row.platform == 'EPICv2' && row.method == 'enmix' } },
+                { assert rows[0].normalisation == 'ENmix oob + RELIC + RCP' },
+                { assert rows.collect { row -> row.predicted_sex } == ['female', 'male'] },
+                { assert path(process.out.multiqc[0][1]).text.contains("plot_type: 'generalstats'") },
+                { assert snapshot(process.out.qc, process.out.multiqc, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("minfi route - stub") {
+
+        tag "fast"
+
+        options "-stub"
+
+        when {
+            params {
+                preprocessing = 'minfi'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    [
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Grn.idat.gz', checkIfExists: true)
+                    ],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

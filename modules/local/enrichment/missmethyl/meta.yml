@@ -1,0 +1,70 @@
+name: enrichment_missmethyl
+description: Gene set enrichment of the CpGs significant in one association model with missMethyl (GO and KEGG with gometh, GMT collections such as MSigDB Hallmark and Reactome with gsameth), corrected for the number of CpGs per gene
+keywords:
+  - dna methylation
+  - methylation array
+  - gene set enrichment
+  - gene ontology
+tools:
+  - missmethyl:
+      description: "Analysing Illumina HumanMethylation BeadChip data, including gene set testing that accounts for the number of probes per gene"
+      homepage: https://bioconductor.org/packages/missMethyl
+      documentation: https://bioconductor.org/packages/missMethyl
+      doi: 10.1093/bioinformatics/btv560
+      licence: ["GPL-2.0-only"]
+      identifier: biotools:missmethyl
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the model name as id
+          e.g. [ id:'bmi' ]
+    - stats:
+        type: file
+        description: EWAS_LIMMA statistics of every CpG (cpg_id, gene, gene_group, contrast, p_value, fdr)
+        pattern: "*_stats.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - resolved:
+        type: file
+        description: The resolved model (skip_enrichment)
+        pattern: "*_resolved.json"
+        ontologies:
+          - edam: http://edamontology.org/format_3464
+  - gmts:
+      type: file
+      description: Gene set collections in GMT format with Entrez gene IDs
+      pattern: "*.gmt"
+      ontologies: []
+output:
+  enrichment:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}.tsv":
+          type: file
+          description: One row per collection, contrast and gene set - term, GO ontology, set size, significant genes, P and FDR
+          pattern: "*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_summary.json":
+          type: file
+          description: Status, significant and tested CpGs per contrast, and notes on collections that could not run
+          pattern: "*_summary.json"
+          ontologies:
+            - edam: http://edamontology.org/format_3464
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

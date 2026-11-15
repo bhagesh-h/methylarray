@@ -1,0 +1,17 @@
+# Developer toolbox for methylarray (not used by pipeline tasks).
+# Every version is pinned; update deliberately and record the change in CHANGELOG.md.
+name: base
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.12
+  - openjdk=21.0.10
+  - nf-core=4.2.2
+  - nf-test=0.9.5
+  - nf-metro=2.1.0
+  - prek=0.5.9
+  - nodejs=24.22.3
+  - git=2.56.1
+  - jq=1.8.2
+  - yq=4.4.5

@@ -1,0 +1,143 @@
+{
+    "control metrics, sex and SNP genotypes - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_summary.tsv:md5,5ab6774a339b89348a049a707085a180"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_histograms.tsv:md5,ccc64f8a19fa096603b9432c7cd07cc8"
+                    ]
+                ],
+                "5": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_mqc.tsv:md5,c9aa8a5ac6841ffb3a6cc2de45b44797"
+                    ]
+                ],
+                "6": [
+                    "versions.yml:md5,46c736dd2bd622c35dd4f5e5a0acea83"
+                ],
+                "conflicts": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0"
+                    ]
+                ],
+                "controls": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_mqc.tsv:md5,c9aa8a5ac6841ffb3a6cc2de45b44797"
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
+                    ]
+                ],
+                "snp_histograms": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_histograms.tsv:md5,ccc64f8a19fa096603b9432c7cd07cc8"
+                    ]
+                ],
+                "snp_summary": [
+                    [
+                        {
+                            "id": "ewastools"
+                        },
+                        "ewastools_snp_summary.tsv:md5,5ab6774a339b89348a049a707085a180"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,46c736dd2bd622c35dd4f5e5a0acea83"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T23:19:03.426422808",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "control metrics, sex and SNP genotypes": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "ewastools"
+                    },
+                    "ewastools_qc.tsv:md5,a65ca8b722c30bc7fce5feccdf8b176b"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "ewastools"
+                    },
+                    "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0"
+                ]
+            ],
+            [
+                "versions.yml:md5,2be2fc8e5a9e28fd44a7f7854bbdd5da"
+            ]
+        ],
+        "timestamp": "2026-11-15T09:00:56.701904853",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

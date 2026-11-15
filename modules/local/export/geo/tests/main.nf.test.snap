@@ -1,0 +1,103 @@
+{
+    "minfi route - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "geo_processed_matrix.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "geo_signal_intensities.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "geo_samples.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,406e066b99b46d4accddb4749ccac3ac"
+                ],
+                "intensities": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "geo_signal_intensities.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9"
+                    ]
+                ],
+                "processed": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "geo_processed_matrix.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9"
+                    ]
+                ],
+                "samples": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "geo_samples.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,406e066b99b46d4accddb4749ccac3ac"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T18:33:34.001896702",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "minfi route": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "geo_processed_matrix.tsv.gz:md5,054bc603dc54c2e3a0ef1b549328e76b"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "geo_signal_intensities.tsv.gz:md5,54adc3555bef7d454fab23aba7f0f09a"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "geo_samples.tsv:md5,d1d6311914ba41857ef00b0e3417aaf3"
+                ]
+            ],
+            [
+                "versions.yml:md5,21cf35430b9397a8e0871c8650d878da"
+            ]
+        ],
+        "timestamp": "2026-11-15T18:33:23.404791589",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

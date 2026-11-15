@@ -1,0 +1,164 @@
+{
+    "smoking, alcohol, BMI and IL-6": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores.tsv:md5,356a3c7f88198e4f6659ed9e2d7d92eb"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage.tsv:md5,4f7e8d458906f1533627459ba5d7a7c2"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_weights.tsv:md5,9ce85c491cd3ce63b4b7ffab39908ae2"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage_mqc.tsv:md5,b2530c1a213d9cdaae42625230d8bdf7"
+                    ]
+                ],
+                "4": [
+                    "versions.yml:md5,ab93ad47caba16adaf6f6335bd77cec0"
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage.tsv:md5,4f7e8d458906f1533627459ba5d7a7c2"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage_mqc.tsv:md5,b2530c1a213d9cdaae42625230d8bdf7"
+                    ]
+                ],
+                "scores": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores.tsv:md5,356a3c7f88198e4f6659ed9e2d7d92eb"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,ab93ad47caba16adaf6f6335bd77cec0"
+                ],
+                "weights": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_weights.tsv:md5,9ce85c491cd3ce63b4b7ffab39908ae2"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T23:15:20.109581105",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "smoking, alcohol, BMI and IL-6 - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores.tsv:md5,96281eaf2f130f426ffbd363cc7e12e3"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage.tsv:md5,d9ef34f02ce7dc8e688d44ea13bd9ada"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_weights.tsv:md5,fecf0ab9f6eeaa7491a856e65e23c97d"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage_mqc.tsv:md5,8a5a4156999d05933e75c286fc022c1f"
+                    ]
+                ],
+                "4": [
+                    "versions.yml:md5,e325800245089834ee66bc5b7c12847f"
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage.tsv:md5,d9ef34f02ce7dc8e688d44ea13bd9ada"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_coverage_mqc.tsv:md5,8a5a4156999d05933e75c286fc022c1f"
+                    ]
+                ],
+                "scores": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores.tsv:md5,96281eaf2f130f426ffbd363cc7e12e3"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e325800245089834ee66bc5b7c12847f"
+                ],
+                "weights": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "dnam_scores_weights.tsv:md5,fecf0ab9f6eeaa7491a856e65e23c97d"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T23:15:23.690239759",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

@@ -1,0 +1,87 @@
+{
+    "EPICv2 array - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "BeCOME_1"
+                        },
+                        "BeCOME_1.sesame.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "BeCOME_1"
+                        },
+                        "BeCOME_1.qc.tsv:md5,cc9ba355c4a8a8b16fe173ed05a24e61"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "BeCOME_1"
+                        },
+                        "BeCOME_1.controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,a1901c214ce16b48c3172887bda5696c"
+                ],
+                "controls": [
+                    [
+                        {
+                            "id": "BeCOME_1"
+                        },
+                        "BeCOME_1.controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "BeCOME_1"
+                        },
+                        "BeCOME_1.qc.tsv:md5,cc9ba355c4a8a8b16fe173ed05a24e61"
+                    ]
+                ],
+                "rds": [
+                    [
+                        {
+                            "id": "BeCOME_1"
+                        },
+                        "BeCOME_1.sesame.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,a1901c214ce16b48c3172887bda5696c"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T10:12:20.781045705",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "EPICv2 array - QCDPB": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "BeCOME_1"
+                    },
+                    "BeCOME_1.qc.tsv:md5,62aefd764a1284c6001ecff0ac82c7c6"
+                ]
+            ],
+            [
+                "versions.yml:md5,fd4bbbc446fb2611453a27d8416dd0da"
+            ]
+        ],
+        "timestamp": "2026-11-14T23:41:12.699518051",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

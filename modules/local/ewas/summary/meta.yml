@@ -1,0 +1,46 @@
+name: ewas_summary
+description: One table across the association models (N, lambda, bacon inflation and bias, hits per threshold, top CpG) and a MultiQC table
+keywords:
+  - dna methylation
+  - ewas
+  - summary
+tools:
+  - jsonlite:
+      description: "JSON parser and generator for R"
+      homepage: https://cran.r-project.org/package=jsonlite
+      documentation: https://cran.r-project.org/package=jsonlite
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - summaries:
+      type: file
+      description: Per-model summaries from EWAS_LIMMA
+      pattern: "*_summary.json"
+      ontologies:
+        - edam: http://edamontology.org/format_3464
+output:
+  summary:
+    - "${prefix}.tsv":
+        type: file
+        description: One row per model and contrast
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+  multiqc:
+    - "${prefix}_mqc.tsv":
+        type: file
+        description: MultiQC table of the models
+        pattern: "*_mqc.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

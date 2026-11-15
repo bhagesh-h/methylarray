@@ -1,0 +1,60 @@
+{
+    "three models - stub": {
+        "content": [
+            {
+                "0": [
+                    "ewas_summary.tsv:md5,163b91e05f33021d9fbf32c250b7c345"
+                ],
+                "1": [
+                    "ewas_summary_mqc.tsv:md5,96922cda733ed8dfb320b2a5afca949e"
+                ],
+                "2": [
+                    "versions.yml:md5,288b9285f04a8c7fa50801f1a55457c9"
+                ],
+                "multiqc": [
+                    "ewas_summary_mqc.tsv:md5,96922cda733ed8dfb320b2a5afca949e"
+                ],
+                "summary": [
+                    "ewas_summary.tsv:md5,163b91e05f33021d9fbf32c250b7c345"
+                ],
+                "versions": [
+                    "versions.yml:md5,288b9285f04a8c7fa50801f1a55457c9"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T14:35:14.632487262",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "three models": {
+        "content": [
+            {
+                "0": [
+                    "ewas_summary.tsv:md5,e85324754741345a5b9178fd206d8777"
+                ],
+                "1": [
+                    "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
+                ],
+                "2": [
+                    "versions.yml:md5,a7471c16ac9ac0f7c44e4fb5a49e3fc9"
+                ],
+                "multiqc": [
+                    "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
+                ],
+                "summary": [
+                    "ewas_summary.tsv:md5,e85324754741345a5b9178fd206d8777"
+                ],
+                "versions": [
+                    "versions.yml:md5,a7471c16ac9ac0f7c44e4fb5a49e3fc9"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T18:33:23.885495338",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

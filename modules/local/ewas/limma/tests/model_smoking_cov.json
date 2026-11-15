@@ -1,0 +1,10 @@
+{
+    "name": "score_smoking",
+    "trait": "score",
+    "trait_type": "continuous",
+    "transform": "none",
+    "covariates": ["age", "@smoking"],
+    "min_n": 20,
+    "skip_dmr": false,
+    "skip_enrichment": false
+}

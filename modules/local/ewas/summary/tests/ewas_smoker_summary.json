@@ -1,0 +1,29 @@
+{
+    "model": "smoker",
+    "trait": "smoker",
+    "trait_type": "binary",
+    "n": 40,
+    "n_dropped": 0,
+    "covariates": ["age", "predicted_sex"],
+    "block": "plate",
+    "covariates_used": ["age", "predicted_sex"],
+    "block_correlation": -0.0139551613288134,
+    "contrasts": {
+        "yes-no": {
+            "n_cpgs": 2000,
+            "lambda": 1.018,
+            "lambda_bacon": 1.0424,
+            "bacon_inflation": 0.9817,
+            "bacon_bias": -0.0197,
+            "hits_fdr": 18,
+            "hits_epigenome_wide": 6,
+            "hits_suggestive": 14,
+            "hits_fdr_bacon": 18,
+            "hits_epigenome_wide_bacon": 9,
+            "top_cpg": "cg00000035",
+            "top_p": 2.0462e-11,
+            "top_delta_beta": 0.12182
+        }
+    },
+    "status": "tested"
+}

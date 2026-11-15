@@ -1,3 +1,31 @@
+# Local reference material, scratch tests and planning notes (never published)
 ref
 test
 todo*
+.nfdev.env
+
+# nf-core template
+.nextflow*
+work/
+data/
+results/
+.DS_Store
+testing/
+testing*
+*.pyc
+null/
+.lineage/
+.nf-test/
+.nf-test.log
+.nf-test*.log
+
+# Test samplesheets (public data only) are tracked even though data/ is ignored
+!tests/data/
+
+# Private data must never be committed
+*.idat
+*.idat.gz
+*.xlsx
+*.xls
+inputs/
+.env

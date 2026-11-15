@@ -1,0 +1,103 @@
+{
+    "Horvath, Hannum, PhenoAge and DunedinPACE": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "clocks_coverage.tsv:md5,8a83604a1ad314e8801df840bd359c21"
+                ]
+            ],
+            [
+                "versions.yml:md5,dbe9560e8f254721babcaaa8e056d060"
+            ]
+        ],
+        "timestamp": "2026-11-15T23:19:38.298642372",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "Horvath, Hannum, PhenoAge and DunedinPACE - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks_weights.tsv:md5,90fa629f87c29b41affaf8deac4c9682"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks_coverage_mqc.tsv:md5,850c7cd81ab8dd56c92e604b6c123803"
+                    ]
+                ],
+                "4": [
+                    "versions.yml:md5,2dcc286dba502038ce80291be330c55b"
+                ],
+                "clocks": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4"
+                    ]
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks_coverage_mqc.tsv:md5,850c7cd81ab8dd56c92e604b6c123803"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,2dcc286dba502038ce80291be330c55b"
+                ],
+                "weights": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "clocks_weights.tsv:md5,90fa629f87c29b41affaf8deac4c9682"
+                    ]
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T23:15:12.691087192",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

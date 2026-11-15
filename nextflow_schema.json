@@ -1,0 +1,676 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/bhagesh-h/methylarray/main/nextflow_schema.json",
+    "title": "bhagesh-h/methylarray pipeline parameters",
+    "description": "Quality control, preprocessing and association analysis of Illumina Infinium DNA methylation arrays (EPIC v2)",
+    "type": "object",
+    "$defs": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": ["input", "outdir"],
+            "properties": {
+                "input": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_input.json",
+                    "pattern": "^\\S+\\.(csv|tsv|yaml|yml|json)$",
+                    "description": "Path to the samplesheet (CSV, TSV, YAML or JSON) with one row per array: sample name, red and green IDAT files and optional technical metadata.",
+                    "help_text": "Create a samplesheet with one row per array before running the pipeline. Required columns: `sample`, `idat_red` and `idat_grn`. Optional columns: `sentrix_id`, `sentrix_position`, `plate`, `well`, `batch`, `reported_sex`, `reported_age`, `replicate_group`, `exclude` and `exclude_reason`. See the usage documentation for details.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "phenotypes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_phenotypes.json",
+                    "pattern": "^\\S+\\.(csv|tsv)$",
+                    "description": "Path to a phenotype table (CSV or TSV) with one row per sample: a `sample` column and any analysis variables.",
+                    "help_text": "Optional. The `sample` column must match the samplesheet. Every other column is a trait or covariate that models can name. Column names may not reuse samplesheet columns or the derived covariate names (`predicted_sex`, `dnam_smoking`, `cc_*`, `ctrlpc*`). Missing values are written as `NA` or left empty. Phenotype values are never written to the logs.",
+                    "fa_icon": "fas fa-table"
+                },
+                "models": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "schema": "assets/schema_models.json",
+                    "pattern": "^\\S+\\.(yaml|yml)$",
+                    "description": "Path to a YAML file with the association models to run.",
+                    "help_text": "Optional. Each model gives a `name`, the `trait`, its `trait_type` (`continuous`, `binary` or `categorical`) and optionally a `transform`, `reference` level, `contrasts`, `covariates`, a random-effect `block`, a `subset`, `min_n`, `skip_dmr` and `skip_enrichment`. Covariates are column names or the tokens `@cells`, `@ctrlpcs`, `@technical`, `@sex` and `@smoking`. See the usage documentation.",
+                    "fa_icon": "fas fa-project-diagram"
+                },
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                },
+                "multiqc_title": {
+                    "type": "string",
+                    "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
+                    "fa_icon": "fas fa-file-signature"
+                }
+            }
+        },
+        "preprocessing_options": {
+            "title": "Array and preprocessing options",
+            "type": "object",
+            "fa_icon": "fas fa-microchip",
+            "description": "Array platform, preprocessing method and its settings.",
+            "properties": {
+                "platform": {
+                    "type": "string",
+                    "default": "EPICv2",
+                    "enum": ["EPICv2"],
+                    "description": "Array platform of the IDAT files.",
+                    "help_text": "The platform of every array is detected from its IDAT files, and the run stops if it differs from this value. Infinium MethylationEPIC v2.0 (`EPICv2`) is supported.",
+                    "fa_icon": "fas fa-microchip"
+                },
+                "preprocessing": {
+                    "type": "string",
+                    "default": "minfi",
+                    "enum": ["sesame", "minfi", "enmix", "combined"],
+                    "description": "Preprocessing method.",
+                    "help_text": "`minfi` (default): minfi import, detection p-values and Noob (or `--minfi_norm`). `sesame`: SeSAMe per-array preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays. `enmix`: minfi import, ENmix out-of-band background with RELIC dye-bias correction and RCP probe-type correction. `combined`: the `enmix` route with the SeSAMe quality and pOOBAH masks applied last.",
+                    "fa_icon": "fas fa-cogs"
+                },
+                "sesame_prep": {
+                    "type": "string",
+                    "default": "QCDPB",
+                    "pattern": "^[A-Za-z0-9]+$",
+                    "description": "SeSAMe preprocessing code passed to `prepSesame`.",
+                    "help_text": "Each letter is one step, applied in order. The default `QCDPB` applies the probe quality mask (Q), infers the colour channel of Infinium I probes (C), corrects non-linear dye bias (D), masks probes that fail pOOBAH detection (P) and applies noob background correction (B). See `sesame::prepSesameList()` for all codes.",
+                    "fa_icon": "fas fa-code"
+                },
+                "minfi_norm": {
+                    "type": "string",
+                    "default": "noob",
+                    "enum": ["noob", "funnorm", "quantile", "swan"],
+                    "description": "Normalisation of the `minfi` route.",
+                    "help_text": "`noob`: background and dye-bias correction per array. `funnorm`: functional normalisation with control-probe principal components (Noob background first). `quantile`: stratified quantile normalisation. `swan`: subset-quantile within-array normalisation on the Noob intensities. The `meth` and `unmeth` assays always hold the Noob-corrected intensities.",
+                    "fa_icon": "fas fa-balance-scale"
+                },
+                "enmix_quantile": {
+                    "type": "boolean",
+                    "description": "Add ENmix between-array quantile normalisation (`norm.quantile`) to the `enmix` and `combined` routes, before RCP.",
+                    "fa_icon": "fas fa-sort-amount-down"
+                },
+                "min_beads": {
+                    "type": "integer",
+                    "default": 3,
+                    "minimum": 1,
+                    "description": "Minimum number of beads; values measured by fewer beads are masked.",
+                    "fa_icon": "fas fa-braille"
+                },
+                "minfi_chunk_size": {
+                    "type": "integer",
+                    "default": 40,
+                    "minimum": 2,
+                    "description": "Minimum number of arrays read and corrected together by the minfi-based routes (`minfi`, `enmix`, `combined`).",
+                    "help_text": "Lower values use less memory. Noob, SWAN, detection p-values and the ENmix background, RELIC and RCP steps work array by array, so the result does not depend on the chunk size. Funnorm, quantile normalisation and the ENmix quantile step still read all arrays at once.",
+                    "fa_icon": "fas fa-layer-group",
+                    "hidden": true
+                },
+                "detection_pval": {
+                    "type": "number",
+                    "default": 0.05,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Detection p-value threshold; values above it are masked.",
+                    "help_text": "The detection p-value comes from minfi `detectionP` for the `minfi` route, ENmix `QCinfo` for `enmix` and SeSAMe pOOBAH for `sesame` and `combined`. Masked values are `NA` in the `beta` assay and kept in `beta_unmasked`.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "sesame_cache": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "Directory with the sesameData resources from an earlier run (`references/sesame_cache` when `--save_reference` was set).",
+                    "help_text": "Used by the `sesame` and `combined` routes. Without this option they download the resources from ExperimentHub at the start of each run. With it, SeSAMe preprocessing runs without network access.",
+                    "fa_icon": "fas fa-database"
+                },
+                "save_reference": {
+                    "type": "boolean",
+                    "description": "Save the reference resources to `<outdir>/references/`: the probe annotation table (reuse with `--probe_annotation`) and, for the `sesame` and `combined` routes, the sesameData cache (reuse with `--sesame_cache`).",
+                    "fa_icon": "fas fa-save"
+                }
+            }
+        },
+        "sample_qc_options": {
+            "title": "Sample QC options",
+            "type": "object",
+            "fa_icon": "fas fa-clipboard-check",
+            "description": "Thresholds for the per-array quality control.",
+            "properties": {
+                "skip_ewastools": {
+                    "type": "boolean",
+                    "description": "Skip the ewastools QC (control metrics, X/Y sex check, SNP genotypes).",
+                    "help_text": "ewastools computes the Illumina BeadArray Controls Reporter metrics, normalised X and Y intensities and SNP probe genotypes for the contamination and identity checks.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "ewastools_source": {
+                    "type": "string",
+                    "default": "https://github.com/hhhh5/ewastools/archive/d7d0a3295177b2528248966012f635be881f78ab.tar.gz",
+                    "description": "Source package of ewastools (URL or local path).",
+                    "help_text": "ewastools is not on conda or CRAN, so the QC step installs it from this source tarball. The default is version 1.8.2 at a fixed GitHub commit. For runs without network access, download the file once and give its local path.",
+                    "fa_icon": "fas fa-box"
+                },
+                "max_undetected_fraction": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Arrays with a larger fraction of undetected probes fail QC.",
+                    "help_text": "A probe is undetected when its detection p-value (minfi `detectionP` for `minfi`, ENmix `QCinfo` for `enmix`, SeSAMe pOOBAH for `sesame` and `combined`) is above `--detection_pval`.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "snp_outlier_threshold": {
+                    "type": "number",
+                    "default": -4,
+                    "description": "Arrays with an ewastools SNP outlier score above this value fail QC as possibly contaminated.",
+                    "help_text": "The score is the average log odds that the SNP probe beta values belong to none of the three genotype clusters. The ewastools authors recommend -4. Only arrays below the threshold enter the identity check.",
+                    "fa_icon": "fas fa-vial"
+                }
+            }
+        },
+        "probe_filter_options": {
+            "title": "Probe filtering options",
+            "type": "object",
+            "fa_icon": "fas fa-filter",
+            "description": "Probe annotation sources and the probe exclusions applied before analysis.",
+            "properties": {
+                "probe_annotation": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.tsv\\.gz$",
+                    "description": "Saved probe annotation table (`probe_annotation.tsv.gz` from `--save_reference`), used instead of building it.",
+                    "help_text": "Building the table reads the Peters et al. 2024 manifest and the Zhou lab mask. Save it once with `--save_reference` and pass it here to skip that step.",
+                    "fa_icon": "fas fa-table"
+                },
+                "probe_manifest_source": {
+                    "type": "string",
+                    "default": "https://annotationhub.bioconductor.org/fetch/123230",
+                    "description": "Peters et al. 2024 extended EPIC v2 manifest (`.Rda` file of the Bioconductor EPICv2manifest resource AH116484; URL or path).",
+                    "help_text": "Provides positions, replicate probes and the best replicate, cross-hybridisation flags, manifest position mismatches (`MismatchPos`, report-only) and the EPIC v1 and 450K IDs. The file is about 300 MB. For runs without network access, download it once or reuse a saved table with `--probe_annotation`.",
+                    "fa_icon": "fas fa-book"
+                },
+                "probe_mask_source": {
+                    "type": "string",
+                    "default": "https://raw.githubusercontent.com/zhou-lab/InfiniumAnnotationV1/175566c157b8cb902ba6d9d7525547fca41adbe5/Anno/EPICv2/EPICv2.hg38.mask.tsv.gz",
+                    "description": "Zhou lab InfiniumAnnotation EPIC v2 mask table (URL or path).",
+                    "help_text": "Provides the general mask (removed by the probe filter), SNP masks by population, and the mapping, non-unique and poor-titration flags. Poor titration is report-only. The default is the hg38 mask at a fixed commit.",
+                    "fa_icon": "fas fa-mask"
+                },
+                "probe_fail_fraction": {
+                    "type": "number",
+                    "default": 0.1,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Probes with a detection p-value above `--detection_pval` in more than this fraction of arrays are removed.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "bead_fail_fraction": {
+                    "type": "number",
+                    "default": 0.05,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Probes masked for another reason (bead count, quality mask) in more than this fraction of arrays are removed.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "crosshyb_filter": {
+                    "type": "string",
+                    "default": "wgbs",
+                    "enum": ["wgbs", "blat", "none"],
+                    "description": "Cross-hybridising probes to remove.",
+                    "help_text": "`wgbs`: probes with WGBS evidence of preferential off-target binding (Peters et al. 2024, `CH_WGBS_evidence`, about 11,900 probes). `blat`: every probe with a predicted off-target BLAT hit (`CH_BLAT`, about 30,600 probes). `none`: keep them. The uncollapsed output (`probe_filter/*_uncollapsed_se`) keeps these probes for DMR callers that remap them to their off-target locus; the pipeline's own steps use the CpG-level data.",
+                    "fa_icon": "fas fa-random"
+                },
+                "snp_mask": {
+                    "type": "string",
+                    "default": "common_1pt",
+                    "enum": ["common_1pt", "common_5pt", "afr", "amr", "eas", "eur", "sas", "none"],
+                    "description": "SNP mask to remove: probes with a SNP in the probe body, at the CpG or at the extension base.",
+                    "help_text": "Zhou lab masks from the 1000 Genomes allele frequencies. `common_1pt` and `common_5pt`: SNPs with a global minor allele frequency of at least 1% or 5%. `afr`, `amr`, `eas`, `eur`, `sas`: SNPs with a frequency of at least 1% in that population; choose the population of the study.",
+                    "fa_icon": "fas fa-dna"
+                },
+                "keep_sex_chr": {
+                    "type": "boolean",
+                    "description": "Keep probes on chrX and chrY (removed by default for autosomal analyses).",
+                    "fa_icon": "fas fa-venus-mars"
+                },
+                "replicate_probe_strategy": {
+                    "type": "string",
+                    "default": "mean",
+                    "enum": ["mean", "none"],
+                    "description": "How replicate probes of one CpG are combined in the analysis matrix.",
+                    "help_text": "`mean`: the mean beta value of the replicate probes, so each CpG appears once with its `cg########` ID. `none`: keep every probe. The uncollapsed output always has one row per probe.",
+                    "fa_icon": "fas fa-compress"
+                }
+            }
+        },
+        "cell_composition_options": {
+            "title": "Cell composition options",
+            "type": "object",
+            "fa_icon": "fas fa-tint",
+            "description": "Cell-type deconvolution.",
+            "properties": {
+                "tissue": {
+                    "type": "string",
+                    "default": "blood",
+                    "enum": ["blood", "other"],
+                    "description": "Tissue of the samples.",
+                    "help_text": "`blood`: estimate leukocyte fractions with EpiDISH (12-type reference cent12CT, and the 7-type centDHSbloodDMC for comparison). `other`: skip reference-based deconvolution.",
+                    "fa_icon": "fas fa-vial"
+                },
+                "min_reference_coverage": {
+                    "type": "number",
+                    "default": 0.9,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "Stop if a smaller share of the reference CpGs is in the filtered data.",
+                    "help_text": "Coverage below 98% is reported as a warning in `cell_composition/cell_fractions_reference_coverage.tsv`.",
+                    "fa_icon": "fas fa-percent"
+                }
+            }
+        },
+        "clock_options": {
+            "title": "Epigenetic clock and DNA methylation score options",
+            "type": "object",
+            "fa_icon": "fas fa-clock",
+            "description": "Epigenetic clocks (dnaMethyAge, DunedinPACE) and DNA methylation scores.",
+            "properties": {
+                "skip_clocks": {
+                    "type": "boolean",
+                    "description": "Skip the epigenetic clocks.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "clocks": {
+                    "type": "string",
+                    "default": "HorvathS2013,HannumG2013,LevineM2018,HorvathS2018,ZhangQ2019,LuA2019,ZhangY2017,PCGrimAge,PCPhenoAge,PCHorvathS2013,PCHannumG2013,PCHorvathS2018,FuentealbaM2025,epiTOC2,DunedinPACE",
+                    "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+                    "description": "Comma-separated clocks to compute: dnaMethyAge clock names and DunedinPACE.",
+                    "help_text": "dnaMethyAge clocks: HorvathS2013 (pan-tissue age), HannumG2013 (blood age), LevineM2018 (PhenoAge), HorvathS2018 (skin and blood age), ZhangQ2019, LuA2019 (telomere length), ZhangY2017 (mortality risk score), PCGrimAge, PCPhenoAge, PCHorvathS2013, PCHannumG2013 and PCHorvathS2018 (principal-component clocks; PCGrimAge needs reported age and sex), FuentealbaM2025 (intrinsic capacity), epiTOC2 (mitotic clock); see `dnaMethyAge::availableClock()`. DunedinPACE: pace of ageing. GrimAge, GrimAge2 and FitAge need licensed coefficients and are not available. BernabeuE2023c (cAge) can be added but fails in dnaMethyAge 0.2.0 when an array's estimate is below 20 years; it then gives NA with the error in the coverage notes.",
+                    "fa_icon": "fas fa-list"
+                },
+                "dunedinpace_min_probes": {
+                    "type": "number",
+                    "default": 0.8,
+                    "minimum": 0,
+                    "maximum": 1,
+                    "description": "DunedinPACE returns NA when a smaller share of its CpGs is in the data.",
+                    "fa_icon": "fas fa-percent"
+                },
+                "dnamethyage_source": {
+                    "type": "string",
+                    "default": "https://github.com/yiluyucheng/dnaMethyAge/archive/0d40c9bb02c7d9a4d91ce01d150a9c0b12edf1f4.tar.gz",
+                    "description": "dnaMethyAge source package (URL or local path), installed by the clock task.",
+                    "help_text": "dnaMethyAge is not on conda or CRAN. The default is version 0.2.0 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
+                    "fa_icon": "fas fa-box"
+                },
+                "dunedinpace_source": {
+                    "type": "string",
+                    "default": "https://github.com/danbelsky/DunedinPACE/archive/4b569983543e51d1022aecec9a25e694bb3a336a.tar.gz",
+                    "description": "DunedinPACE source package (URL or local path), installed by the clock task.",
+                    "help_text": "DunedinPACE is not on conda or CRAN. The default is version 0.99.0 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
+                    "fa_icon": "fas fa-box"
+                },
+                "skip_dnam_scores": {
+                    "type": "boolean",
+                    "description": "Skip the DNA methylation scores (smoking, alcohol, BMI, IL-6).",
+                    "help_text": "Models that use `@smoking` need the smoking score.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "dnam_scores": {
+                    "type": "string",
+                    "default": "smoking,alcohol,bmi,il6",
+                    "pattern": "^(smoking|alcohol|bmi|il6)(,(smoking|alcohol|bmi|il6))*$",
+                    "description": "Comma-separated DNA methylation scores: weighted sums of published CpG sets.",
+                    "help_text": "`smoking`, `alcohol` and `bmi`: McCartney et al. (2018; 233, 450 and 1,109 CpGs). `il6`: Stevenson et al. (2021; 35 CpGs). The weights are in `assets/dnam_scores` with their sources. Scores are written as `dnam_<score>`; `dnam_smoking` is the `@smoking` model covariate.",
+                    "fa_icon": "fas fa-list"
+                }
+            }
+        },
+        "exploration_options": {
+            "title": "Exploratory analysis options",
+            "type": "object",
+            "fa_icon": "fas fa-chart-area",
+            "description": "Principal component analyses of the methylation data and the control probes.",
+            "properties": {
+                "n_variable_cpgs": {
+                    "type": "integer",
+                    "default": 50000,
+                    "minimum": 1000,
+                    "description": "Number of most variable CpGs (by M-value variance) used for the PCA.",
+                    "fa_icon": "fas fa-sort-amount-down"
+                },
+                "n_pcs": {
+                    "type": "string",
+                    "default": "auto",
+                    "pattern": "^(auto|[1-9][0-9]?)$",
+                    "description": "Principal components tested for associations: a number, or `auto`.",
+                    "help_text": "`auto` uses the random matrix theory estimate of `isva::EstDimRMT` (Teschendorff et al. 2011), as ChAMP does; at most 20 and at most the number of arrays minus one.",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "n_ctrl_pcs": {
+                    "type": "string",
+                    "default": "auto",
+                    "pattern": "^(auto|[1-9][0-9]?)$",
+                    "description": "Control-probe principal components kept as covariates: a number, or `auto`.",
+                    "help_text": "The control-probe PCs (Lehne et al. 2015) come from the log2, standardised intensities of the non-negative control probes in both channels, read by ewastools. `auto` keeps the smallest number that explains at least 90% of their variance, at most 20. Without ewastools (`--skip_ewastools`) there are no control-probe PCs.",
+                    "fa_icon": "fas fa-layer-group"
+                }
+            }
+        },
+        "association_options": {
+            "title": "Association options",
+            "type": "object",
+            "fa_icon": "fas fa-project-diagram",
+            "description": "Significance thresholds of the epigenome-wide association models.",
+            "properties": {
+                "p_epigenome_wide": {
+                    "type": "number",
+                    "default": 9e-8,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Epigenome-wide significance threshold for EPIC arrays.",
+                    "help_text": "9e-8 was derived for the EPIC array by Mansell et al. (2019). Hits at FDR < 0.05 are reported as well.",
+                    "fa_icon": "fas fa-less-than"
+                },
+                "p_suggestive": {
+                    "type": "number",
+                    "default": 1e-5,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Suggestive significance threshold.",
+                    "fa_icon": "fas fa-less-than"
+                }
+            }
+        },
+        "region_options": {
+            "title": "Region options",
+            "type": "object",
+            "fa_icon": "fas fa-map",
+            "description": "Differentially methylated regions with DMRcate and dmrff.",
+            "properties": {
+                "skip_dmr": {
+                    "type": "boolean",
+                    "description": "Skip the region analysis for every model (single models: `skip_dmr: true` in the models file).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "dmr_lambda": {
+                    "type": "integer",
+                    "default": 1000,
+                    "minimum": 1,
+                    "description": "DMRcate kernel bandwidth in base pairs (lambda).",
+                    "help_text": "The DMRcate default; Peters et al. (2015) recommend lambda = 1000 with C = 2.",
+                    "fa_icon": "fas fa-arrows-alt-h"
+                },
+                "dmr_c": {
+                    "type": "number",
+                    "default": 2,
+                    "minimum": 0.2,
+                    "description": "DMRcate scaling factor of the kernel bandwidth (C).",
+                    "fa_icon": "fas fa-sliders-h"
+                },
+                "dmr_min_cpgs": {
+                    "type": "integer",
+                    "default": 2,
+                    "minimum": 2,
+                    "description": "Minimum number of CpGs in a region (DMRcate and dmrff).",
+                    "fa_icon": "fas fa-sort-numeric-up"
+                },
+                "dmrff_source": {
+                    "type": "string",
+                    "default": "https://github.com/perishky/dmrff/archive/8e0469e5238c4c2de84746af143a733600537be4.tar.gz",
+                    "description": "dmrff source package (URL or local path), installed by the region task.",
+                    "help_text": "dmrff is not on conda or CRAN. The default is version 1.1.2 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
+                    "fa_icon": "fas fa-box"
+                }
+            }
+        },
+        "enrichment_options": {
+            "title": "Enrichment options",
+            "type": "object",
+            "fa_icon": "fas fa-sitemap",
+            "description": "Gene set enrichment of the significant CpGs with missMethyl.",
+            "properties": {
+                "skip_enrichment": {
+                    "type": "boolean",
+                    "description": "Skip gene set enrichment for every model (single models: `skip_enrichment: true` in the models file).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "enrichment_min_hits": {
+                    "type": "integer",
+                    "default": 10,
+                    "minimum": 1,
+                    "description": "Run enrichment for a contrast only with at least this many CpGs at FDR < 0.05.",
+                    "fa_icon": "fas fa-sort-numeric-up"
+                },
+                "enrichment_collections": {
+                    "type": "string",
+                    "default": "GO,KEGG",
+                    "pattern": "^((GO|KEGG)(,(GO|KEGG))?|none)$",
+                    "description": "missMethyl gometh collections: `GO`, `KEGG`, both, or `none`.",
+                    "help_text": "GO uses the org.Hs.eg.db and GO.db packages in the container. KEGG pathways are downloaded from the KEGG REST service at run time; without network access the KEGG test is recorded as not run and the other collections still run.",
+                    "fa_icon": "fas fa-list"
+                },
+                "gene_set_gmts": {
+                    "type": "string",
+                    "default": "https://data.broadinstitute.org/gsea-msigdb/msigdb/release/2025.1.Hs/h.all.v2025.1.Hs.entrez.gmt,https://data.broadinstitute.org/gsea-msigdb/msigdb/release/2025.1.Hs/c2.cp.reactome.v2025.1.Hs.entrez.gmt",
+                    "description": "Comma-separated GMT files of gene sets with Entrez gene IDs (URLs or local paths), tested with gsameth. Empty to skip.",
+                    "help_text": "The default is MSigDB release 2025.1: the Hallmark collection and the Reactome pathways. Other MSigDB collections or custom GMT files with Entrez IDs work the same way. Download the files once and give local paths for runs without network access.",
+                    "fa_icon": "fas fa-file-alt"
+                }
+            }
+        },
+        "institutional_config_options": {
+            "title": "Institutional config options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters used to describe centralised config profiles. These should not be edited.",
+            "help_text": "The centralised nf-core configuration profiles use a handful of pipeline parameters to describe themselves. This information is then printed to the Nextflow log when you run a pipeline. You should not need to change these values when you run a pipeline.",
+            "properties": {
+                "custom_config_version": {
+                    "type": "string",
+                    "description": "Git commit id for Institutional configs.",
+                    "default": "master",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "custom_config_base": {
+                    "type": "string",
+                    "description": "Base directory for Institutional configs.",
+                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                    "hidden": true,
+                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell Nextflow where to find them with this parameter.",
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_name": {
+                    "type": "string",
+                    "description": "Institutional config name.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_description": {
+                    "type": "string",
+                    "description": "Institutional config description.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_contact": {
+                    "type": "string",
+                    "description": "Institutional config contact information.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_url": {
+                    "type": "string",
+                    "description": "Institutional config URL link.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                }
+            }
+        },
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "properties": {
+                "version": {
+                    "type": "boolean",
+                    "description": "Display version and exit.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
+                    "hidden": true
+                },
+                "email_on_fail": {
+                    "type": "string",
+                    "description": "Email address for completion summary, only when pipeline fails.",
+                    "fa_icon": "fas fa-exclamation-triangle",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully.",
+                    "hidden": true
+                },
+                "plaintext_email": {
+                    "type": "boolean",
+                    "description": "Send plain-text email instead of HTML.",
+                    "fa_icon": "fas fa-remove-format",
+                    "hidden": true
+                },
+                "max_multiqc_email_size": {
+                    "type": "string",
+                    "description": "File size limit when attaching MultiQC reports to summary emails.",
+                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+                    "default": "25.MB",
+                    "fa_icon": "fas fa-file-upload",
+                    "hidden": true
+                },
+                "monochrome_logs": {
+                    "type": "boolean",
+                    "description": "Do not use coloured log outputs.",
+                    "fa_icon": "fas fa-palette",
+                    "hidden": true
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Custom config file to supply to MultiQC.",
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true
+                },
+                "multiqc_logo": {
+                    "type": "string",
+                    "description": "Custom logo file to supply to MultiQC. File name must also be set in the MultiQC config file",
+                    "fa_icon": "fas fa-image",
+                    "hidden": true
+                },
+                "multiqc_methods_description": {
+                    "type": "string",
+                    "description": "Custom MultiQC YAML file with an HTML methods description, used instead of `assets/methods_description_template.yml`.",
+                    "fa_icon": "fas fa-cog"
+                },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true,
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
+                },
+                "pipelines_testdata_base_path": {
+                    "type": "string",
+                    "fa_icon": "far fa-check-circle",
+                    "description": "Base URL or local path to location of pipeline test dataset files",
+                    "default": "https://raw.githubusercontent.com/nf-core/test-datasets/",
+                    "hidden": true
+                },
+                "trace_report_suffix": {
+                    "type": "string",
+                    "fa_icon": "far fa-calendar",
+                    "description": "Suffix to add to the trace report filename. Default is the date and time in the format yyyy-MM-dd_HH-mm-ss.",
+                    "hidden": true
+                },
+                "help": {
+                    "type": ["boolean", "string"],
+                    "description": "Display the help message."
+                },
+                "help_full": {
+                    "type": "boolean",
+                    "description": "Display the full detailed help message."
+                },
+                "show_hidden": {
+                    "type": "boolean",
+                    "description": "Display hidden parameters in the help message (only works when --help or --help_full are provided)."
+                },
+                "skip_report": {
+                    "type": "boolean",
+                    "description": "Skip the HTML analysis report (`report/methylarray_report.html`).",
+                    "fa_icon": "fas fa-forward"
+                },
+                "export_geo": {
+                    "type": "boolean",
+                    "description": "Write GEO submission files for the arrays that passed sample QC (`geo/`).",
+                    "help_text": "A processed matrix (normalised beta values without detection masking, with detection p-values), a matrix of the unnormalised methylated and unmethylated signal intensities read from the IDAT files, and a sample table with the IDAT file names. Columns are named after the samplesheet sample names: rename them before submission if they identify participants.",
+                    "fa_icon": "fas fa-file-export"
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/$defs/input_output_options"
+        },
+        {
+            "$ref": "#/$defs/preprocessing_options"
+        },
+        {
+            "$ref": "#/$defs/sample_qc_options"
+        },
+        {
+            "$ref": "#/$defs/probe_filter_options"
+        },
+        {
+            "$ref": "#/$defs/cell_composition_options"
+        },
+        {
+            "$ref": "#/$defs/clock_options"
+        },
+        {
+            "$ref": "#/$defs/exploration_options"
+        },
+        {
+            "$ref": "#/$defs/association_options"
+        },
+        {
+            "$ref": "#/$defs/region_options"
+        },
+        {
+            "$ref": "#/$defs/enrichment_options"
+        },
+        {
+            "$ref": "#/$defs/institutional_config_options"
+        },
+        {
+            "$ref": "#/$defs/generic_options"
+        }
+    ]
+}

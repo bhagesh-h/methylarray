@@ -1,0 +1,6 @@
+{
+    "model": { "name": "skipped", "trait": "score", "trait_type": "continuous", "skip_dmr": true },
+    "covariates": [],
+    "n": 38,
+    "dropped": []
+}

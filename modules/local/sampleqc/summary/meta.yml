@@ -1,0 +1,85 @@
+name: sampleqc_summary
+description: Combines the preprocessing QC, the ewastools QC and the samplesheet into one status per array (PASS, FLAG, FAIL or EXCLUDED) with the reasons
+keywords:
+  - dna methylation
+  - methylation array
+  - quality control
+  - sample qc
+tools:
+  - r:
+      description: "R language and environment for statistical computing"
+      homepage: https://www.r-project.org
+      documentation: https://www.r-project.org
+      licence: ["GPL-2.0-or-later"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with an id for the run
+          e.g. [ id:'sample_qc' ]
+    - samples:
+        type: file
+        description: Every samplesheet row, with 'sample', 'reported_sex', 'replicate_group' and 'exclude' columns
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - preprocessing_qc:
+        type: file
+        description: QC table of the preprocessing route, with 'frac_detected' or 'frac_dt' and 'predicted_sex'
+        pattern: "*_qc.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - ewastools_qc:
+        type: file
+        description: ewastools QC table; [] when ewastools was skipped
+        pattern: "*_qc.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - snp_conflicts:
+        type: file
+        description: ewastools identity conflicts; [] when ewastools was skipped
+        pattern: "*_snp_conflicts.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  qc:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}.tsv":
+          type: file
+          description: One row per array - status, reasons and the metrics behind them
+          pattern: "*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  retained:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_retained.txt":
+          type: file
+          description: Names of the arrays with status PASS or FLAG, one per line
+          pattern: "*_retained.txt"
+          ontologies:
+            - edam: http://edamontology.org/format_2330
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}*_mqc.*":
+          type: file
+          description: MultiQC custom content - general statistics, status table and the X/Y scatter plot
+          pattern: "*_mqc.{tsv,json}"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

@@ -1,0 +1,126 @@
+name: exploration_pca
+description: Control-probe principal components (Lehne et al. 2015) and PCA of the most variable CpGs, with the association of each component with technical, biological and phenotype variables
+keywords:
+  - dna methylation
+  - methylation array
+  - pca
+  - batch effects
+  - exploratory analysis
+tools:
+  - isva:
+      description: "Independent surrogate variable analysis; EstDimRMT estimates the number of significant components by random matrix theory"
+      homepage: https://cran.r-project.org/package=isva
+      documentation: https://cran.r-project.org/package=isva
+      doi: 10.1093/bioinformatics/btr171
+      licence: ["GPL-2.0-only", "GPL-3.0-only"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the preprocessing method as id
+          e.g. [ id:'minfi' ]
+    - se:
+        type: directory
+        description: Filtered SummarizedExperiment with one row per CpG (assay mvalue)
+    - samples:
+        type: file
+        description: Sample metadata (plate, batch, Sentrix ID and row, reported age)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - sample_qc:
+        type: file
+        description: Sample QC table (frac_detected, predicted_sex_<method>)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - controls:
+        type: file
+        description: Control-probe intensities from EWASTOOLS_QC; [] without ewastools
+        pattern: "*_controls.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - cell_fractions:
+        type: file
+        description: EpiDISH cell fractions (lineage_* columns); [] without cell composition
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - phenotypes:
+        type: file
+        description: Phenotype table with a 'sample' column; every other column is tested; [] without phenotypes
+        pattern: "*.{csv,tsv}"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  ctrl_pcs:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_ctrl_pcs.tsv":
+          type: file
+          description: Control-probe principal components kept, per array
+          pattern: "*_ctrl_pcs.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  ctrl_variance:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_ctrl_pca_variance.tsv":
+          type: file
+          description: Share of the control-probe variance per component
+          pattern: "*_ctrl_pca_variance.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  scores:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_scores.tsv":
+          type: file
+          description: Tested principal components of the most variable CpGs, per array
+          pattern: "*_scores.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  variance:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_variance.tsv":
+          type: file
+          description: Share of variance per component and whether it was tested
+          pattern: "*_variance.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  associations:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_associations.tsv":
+          type: file
+          description: Per variable and component the test, number of arrays, R-squared and p-value
+          pattern: "*_associations.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_*_mqc.*":
+          type: file
+          description: MultiQC association heatmap, scree plot and PC1/PC2 scatter
+          pattern: "*_mqc.{tsv,json}"
+          ontologies: []
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

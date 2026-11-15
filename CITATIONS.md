@@ -1,6 +1,6 @@
 # methylarray: Citations
 
-This file is the single reference list for the pipeline. The README, the documentation and the generated reports point here instead of repeating references.
+This file is the single reference list for the pipeline. The README, the documentation and the reports point here instead of repeating references. The first sections list the software, methods and data the pipeline runs or reads; the last sections list work that informed its design but is not run by it. Entries without a DOI link have no DOI or are pending verification of the identifier.
 
 ## Pipeline
 
@@ -36,15 +36,15 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Huber W, Carey VJ, Gentleman R, et al. Orchestrating high-throughput genomic analysis with Bioconductor. Nat Methods. 2015;12(2):115-121.
 
+- [Quarto](https://quarto.org)
+
+  > Open-source scientific and technical publishing system. Renders the HTML analysis report from `assets/report/methylarray_report.qmd`.
+
 ## Software packaging and containers
 
 - [Bioconda](https://doi.org/10.1038/s41592-018-0046-7)
 
   > Grüning B, Dale R, Sjödin A, et al. Bioconda: sustainable and comprehensive software distribution for the life sciences. Nat Methods. 2018;15(7):475-476.
-
-- [BioContainers](https://doi.org/10.1093/bioinformatics/btx192)
-
-  > da Veiga Leprevost F, Grüning BA, Alves Aflitos S, et al. BioContainers: an open-source and community-driven framework for software standardization. Bioinformatics. 2017;33(16):2580-2582.
 
 - [Docker](https://dl.acm.org/doi/10.5555/2600239.2600241)
 
@@ -68,25 +68,17 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Peters TJ, Meyer B, Ryan L, et al. Characterisation and reproducibility of the HumanMethylationEPIC v2.0 BeadChip for DNA methylation profiling. BMC Genomics. 2024;25:251.
 
-- [EPIC v2 evaluation](https://doi.org/10.1186/s43682-023-00021-5)
-
-  > Kaur D, Lee SM, Goldberg D, et al. Comprehensive evaluation of the Infinium human MethylationEPIC v2 BeadChip. Epigenetics Commun. 2023;3:6.
-
-- EPIC v2 validation
-
-  > Noguera-Castells A, García-Prieto CA, Álvarez-Errico D, Esteller M. Validation of the new EPIC DNA methylation microarray (900K EPIC v2) for high-throughput profiling of the human DNA methylome. Epigenetics. 2023;18(1):2185742.
-
 - [Probe masking annotation](https://doi.org/10.1093/nar/gkw967)
 
   > Zhou W, Laird PW, Shen H. Comprehensive characterization, annotation and innovative use of Infinium DNA methylation BeadChip probes. Nucleic Acids Res. 2017;45(4):e22.
 
-- [EPIC v1 probe evaluation](https://doi.org/10.1186/s13059-016-1066-1)
+- [EPICv2manifest](https://doi.org/10.18129/B9.bioc.EPICv2manifest)
 
-  > Pidsley R, Zotenko E, Peters TJ, et al. Critical evaluation of the Illumina MethylationEPIC BeadChip microarray for whole-genome DNA methylation profiling. Genome Biol. 2016;17:208.
+  > Peters T. EPICv2manifest: Illumina Infinium MethylationEPIC v2.0 extended manifest from Peters et al. 2024. Bioconductor package. The pipeline reads AnnotationHub resource AH116484.
 
-- [EPIC v1 polymorphic and off-target probes](https://doi.org/10.1016/j.gdata.2016.05.012)
+- [InfiniumAnnotation](https://github.com/zhou-lab/InfiniumAnnotationV1)
 
-  > McCartney DL, Walker RM, Morris SW, McIntosh AM, Porteous DJ, Evans KL. Identification of polymorphic and off-target probe binding sites on the Illumina Infinium MethylationEPIC BeadChip. Genom Data. 2016;9:22-24.
+  > Zhou lab probe annotation and masks for Infinium arrays. The pipeline reads the EPIC v2 hg38 mask table (`EPICv2.hg38.mask.tsv.gz`) at a fixed commit.
 
 - IlluminaHumanMethylationEPICv2manifest and IlluminaHumanMethylationEPICv2anno.20a1.hg38
 
@@ -110,6 +102,14 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Fortin JP, Labbe A, Lemire M, et al. Functional normalization of 450k methylation array data improves replication in large cancer studies. Genome Biol. 2014;15:503.
 
+- [SWAN normalisation](https://doi.org/10.1186/gb-2012-13-6-r44)
+
+  > Maksimovic J, Gordon L, Oshlack A. SWAN: Subset-quantile within array normalization for Illumina Infinium HumanMethylation450 BeadChips. Genome Biol. 2012;13(6):R44.
+
+- [Stratified quantile normalisation](https://doi.org/10.2217/epi.12.21)
+
+  > Touleimat N, Tost J. Complete pipeline for Infinium Human Methylation 450K BeadChip data processing using subset quantile normalization for accurate DNA methylation estimation. Epigenomics. 2012;4(3):325-341.
+
 - [minfi for EPIC](https://doi.org/10.1093/bioinformatics/btw691)
 
   > Fortin JP, Triche TJ Jr, Hansen KD. Preprocessing, normalization and integration of the Illumina HumanMethylationEPIC array with minfi. Bioinformatics. 2017;33(4):558-560.
@@ -128,21 +128,29 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Xu Z, Langie SA, De Boever P, Taylor JA, Niu L. RELIC: a novel dye-bias correction method for Illumina Methylation BeadChip. BMC Genomics. 2017;18:4.
 
-- [BMIQ](https://doi.org/10.1093/bioinformatics/bts680)
-
-  > Teschendorff AE, Marabita F, Lechner M, et al. A beta-mixture quantile normalization method for correcting probe design bias in Illumina Infinium 450 k DNA methylation data. Bioinformatics. 2013;29(2):189-196.
-
 - [ewastools](https://doi.org/10.1186/s13148-018-0504-1)
 
   > Heiss JA, Just AC. Identifying mislabeled and contaminated DNA methylation microarray data: an extended quality control toolset with examples from GEO. Clin Epigenetics. 2018;10:73.
+
+- [illuminaio](https://doi.org/10.12688/f1000research.2-264.v1)
+
+  > Smith ML, Baggerly KA, Bengtsson H, Ritchie ME, Hansen KD. illuminaio: An open source IDAT parsing tool for Illumina microarrays. F1000Research. 2013;2:264.
 
 - [Control-probe principal components](https://doi.org/10.1186/s13059-015-0600-x)
 
   > Lehne B, Drong AW, Loh M, et al. A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies. Genome Biol. 2015;16:37.
 
+- [isva (random matrix theory estimate of the number of components)](https://doi.org/10.1093/bioinformatics/btr171)
+
+  > Teschendorff AE, Zhuang J, Widschwendter M. Independent surrogate variable analysis to deconvolve confounding factors in large-scale microarray profiling studies. Bioinformatics. 2011;27(11):1496-1505.
+
 - SummarizedExperiment and HDF5Array
 
   > Bioconductor infrastructure packages for on-disk assay storage.
+
+- sesameData and ExperimentHub
+
+  > Bioconductor packages that distribute the SeSAMe probe manifests, masks and platform signatures. The `sesame` and `combined` routes download them once per run (or reuse `--sesame_cache`) and records each resource's ExperimentHub ID and MD5 checksum.
 
 ## Cell-type composition
 
@@ -150,21 +158,9 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Teschendorff AE, Breeze CE, Zheng SC, Beck S. A comparison of reference-based algorithms for correcting cell-type heterogeneity in Epigenome-Wide Association Studies. BMC Bioinformatics. 2017;18:105.
 
-- 12-cell-type blood reference (cent12CT)
+- [12-cell-type blood reference (cent12CT)](https://doi.org/10.1186/s13073-023-01211-5)
 
   > Luo Q, Dwaraka VB, Chen Q, et al. A meta-analysis of immune-cell fractions at high resolution reveals novel associations with common phenotypes and health outcomes. Genome Med. 2023;15:59.
-
-- [Enhanced blood deconvolution reference](https://doi.org/10.1038/s41467-021-27864-7)
-
-  > Salas LA, Zhang Z, Koestler DC, et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nat Commun. 2022;13:761.
-
-- [FlowSorted.Blood.EPIC and IDOL](https://doi.org/10.1186/s13059-018-1448-7)
-
-  > Salas LA, Koestler DC, Butler RA, et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biol. 2018;19:64.
-
-- [Houseman constrained projection](https://doi.org/10.1186/1471-2105-13-86)
-
-  > Houseman EA, Accomando WP, Koestler DC, et al. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics. 2012;13:86.
 
 ## DNA methylation biomarkers
 
@@ -196,19 +192,11 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Belsky DW, Caspi A, Corcoran DL, et al. DunedinPACE, a DNA methylation biomarker of the pace of aging. eLife. 2022;11:e73420.
 
-- [methylCIPHER](https://doi.org/10.1101/2022.07.13.499978)
-
-  > Thrush KL, Higgins-Chen AT, Liu Z, Levine ME. R methylCIPHER: a methylation clock investigational package for hypothesis-driven evaluation and research. bioRxiv. 2022.
-
-- pyaging
-
-  > de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. Bioinformatics. 2024.
-
-- [dnaMethyAge](https://github.com/yiluyucheng/dnaMethyAge)
+- [dnaMethyAge](https://doi.org/10.1007/s11357-023-00871-w) ([GitHub](https://github.com/yiluyucheng/dnaMethyAge))
 
   > Wang Y, Grant OA, Zhai X, McDonald-Maier KD, Schalkwyk LC. Insights into ageing rates comparison across tissues from recalibrating cerebellum DNA methylation clock. GeroScience. 2024;46:39-56.
 
-  Implementation used for the published clock coefficients (pinned to a commit). It also provides the clocks below.
+  Implementation used for the published clock coefficients (pinned to a commit). It also provides the clocks below; cAge (BernabeuE2023c) is not in the default `--clocks` list.
 
 - Zhang 2019 clock
 
@@ -234,23 +222,15 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Fuentealba M, Rouch L, Guyonnet S, et al. A blood-based epigenetic clock for intrinsic capacity predicts mortality and is associated with clinical, immunological and lifestyle factors. Nat Aging. 2025.
 
-  Entries in this file without a DOI link are pending verification of the identifier.
-
 - [Smoking, alcohol and BMI predictors](https://doi.org/10.1186/s13059-018-1514-1)
 
   > McCartney DL, Hillary RF, Stevenson AJ, et al. Epigenetic prediction of complex traits and death. Genome Biol. 2018;19:136.
 
-- [DNA methylation CRP score](https://doi.org/10.1038/s41467-022-29792-6)
-
-  > Wielscher M, Mandaviya PR, Kuehnel B, et al. DNA methylation signature of chronic low-grade inflammation and its role in cardio-respiratory diseases. Nat Commun. 2022;13:2408.
-
-- DNA methylation IL-6 score
+- [DNA methylation IL-6 score](https://doi.org/10.1093/gerona/glab046)
 
   > Stevenson AJ, Gadd DA, Hillary RF, et al. Creating and validating a DNA methylation-based proxy for interleukin-6. J Gerontol A Biol Sci Med Sci. 2021;76(12):2284-2292.
 
-- [EpiScores](https://doi.org/10.7554/eLife.71802)
-
-  > Gadd DA, Hillary RF, McCartney DL, et al. Epigenetic scores for the circulating proteome as tools for disease prediction. eLife. 2022;11:e71802.
+  The smoking, alcohol, BMI and IL-6 weights in `assets/dnam_scores` are taken from the supplementary tables of McCartney et al. (2018) and Stevenson et al. (2021), both published under CC BY 4.0; `assets/dnam_scores/sources.tsv` names each table.
 
 ## Statistical analysis
 
@@ -262,18 +242,6 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > van Iterson M, van Zwet EW, BIOS Consortium, Heijmans BT. Controlling bias and inflation in epigenome- and transcriptome-wide association studies using the empirical null distribution. Genome Biol. 2017;18:19.
 
-- [variancePartition](https://doi.org/10.1186/s12859-016-1323-z)
-
-  > Hoffman GE, Schadt EE. variancePartition: interpreting drivers of variation in complex gene expression studies. BMC Bioinformatics. 2016;17:483.
-
-- [sva](https://doi.org/10.1093/bioinformatics/bts034)
-
-  > Leek JT, Johnson WE, Parker HS, Jaffe AE, Storey JD. The sva package for removing batch effects and other unwanted variation in high-throughput experiments. Bioinformatics. 2012;28(6):882-883.
-
-- [ComBat](https://doi.org/10.1093/biostatistics/kxj037)
-
-  > Johnson WE, Li C, Rabinovic A. Adjusting batch effects in microarray expression data using empirical Bayes methods. Biostatistics. 2007;8(1):118-127.
-
 - [Beta values and M-values](https://doi.org/10.1186/1471-2105-11-587)
 
   > Du P, Zhang X, Huang CC, et al. Comparison of Beta-value and M-value methods for quantifying methylation levels by microarray analysis. BMC Bioinformatics. 2010;11:587.
@@ -282,17 +250,9 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Mansell G, Gorrie-Stone TJ, Bao Y, et al. Guidance for DNA methylation studies: statistical insights from the Illumina EPIC array. BMC Genomics. 2019;20:366.
 
-- [450K significance threshold](https://doi.org/10.1002/gepi.22086)
+- [Effective number of tests](https://doi.org/10.1002/gepi.20408)
 
-  > Saffari A, Silver MJ, Zavattari P, et al. Estimation of a significance threshold for epigenome-wide association studies. Genet Epidemiol. 2018;42(1):20-33.
-
-- [Batch correction caveats](https://doi.org/10.3389/fgene.2018.00083)
-
-  > Price EM, Robinson WP. Adjusting for batch effects in DNA methylation microarray data, a lesson learned. Front Genet. 2018;9:83.
-
-- [ComBat simulation study](https://doi.org/10.1186/s12859-020-03559-6)
-
-  > Zindler T, Frieling H, Neyazi A, Bleich S, Friedel E. Simulating ComBat: how batch correction can lead to the systematic introduction of false positive results in DNA methylation microarray studies. BMC Bioinformatics. 2020;21:271.
+  > Galwey NW. A new measure of the effective number of tests, a practical tool for comparing families of non-independent significance tests. Genet Epidemiol. 2009;33(7):559-568.
 
 ## Differentially methylated regions and enrichment
 
@@ -316,17 +276,109 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Liberzon A, Birger C, Thorvaldsdóttir H, Ghandi M, Mesirov JP, Tamayo P. The Molecular Signatures Database hallmark gene set collection. Cell Syst. 2015;1(6):417-425.
 
+- [Reactome](https://doi.org/10.1093/nar/gkad1025)
+
+  > Milacic M, Beavers D, Conley P, et al. The Reactome Pathway Knowledgebase 2024. Nucleic Acids Res. 2024;52(D1):D672-D678.
+
+- [KEGG](https://doi.org/10.1093/nar/28.1.27)
+
+  > Kanehisa M, Goto S. KEGG: Kyoto Encyclopedia of Genes and Genomes. Nucleic Acids Res. 2000;28(1):27-30.
+
+- [Gene Ontology](https://doi.org/10.1093/genetics/iyad031)
+
+  > The Gene Ontology Consortium. The Gene Ontology knowledgebase in 2023. Genetics. 2023;224(1):iyad031.
+
+## Public data
+
+- GEO [GSE286313](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE286313): matched EPIC v1 and v2 venous blood (Zhuang et al. 2025). The EPIC v2 arrays are the data of the `test` and `test_full` profiles and of the module tests.
+
+- GEO [GSE240469](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE240469): EPIC v2 cell line replicates (Peters et al. 2024).
+
+## Related methods and resources not run by the pipeline
+
+These informed the design or are candidates for later versions. The pipeline does not run them.
+
+- [EPIC v2 evaluation](https://doi.org/10.1186/s43682-023-00021-5)
+
+  > Kaur D, Lee SM, Goldberg D, et al. Comprehensive evaluation of the Infinium human MethylationEPIC v2 BeadChip. Epigenetics Commun. 2023;3:6.
+
+- EPIC v2 validation
+
+  > Noguera-Castells A, García-Prieto CA, Álvarez-Errico D, Esteller M. Validation of the new EPIC DNA methylation microarray (900K EPIC v2) for high-throughput profiling of the human DNA methylome. Epigenetics. 2023;18(1):2185742.
+
+- [EPIC v1 probe evaluation](https://doi.org/10.1186/s13059-016-1066-1)
+
+  > Pidsley R, Zotenko E, Peters TJ, et al. Critical evaluation of the Illumina MethylationEPIC BeadChip microarray for whole-genome DNA methylation profiling. Genome Biol. 2016;17:208.
+
+- [EPIC v1 polymorphic and off-target probes](https://doi.org/10.1016/j.gdata.2016.05.012)
+
+  > McCartney DL, Walker RM, Morris SW, McIntosh AM, Porteous DJ, Evans KL. Identification of polymorphic and off-target probe binding sites on the Illumina Infinium MethylationEPIC BeadChip. Genom Data. 2016;9:22-24.
+
+- [BMIQ](https://doi.org/10.1093/bioinformatics/bts680)
+
+  > Teschendorff AE, Marabita F, Lechner M, et al. A beta-mixture quantile normalization method for correcting probe design bias in Illumina Infinium 450 k DNA methylation data. Bioinformatics. 2013;29(2):189-196.
+
+- [BioContainers](https://doi.org/10.1093/bioinformatics/btx192)
+
+  > da Veiga Leprevost F, Grüning BA, Alves Aflitos S, et al. BioContainers: an open-source and community-driven framework for software standardization. Bioinformatics. 2017;33(16):2580-2582.
+
+- [Enhanced blood deconvolution reference](https://doi.org/10.1038/s41467-021-27864-7)
+
+  > Salas LA, Zhang Z, Koestler DC, et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nat Commun. 2022;13:761.
+
+- [FlowSorted.Blood.EPIC and IDOL](https://doi.org/10.1186/s13059-018-1448-7)
+
+  > Salas LA, Koestler DC, Butler RA, et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biol. 2018;19:64.
+
+- [Houseman constrained projection](https://doi.org/10.1186/1471-2105-13-86)
+
+  > Houseman EA, Accomando WP, Koestler DC, et al. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics. 2012;13:86.
+
+- [methylCIPHER](https://doi.org/10.1101/2022.07.13.499978)
+
+  > Thrush KL, Higgins-Chen AT, Liu Z, Levine ME. R methylCIPHER: a methylation clock investigational package for hypothesis-driven evaluation and research. bioRxiv. 2022.
+
+- pyaging
+
+  > de Lima Camillo LP. pyaging: a Python-based compendium of GPU-optimized aging clocks. Bioinformatics. 2024.
+
+- [DNA methylation CRP score](https://doi.org/10.1038/s41467-022-29792-6)
+
+  > Wielscher M, Mandaviya PR, Kuehnel B, et al. DNA methylation signature of chronic low-grade inflammation and its role in cardio-respiratory diseases. Nat Commun. 2022;13:2408.
+
+- [EpiScores](https://doi.org/10.7554/eLife.71802)
+
+  > Gadd DA, Hillary RF, McCartney DL, et al. Epigenetic scores for the circulating proteome as tools for disease prediction. eLife. 2022;11:e71802.
+
+- [variancePartition](https://doi.org/10.1186/s12859-016-1323-z)
+
+  > Hoffman GE, Schadt EE. variancePartition: interpreting drivers of variation in complex gene expression studies. BMC Bioinformatics. 2016;17:483.
+
+- [sva](https://doi.org/10.1093/bioinformatics/bts034)
+
+  > Leek JT, Johnson WE, Parker HS, Jaffe AE, Storey JD. The sva package for removing batch effects and other unwanted variation in high-throughput experiments. Bioinformatics. 2012;28(6):882-883.
+
+- [ComBat](https://doi.org/10.1093/biostatistics/kxj037)
+
+  > Johnson WE, Li C, Rabinovic A. Adjusting batch effects in microarray expression data using empirical Bayes methods. Biostatistics. 2007;8(1):118-127.
+
+- [450K significance threshold](https://doi.org/10.1002/gepi.22086)
+
+  > Saffari A, Silver MJ, Zavattari P, et al. Estimation of a significance threshold for epigenome-wide association studies. Genet Epidemiol. 2018;42(1):20-33.
+
+- [Batch correction caveats](https://doi.org/10.3389/fgene.2018.00083)
+
+  > Price EM, Robinson WP. Adjusting for batch effects in DNA methylation microarray data, a lesson learned. Front Genet. 2018;9:83.
+
+- [ComBat simulation study](https://doi.org/10.1186/s12859-020-03559-6)
+
+  > Zindler T, Frieling H, Neyazi A, Bleich S, Friedel E. Simulating ComBat: how batch correction can lead to the systematic introduction of false positive results in DNA methylation microarray studies. BMC Bioinformatics. 2020;21:271.
+
 - KnowYourCG
 
   > CpG-centric enrichment testing distributed with SeSAMe (see the SeSAMe citation).
 
-## Reference studies used to validate results
-
-- [Epigenetic age acceleration in the 300-OB cohort](https://doi.org/10.1186/s13148-026-02263-1)
-
-  > Vasiahina V, dos Santos JC, Ballan M, et al. Epigenetic age acceleration is associated with metabolic syndrome and vascular stiffness in adults with overweight and obesity: an observational cohort study. Clin Epigenetics. 2026 (article in press).
-
-  Published analysis of the same EPIC v2 arrays (minfi, noob). Used as the benchmark when the pipeline is validated on 300-OB.
+## Reference studies for validating results
 
 - [EWAS of body mass index](https://doi.org/10.1038/nature20784)
 
@@ -353,8 +405,3 @@ This file is the single reference list for the pipeline. The README, the documen
 - [Differences between EPIC v2 and v1 in DNA methylation based tools](https://doi.org/10.26508/lsa.202403155)
 
   > Zhuang BC, Jude MS, Konwar C, et al. Accounting for differences between Infinium MethylationEPIC v2 and v1 in DNA methylation-based tools. Life Sci Alliance. 2025;8(9):e202403155.
-
-## Test data
-
-- GEO [GSE286313](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE286313): matched EPIC v1 and v2 venous blood (Zhuang et al. 2025).
-- GEO [GSE240469](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE240469): EPIC v2 cell line replicates (Peters et al. 2024).

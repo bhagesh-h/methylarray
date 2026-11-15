@@ -1,0 +1,3 @@
+sample,idat_red,idat_grn,plate,reported_sex,reported_age
+S001,/path/to/idat/207059430159/207059430159_R01C01_Red.idat,/path/to/idat/207059430159/207059430159_R01C01_Grn.idat,P01,F,52
+S002,/path/to/idat/207059430159/207059430159_R02C01_Red.idat,/path/to/idat/207059430159/207059430159_R02C01_Grn.idat,P01,M,47

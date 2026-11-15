@@ -1,0 +1,10 @@
+{
+    "model": "small",
+    "trait": "score",
+    "trait_type": "continuous",
+    "n": 9,
+    "n_dropped": 31,
+    "covariates": "age",
+    "block": null,
+    "status": "not tested: 9 complete cases, fewer than min_n 20"
+}

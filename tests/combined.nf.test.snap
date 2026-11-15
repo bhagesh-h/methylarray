@@ -1,0 +1,240 @@
+{
+    "-profile test --preprocessing combined - stub": {
+        "content": [
+            {
+                "BIOMARKERS_ASSOCIATE": {
+                    "R": "stub",
+                    "jsonlite": "stub"
+                },
+                "CLOCKS_COMPUTE": {
+                    "DunedinPACE": "stub",
+                    "RPMM": "stub",
+                    "dnaMethyAge": "stub",
+                    "impute": "stub",
+                    "preprocessCore": "stub"
+                },
+                "DMR_CALL": {
+                    "DMRcate": "stub",
+                    "dmrff": "stub"
+                },
+                "DNAM_SCORES": {
+                    "SummarizedExperiment": "stub",
+                    "data.table": "stub"
+                },
+                "ENRICHMENT_MISSMETHYL": {
+                    "GO.db": "stub",
+                    "missMethyl": "stub",
+                    "org.Hs.eg.db": "stub"
+                },
+                "EPIDISH_RPC": {
+                    "EpiDISH": "stub",
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub"
+                },
+                "EWASTOOLS_QC": {
+                    "ewastools": "stub",
+                    "illuminaio": "stub"
+                },
+                "EWAS_LIMMA": {
+                    "SummarizedExperiment": "stub",
+                    "bacon": "stub",
+                    "limma": "stub"
+                },
+                "EWAS_SUMMARY": {
+                    "jsonlite": "stub"
+                },
+                "EXPLORATION_PCA": {
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "isva": "stub"
+                },
+                "EXPORT_GEO": {
+                    "data.table": "stub",
+                    "minfi": "stub"
+                },
+                "MINFI_PREPROCESS": {
+                    "ENmix": "stub",
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "minfi": "stub"
+                },
+                "PROBES_ANNOTATE": {
+                    "data.table": "stub"
+                },
+                "PROBES_FILTER": {
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "data.table": "stub"
+                },
+                "SAMPLEQC_SUMMARY": {
+                    "R": "stub"
+                },
+                "SESAME_BUILDSE": {
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub"
+                },
+                "SESAME_CACHE": {
+                    "ExperimentHub": "stub",
+                    "sesame": "stub",
+                    "sesameData": "stub"
+                },
+                "SESAME_PREPROCESS": {
+                    "sesame": "stub",
+                    "sesameData": "stub"
+                },
+                "Workflow": {
+                    "bhagesh-h/methylarray": "v1.0.0dev"
+                }
+            },
+            [
+                "biomarkers",
+                "biomarkers/biomarkers_agreement.tsv",
+                "biomarkers/biomarkers_batch.tsv",
+                "biomarkers/biomarkers_cells_measures.tsv",
+                "biomarkers/biomarkers_cells_phenotypes.tsv",
+                "biomarkers/biomarkers_phenotypes.tsv",
+                "biomarkers/biomarkers_quartiles.tsv",
+                "cell_composition",
+                "cell_composition/cell_fractions.tsv",
+                "cell_composition/cell_fractions_reference_coverage.tsv",
+                "clocks",
+                "clocks/clocks.tsv",
+                "clocks/clocks_coverage.tsv",
+                "clocks/clocks_weights.tsv",
+                "dmr",
+                "dmr/age",
+                "dmr/age/dmr_age_consensus.bed",
+                "dmr/age/dmr_age_consensus.tsv",
+                "dmr/age/dmr_age_dmrcate.tsv",
+                "dmr/age/dmr_age_dmrff.tsv",
+                "dmr/age/dmr_age_summary.json",
+                "dnam_scores",
+                "dnam_scores/dnam_scores.tsv",
+                "dnam_scores/dnam_scores_coverage.tsv",
+                "dnam_scores/dnam_scores_weights.tsv",
+                "enrichment",
+                "enrichment/age",
+                "enrichment/age/enrichment_age.tsv",
+                "enrichment/age/enrichment_age_summary.json",
+                "ewas",
+                "ewas/age",
+                "ewas/age/ewas_age_design_check.tsv",
+                "ewas/age/ewas_age_resolved.json",
+                "ewas/age/ewas_age_stats.tsv.gz",
+                "ewas/age/ewas_age_summary.json",
+                "ewas/age/ewas_age_top.tsv",
+                "ewas/ewas_summary.tsv",
+                "exploration",
+                "exploration/pca_associations.tsv",
+                "exploration/pca_ctrl_pca_variance.tsv",
+                "exploration/pca_ctrl_pcs.tsv",
+                "exploration/pca_outliers.tsv",
+                "exploration/pca_scores.tsv",
+                "exploration/pca_scree_mqc.tsv",
+                "exploration/pca_variance.tsv",
+                "geo",
+                "geo/geo_processed_matrix.tsv.gz",
+                "geo/geo_samples.tsv",
+                "geo/geo_signal_intensities.tsv.gz",
+                "multiqc",
+                "multiqc/multiqc_data",
+                "multiqc/multiqc_data/.stub",
+                "multiqc/multiqc_plots",
+                "multiqc/multiqc_plots/.stub",
+                "multiqc/multiqc_report.html",
+                "pipeline_info",
+                "pipeline_info/methylarray_software_mqc_versions.yml",
+                "preprocessing",
+                "preprocessing/combined",
+                "preprocessing/combined/combined_se",
+                "preprocessing/combined/combined_se/assays.h5",
+                "preprocessing/combined/combined_se/se.rds",
+                "preprocessing/sesame",
+                "preprocessing/sesame/sesame_se",
+                "preprocessing/sesame/sesame_se/assays.h5",
+                "preprocessing/sesame/sesame_se/se.rds",
+                "probe_filter",
+                "probe_filter/combined_filtered_attrition.tsv",
+                "probe_filter/combined_filtered_exclusions.tsv.gz",
+                "probe_filter/combined_filtered_se",
+                "probe_filter/combined_filtered_se/assays.h5",
+                "probe_filter/combined_filtered_se/se.rds",
+                "probe_filter/combined_filtered_uncollapsed_se",
+                "probe_filter/combined_filtered_uncollapsed_se/assays.h5",
+                "probe_filter/combined_filtered_uncollapsed_se/se.rds",
+                "qc",
+                "qc/combined",
+                "qc/combined/combined_qc.tsv",
+                "qc/ewastools",
+                "qc/ewastools/ewastools_controls.tsv.gz",
+                "qc/ewastools/ewastools_qc.tsv",
+                "qc/ewastools/ewastools_snp_conflicts.tsv",
+                "qc/ewastools/ewastools_snp_histograms.tsv",
+                "qc/ewastools/ewastools_snp_summary.tsv",
+                "qc/sample_qc.tsv",
+                "qc/sample_qc_retained.txt",
+                "qc/sesame",
+                "qc/sesame/sesame_qc.tsv",
+                "report",
+                "report/methylarray_report.html"
+            ],
+            [
+                "biomarkers_agreement.tsv:md5,94570ddacf5cddfaafb1250eb2684f36",
+                "biomarkers_batch.tsv:md5,378cadd9d9ba1bb2cae0d27663993a3e",
+                "biomarkers_cells_measures.tsv:md5,5171816fe4fa28ee0f5b42234ecb96ab",
+                "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c",
+                "biomarkers_phenotypes.tsv:md5,f8639e17b0b8d6cfba0d2689a8717e28",
+                "biomarkers_quartiles.tsv:md5,fe324338b369730600fb20b791bf02e5",
+                "cell_fractions.tsv:md5,d522843d0cd415cbf3d1bc5c6bb51d01",
+                "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5",
+                "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4",
+                "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9",
+                "clocks_weights.tsv:md5,90fa629f87c29b41affaf8deac4c9682",
+                "dmr_age_consensus.bed:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_consensus.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_dmrcate.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_dmrff.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "dmr_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
+                "dnam_scores.tsv:md5,96281eaf2f130f426ffbd363cc7e12e3",
+                "dnam_scores_coverage.tsv:md5,d9ef34f02ce7dc8e688d44ea13bd9ada",
+                "dnam_scores_weights.tsv:md5,fecf0ab9f6eeaa7491a856e65e23c97d",
+                "enrichment_age.tsv:md5,adbf0efb474ed273fc10b48b133a9c58",
+                "enrichment_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
+                "ewas_age_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewas_age_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11",
+                "ewas_age_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewas_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
+                "ewas_age_top.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewas_summary.tsv:md5,163b91e05f33021d9fbf32c250b7c345",
+                "pca_associations.tsv:md5,ad9be22e4e7a74c14b6bad99b7365e2b",
+                "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94",
+                "pca_ctrl_pcs.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
+                "pca_outliers.tsv:md5,9a7a9681db36858bd2bcd7ca0392825d",
+                "pca_scores.tsv:md5,fc4f6d4673bc687f89061fe547ffe151",
+                "pca_scree_mqc.tsv:md5,95b63210791ceb7b8bcac1b23ce1873f",
+                "pca_variance.tsv:md5,220c70d77202755b60bb0c397eef2b37",
+                "geo_processed_matrix.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
+                "geo_samples.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
+                "geo_signal_intensities.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
+                ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
+                ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "combined_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31",
+                "combined_filtered_exclusions.tsv.gz:md5,c6cc1cc059afd2343a237bf1880d2041",
+                "combined_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
+                "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
+                "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0",
+                "ewastools_snp_histograms.tsv:md5,ccc64f8a19fa096603b9432c7cd07cc8",
+                "ewastools_snp_summary.tsv:md5,5ab6774a339b89348a049a707085a180",
+                "sample_qc.tsv:md5,2f0638a9c17a82d2a7dd883687300b81",
+                "sample_qc_retained.txt:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
+            ]
+        ],
+        "timestamp": "2026-11-15T23:24:49.148076151",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

@@ -1,0 +1,110 @@
+name: dmr_call
+description: Differentially methylated regions of one association model with DMRcate (kernel smoothing of the model statistics) and dmrff, and their consensus
+keywords:
+  - dna methylation
+  - methylation array
+  - differentially methylated regions
+  - dmr
+tools:
+  - dmrcate:
+      description: "Methylation array and sequencing spatial analysis methods"
+      homepage: https://bioconductor.org/packages/DMRcate
+      documentation: https://bioconductor.org/packages/DMRcate
+      doi: 10.1186/1756-8935-8-6
+      licence: ["GPL-3.0-only"]
+      identifier: biotools:dmrcate
+  - dmrff:
+      description: "Identifying differentially methylated regions efficiently with power and control"
+      homepage: https://github.com/perishky/dmrff
+      documentation: https://github.com/perishky/dmrff
+      doi: 10.1101/508556
+      licence: ["Artistic-2.0"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the model name as id
+          e.g. [ id:'bmi' ]
+    - stats:
+        type: file
+        description: EWAS_LIMMA statistics of every CpG (chr, pos, contrast, logfc_m, se_m, delta_beta, t, p_value, fdr, gene)
+        pattern: "*_stats.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - resolved:
+        type: file
+        description: The resolved model with the arrays left out
+        pattern: "*_resolved.json"
+        ontologies:
+          - edam: http://edamontology.org/format_3464
+    - se:
+        type: directory
+        description: Filtered SummarizedExperiment with one row per CpG (assay mvalue)
+  - dmrff_source:
+      type: file
+      description: dmrff source package (tar.gz of a pinned GitHub commit), installed into the task directory
+      pattern: "*.tar.gz"
+      ontologies: []
+output:
+  dmrcate:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_dmrcate.tsv":
+          type: file
+          description: DMRcate regions per contrast with CpG count, smoothed FDR, Stouffer, HMFDR and Fisher P, maximum and mean delta-beta, and genes
+          pattern: "*_dmrcate.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  dmrff:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_dmrff.tsv":
+          type: file
+          description: dmrff regions per contrast at Bonferroni-adjusted P < 0.05, with estimate, SE, z, P and genes
+          pattern: "*_dmrff.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  consensus:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_consensus.tsv":
+          type: file
+          description: Regions found by both methods, overlapping and in the same direction
+          pattern: "*_consensus.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  bed:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_consensus.bed":
+          type: file
+          description: Consensus regions in BED format (0-based start)
+          pattern: "*_consensus.bed"
+          ontologies:
+            - edam: http://edamontology.org/format_3003
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_summary.json":
+          type: file
+          description: Status and the number of regions per method and contrast
+          pattern: "*_summary.json"
+          ontologies:
+            - edam: http://edamontology.org/format_3464
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

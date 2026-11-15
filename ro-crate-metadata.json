@@ -1,0 +1,327 @@
+{
+    "@context": [
+        "https://w3id.org/ro/crate/1.3/context",
+        "https://w3id.org/ro/terms/test"
+    ],
+    "@graph": [
+        {
+            "@id": "./",
+            "@type": "Dataset",
+            "conformsTo": [
+                {
+                    "@id": "https://w3id.org/workflowhub/workflow-ro-crate/1.1"
+                },
+                {
+                    "@id": "https://w3id.org/ro/wftest/0.2"
+                }
+            ],
+            "creativeWorkStatus": "InProgress",
+            "datePublished": "2026-11-14T22:51:55+00:00",
+            "description": "# methylarray\n\n[![GitHub Actions CI Status](https://github.com/bhagesh-h/methylarray/actions/workflows/nf-test.yml/badge.svg)](https://github.com/bhagesh-h/methylarray/actions/workflows/nf-test.yml)\n[![GitHub Actions Linting Status](https://github.com/bhagesh-h/methylarray/actions/workflows/linting.yml/badge.svg)](https://github.com/bhagesh-h/methylarray/actions/workflows/linting.yml)\n[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)\n\n[![Nextflow](https://img.shields.io/badge/version-%E2%89%A526.04.2-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)\n[![nf-core template version](https://img.shields.io/badge/nf--core_template-4.2.2-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/4.2.2)\n[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)\n[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)\n[![run with apptainer](https://img.shields.io/badge/run%20with-apptainer-1d355c.svg?labelColor=000000)](https://apptainer.org/)\n[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)\n[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)\n\n## Introduction\n\n**methylarray** is a Nextflow pipeline for Illumina Infinium DNA methylation arrays. It starts from raw IDAT files and produces:\n\n- quality-controlled and normalised methylation matrices\n- sample and probe QC reports\n- blood cell-type estimates\n- DNA methylation biomarkers (epigenetic clocks and DNAm scores)\n- epigenome-wide association results\n- differentially methylated regions\n- pathway and chromatin enrichment\n- a MultiQC report and an HTML analysis report\n\nThe pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and handles the specific features of that array: replicate probes, the GRCh38 manifest, the `nv` and `rs` probe classes, and the updated cross-hybridisation annotation. It is written in Nextflow DSL2 with strict syntax, built from the nf-core template, and every step runs with pinned software through Docker, Singularity, Apptainer, Podman or conda.\n\n![methylarray workflow](docs/images/metro_map.svg)\n\n> **Status:** under active development. Version 1.0.0 has not been released. [CHANGELOG.md](CHANGELOG.md) lists what is implemented.\n\n## Pipeline summary\n\n1. Validate the samplesheet, phenotype table and model definitions against JSON schemas (nf-schema).\n2. Prepare reference resources once and cache them for offline runs: the SeSAMe data cache, the EPIC v2 manifest and probe masks.\n3. Preprocess the arrays with one of five options (see [Preprocessing options](#preprocessing-options)).\n4. Run sample QC:\n   - Illumina control-probe metrics\n   - predicted versus reported sex\n   - SNP-based identity and duplicate detection\n   - contamination score\n   - outlier detection\n   - technical-replicate concordance\n\n   Every exclusion is recorded with a reason.\n\n5. Filter probes, in order:\n   - detection failure and low bead count\n   - cross-hybridising, SNP-affected, `nv`, `rs` and non-CpG probes\n   - sex chromosomes (optional)\n\n   EPIC v2 replicate probes are then collapsed to one value per CpG. A probe attrition table documents each step.\n\n6. Estimate leukocyte proportions with EpiDISH.\n7. Compute epigenetic clocks (Horvath, Hannum, skin and blood, PhenoAge, PC clocks, DunedinPACE and others) and DNAm scores (CRP, IL-6, smoking, alcohol, BMI), reporting the probe coverage of each on the array.\n8. Explore technical and biological variation:\n   - control-probe principal components\n   - principal components and their associations with covariates\n   - a design-balance check for every model\n9. When a models file is given, run epigenome-wide association studies:\n   - limma on M-values, with effect sizes reported as differences in beta values\n   - bias and inflation control with bacon\n   - DMRs from DMRcate and dmrff, keeping regions supported by both\n   - gene set and CpG-centric enrichment (missMethyl, KnowYourCG)\n10. In parallel mode, compare the preprocessing methods (method concordance).\n11. Build a MultiQC report and an HTML report with an automatically generated methods section.\n\n## Preprocessing options\n\nSelect one with `--preprocessing`.\n\n| Option             | Route                                                                                                          | When to use it                                                                                                               |\n| ------------------ | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |\n| `sesame` (default) | SeSAMe per-sample preprocessing: quality masks, channel inference, non-linear dye bias, pOOBAH detection, noob | Recommended for EPIC v2. Each sample is processed on its own, so results do not depend on which other samples are in the run |\n| `minfi`            | minfi import, detection p-values, Noob (Funnorm optional)                                                      | Comparison with studies processed in minfi                                                                                   |\n| `enmix`            | minfi import, ENmix QC, ENmix background with RELIC dye-bias correction, RCP probe-type correction             | Strong replicate agreement in published benchmarks                                                                           |\n| `combined`         | minfi import, SeSAMe pOOBAH detection masks, ENmix background with RELIC, RCP                                  | One integrated route that uses the strongest step of each package                                                            |\n| `parallel`         | Runs `minfi`, `sesame` and `enmix` side by side through the full analysis, then compares them                  | Sensitivity analysis. Reports concordance of beta values, QC decisions, cell estimates, clocks and association results       |\n\n## Requirements\n\n- [Nextflow](https://www.nextflow.io/docs/latest/install.html) 26.04.2 or later (earlier releases can wrongly report remote HTTP or HTTPS input files as missing).\n- One of [Docker](https://docs.docker.com/engine/installation/), [Singularity](https://www.sylabs.io/guides/3.0/user-guide/), [Apptainer](https://apptainer.org/docs/user/latest/), [Podman](https://podman.io/) or [conda](https://conda.io/miniconda.html). Containers are recommended.\n- Memory:\n  - per-sample tasks need about 4 GB\n  - steps that combine all samples need about 32 GB for a few hundred EPIC v2 arrays\n- Internet access on the first run, to fetch containers and reference resources. Later runs can be offline with `--sesame_cache`.\n\n## Quick start\n\n1. Test the pipeline on the bundled test data:\n\n   ```bash\n   nextflow run bhagesh-h/methylarray -profile test,docker --outdir results\n   ```\n\n   Replace `docker` with `singularity`, `apptainer`, `podman` or `conda` to match your system. Institutional profiles from [nf-core/configs](https://github.com/nf-core/configs) also work.\n\n2. Prepare a samplesheet (see [Input](#input)).\n\n3. Run the pipeline:\n\n   ```bash\n   nextflow run bhagesh-h/methylarray \\\n       -r <version> \\\n       -profile docker \\\n       --input samplesheet.csv \\\n       --phenotypes phenotypes.tsv \\\n       --models models.yaml \\\n       --outdir results\n   ```\n\nPipeline parameters must be passed on the command line or in a `-params-file`. A `-c` config file should only change infrastructure settings such as resources and executors.\n\n## Input\n\n### Samplesheet\n\nA CSV, TSV, JSON or YAML file with one row per array. Required columns are `sample`, `idat_red` and `idat_grn`.\n\n```csv\nsample,idat_red,idat_grn,plate,reported_sex\nS001,/data/idat/200000000001/200000000001_R01C01_Red.idat,/data/idat/200000000001/200000000001_R01C01_Grn.idat,P01,F\nS002,/data/idat/200000000001/200000000001_R02C01_Red.idat,/data/idat/200000000001/200000000001_R02C01_Grn.idat,P01,M\n```\n\n| Column                      | Required | Description                                                      |\n| --------------------------- | -------- | ---------------------------------------------------------------- |\n| `sample`                    | yes      | Unique sample identifier                                         |\n| `idat_red`                  | yes      | Red channel IDAT (`_Red.idat` or `_Red.idat.gz`)                 |\n| `idat_grn`                  | yes      | Green channel IDAT with the same prefix as the red file          |\n| `sentrix_id`                | no       | Chip barcode. Derived from the file name if omitted              |\n| `sentrix_position`          | no       | Position such as `R01C01`. Derived from the file name if omitted |\n| `plate`                     | no       | Processing plate, used as a batch variable                       |\n| `well`                      | no       | Plate well                                                       |\n| `batch`                     | no       | Any further processing batch                                     |\n| `reported_sex`              | no       | `M` or `F`, compared with the sex predicted from the array       |\n| `reported_age`              | no       | Chronological age, used for clock-based checks                   |\n| `replicate_group`           | no       | Shared value for technical replicates                            |\n| `exclude`, `exclude_reason` | no       | Manual exclusion with a recorded reason                          |\n\n### Phenotypes\n\nAn optional CSV or TSV file with a `sample` column and any number of analysis variables. Phenotype values are never written to logs.\n\n### Models\n\nAn optional YAML file listing the association models to run. Each model names a trait, its type, an optional transformation and the covariates. Shortcut tokens expand to derived covariates: `@cells` (cell composition), `@technical` (plate and Sentrix row), `@ctrlpcs` (control-probe components), `@sex` (predicted sex) and `@smoking` (DNAm smoking score).\n\n```yaml\n- name: bmi\n  trait: bmi\n  trait_type: continuous\n  covariates: [age, \"@sex\", \"@cells\", \"@technical\", \"@ctrlpcs\", \"@smoking\"]\n- name: crp\n  trait: hscrp\n  trait_type: continuous\n  transform: log\n  covariates: [age, \"@sex\", bmi, \"@cells\", \"@technical\", \"@ctrlpcs\"]\n```\n\nWithout a models file the pipeline stops after QC, preprocessing, cell composition, biomarkers and exploratory analysis.\n\n## Usage notes\n\n- `--qc_only` stops after sample QC and reporting. Use it to review the QC report and write a sample exclusion file, then pass that file with `--sample_exclusions` in the full run.\n- Add `-resume` to reuse completed tasks after a change or failure.\n- `--sesame_cache` reuses a reference cache from an earlier run, which allows offline execution.\n- Batch effects are modelled as covariates by default. ComBat is available through `--combat_batch` but only runs for models that pass the design-balance check, because ComBat on unbalanced designs can create false positives.\n- Run `nextflow run bhagesh-h/methylarray --help` for all parameters. The full description of every option is in [docs/usage.md](docs/usage.md), and the parameter schema is [nextflow_schema.json](nextflow_schema.json).\n\n## Outputs\n\n```text\nresults/\n├── pipeline_info/      execution reports, software versions, validated inputs\n├── qc/                 sample QC, control metrics, sex and identity checks, probe attrition\n├── preprocessing/      HDF5-backed SummarizedExperiment objects and exported matrices\n├── cell_composition/   cell-type proportions and plots\n├── biomarkers/         epigenetic clocks and DNAm scores\n├── exploratory/        PCA, control-probe components, design checks\n├── ewas/               summary statistics, top hits and plots per model, cross-model summary\n├── dmr/                DMRcate, dmrff and consensus regions per model\n├── enrichment/         gene set and CpG-centric enrichment per model\n├── comparison/         method concordance (parallel mode)\n├── multiqc/            MultiQC report\n└── report/             HTML analysis report with methods text\n```\n\nIn parallel mode each method writes its own subdirectory under `preprocessing/`, `qc/` and the analysis folders. Every file is described in [docs/output.md](docs/output.md).\n\n## Testing\n\nThe pipeline is tested with [nf-test](https://www.nf-test.com) at the module, subworkflow and pipeline level. The `test` profile uses a small public EPIC v2 whole-blood dataset with synthetic phenotypes and runs on a 4 CPU, 15 GB machine. The `test_full` profile runs the complete public dataset.\n\n## Reproducibility\n\n- Each module pins its software in an `environment.yml` and a matching container image.\n- Software versions are collected from every task and reported in MultiQC and in `pipeline_info/`.\n- Random seeds are fixed, and inputs are sorted before aggregation.\n- The exact command, parameters, container digests and pipeline revision are written with every run.\n\n## Data privacy\n\nThe pipeline processes data where it runs and does not upload samples, phenotypes or results anywhere. When working with human data, keep IDATs, samplesheets with identifiers, phenotype tables and results out of version control.\n\n## Credits\n\nmethylarray is developed and maintained by [bhagesh-h](https://github.com/bhagesh-h).\n\nThe design draws on the nf-core/methylarray development pipeline and its contributors, the Garvan Institute EPIC v2 workflow, and the EPIC v2 preprocessing work of the Kobor lab. The workflow diagram is drawn with [nf-metro](https://github.com/seqeralabs/nf-metro) from [assets/metro_map.mmd](assets/metro_map.mmd).\n\n## Contributions and support\n\nBug reports and feature requests are welcome through GitHub issues. Development happens on the `dev` branch: open pull requests against `dev`, never against `main`. See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) before opening a pull request.\n\n## Citations\n\nAll tools, methods, reference data and frameworks used by the pipeline are listed in [CITATIONS.md](CITATIONS.md). A Zenodo DOI for the pipeline will be added at the first release.\n\n## License\n\nmethylarray is released under the [MIT License](LICENSE).\n",
+            "hasPart": [
+                {
+                    "@id": "main.nf"
+                },
+                {
+                    "@id": "assets/"
+                },
+                {
+                    "@id": "conf/"
+                },
+                {
+                    "@id": "docs/"
+                },
+                {
+                    "@id": "docs/images/"
+                },
+                {
+                    "@id": "modules/"
+                },
+                {
+                    "@id": "modules/nf-core/"
+                },
+                {
+                    "@id": "workflows/"
+                },
+                {
+                    "@id": "subworkflows/"
+                },
+                {
+                    "@id": "nextflow.config"
+                },
+                {
+                    "@id": "README.md"
+                },
+                {
+                    "@id": "nextflow_schema.json"
+                },
+                {
+                    "@id": "CHANGELOG.md"
+                },
+                {
+                    "@id": "LICENSE"
+                },
+                {
+                    "@id": "CITATIONS.md"
+                },
+                {
+                    "@id": "modules.json"
+                },
+                {
+                    "@id": "docs/usage.md"
+                },
+                {
+                    "@id": "docs/output.md"
+                },
+                {
+                    "@id": ".nf-core.yml"
+                },
+                {
+                    "@id": ".pre-commit-config.yaml"
+                },
+                {
+                    "@id": ".prettierignore"
+                }
+            ],
+            "isBasedOn": "https://github.com/bhagesh-h/methylarray",
+            "license": "MIT",
+            "mainEntity": {
+                "@id": "main.nf"
+            },
+            "mentions": [
+                {
+                    "@id": "#b28d9801-9d3e-42a4-b432-06be324c5ecc"
+                }
+            ],
+            "name": "bhagesh-h/methylarray"
+        },
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {
+                "@id": "./"
+            },
+            "conformsTo": {
+                "@id": "https://w3id.org/ro/crate/1.3"
+            }
+        },
+        {
+            "@id": "main.nf",
+            "@type": [
+                "File",
+                "SoftwareSourceCode",
+                "ComputationalWorkflow"
+            ],
+            "author": [
+                {
+                    "@id": "#a7319736-29c8-47c5-9c6a-ce95af982aa6"
+                }
+            ],
+            "dateCreated": "",
+            "dateModified": "2026-11-14T22:51:55Z",
+            "dct:conformsTo": "https://bioschemas.org/profiles/ComputationalWorkflow/1.0-RELEASE/",
+            "keywords": [
+                "nf-core",
+                "nextflow"
+            ],
+            "license": [
+                "MIT"
+            ],
+            "maintainer": [
+                {
+                    "@id": "#a7319736-29c8-47c5-9c6a-ce95af982aa6"
+                }
+            ],
+            "name": [
+                "bhagesh-h/methylarray"
+            ],
+            "programmingLanguage": {
+                "@id": "https://w3id.org/workflowhub/workflow-ro-crate#nextflow"
+            },
+            "sdPublisher": {
+                "@id": "https://nf-co.re/"
+            },
+            "url": [
+                "https://github.com/bhagesh-h/methylarray",
+                "https://nf-co.re/bhagesh-h/methylarray/dev/"
+            ],
+            "version": [
+                "1.0.0dev"
+            ]
+        },
+        {
+            "@id": "https://w3id.org/workflowhub/workflow-ro-crate#nextflow",
+            "@type": "ComputerLanguage",
+            "identifier": {
+                "@id": "https://www.nextflow.io/"
+            },
+            "name": "Nextflow",
+            "url": {
+                "@id": "https://www.nextflow.io/"
+            },
+            "version": "!>=26.04.2"
+        },
+        {
+            "@id": "https://w3id.org/workflowhub/workflow-ro-crate/1.1",
+            "@type": [
+                "CreativeWork",
+                "Profile"
+            ],
+            "name": "Workflow RO-Crate",
+            "version": "1.1"
+        },
+        {
+            "@id": "#b28d9801-9d3e-42a4-b432-06be324c5ecc",
+            "@type": "TestSuite",
+            "instance": [
+                {
+                    "@id": "#e5df3bcc-4268-436b-a1c2-99512f152347"
+                }
+            ],
+            "mainEntity": {
+                "@id": "main.nf"
+            },
+            "name": "Test suite for bhagesh-h/methylarray"
+        },
+        {
+            "@id": "https://w3id.org/ro/wftest/0.2",
+            "@type": [
+                "CreativeWork",
+                "Profile"
+            ],
+            "name": "Workflow Testing RO-Crate",
+            "version": "0.2"
+        },
+        {
+            "@id": "#e5df3bcc-4268-436b-a1c2-99512f152347",
+            "@type": "TestInstance",
+            "name": "GitHub Actions workflow for testing bhagesh-h/methylarray",
+            "resource": "repos/bhagesh-h/methylarray/actions/workflows/nf-test.yml",
+            "runsOn": {
+                "@id": "https://w3id.org/ro/terms/test#GithubService"
+            },
+            "url": "https://api.github.com"
+        },
+        {
+            "@id": "https://w3id.org/ro/terms/test#GithubService",
+            "@type": "TestService",
+            "name": "Github Actions",
+            "url": {
+                "@id": "https://github.com"
+            }
+        },
+        {
+            "@id": "assets/",
+            "@type": "Dataset",
+            "description": "Additional files"
+        },
+        {
+            "@id": "conf/",
+            "@type": "Dataset",
+            "description": "Configuration files"
+        },
+        {
+            "@id": "docs/",
+            "@type": "Dataset",
+            "description": "Markdown files for documenting the pipeline"
+        },
+        {
+            "@id": "docs/images/",
+            "@type": "Dataset",
+            "description": "Images for the documentation files"
+        },
+        {
+            "@id": "modules/",
+            "@type": "Dataset",
+            "description": "Modules used by the pipeline"
+        },
+        {
+            "@id": "modules/nf-core/",
+            "@type": "Dataset",
+            "description": "nf-core modules"
+        },
+        {
+            "@id": "workflows/",
+            "@type": "Dataset",
+            "description": "Main pipeline workflows to be executed in main.nf"
+        },
+        {
+            "@id": "subworkflows/",
+            "@type": "Dataset",
+            "description": "Smaller subworkflows"
+        },
+        {
+            "@id": "nextflow.config",
+            "@type": "File",
+            "description": "Main Nextflow configuration file"
+        },
+        {
+            "@id": "README.md",
+            "@type": "File",
+            "description": "Basic pipeline usage information"
+        },
+        {
+            "@id": "nextflow_schema.json",
+            "@type": "File",
+            "description": "JSON schema for pipeline parameter specification"
+        },
+        {
+            "@id": "CHANGELOG.md",
+            "@type": "File",
+            "description": "Information on changes made to the pipeline"
+        },
+        {
+            "@id": "LICENSE",
+            "@type": "File",
+            "description": "The license - should be MIT"
+        },
+        {
+            "@id": "CITATIONS.md",
+            "@type": "File",
+            "description": "Citations needed when using the pipeline"
+        },
+        {
+            "@id": "modules.json",
+            "@type": "File",
+            "description": "Version information for modules from nf-core/modules"
+        },
+        {
+            "@id": "docs/usage.md",
+            "@type": "File",
+            "description": "Usage documentation"
+        },
+        {
+            "@id": "docs/output.md",
+            "@type": "File",
+            "description": "Output documentation"
+        },
+        {
+            "@id": ".nf-core.yml",
+            "@type": "File",
+            "description": "nf-core configuration file, configuring template features and linting rules"
+        },
+        {
+            "@id": ".pre-commit-config.yaml",
+            "@type": "File",
+            "description": "Configuration file for pre-commit hooks"
+        },
+        {
+            "@id": ".prettierignore",
+            "@type": "File",
+            "description": "Ignore file for prettier"
+        },
+        {
+            "@id": "https://nf-co.re/",
+            "@type": "Organization",
+            "name": "nf-core",
+            "url": "https://nf-co.re/"
+        },
+        {
+            "@id": "#a7319736-29c8-47c5-9c6a-ce95af982aa6",
+            "@type": "Person",
+            "email": "bhagc0de@gmail.com",
+            "name": "bhagesh-h",
+            "url": "https://github.com/bhagesh-h"
+        }
+    ]
+}

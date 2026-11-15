@@ -1,0 +1,181 @@
+{
+    "clocks, scores, cells and phenotypes": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "biomarkers"
+                    },
+                    "biomarkers_agreement.tsv:md5,ed5a23f8e9891b072c5c10751823ae98"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "biomarkers"
+                    },
+                    "biomarkers_cells_measures.tsv:md5,34606c199a31a65922b7924b73d3c3fe"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "biomarkers"
+                    },
+                    "biomarkers_cells_phenotypes.tsv:md5,d5ae9d03e1511a1b02f02ae27d9dd3b8"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "biomarkers"
+                    },
+                    "biomarkers_batch.tsv:md5,5bc0f872e9b13af17e9a10ce5cf766d1"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "biomarkers"
+                    },
+                    "biomarkers_phenotypes.tsv:md5,4726d2adcf223c0ce8d31ffae27371a6"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "biomarkers"
+                    },
+                    "biomarkers_quartiles.tsv:md5,ef3c9364dffc2a1f3e8473c263164e8e"
+                ]
+            ],
+            [
+                "versions.yml:md5,fb3eefae1ceb2b6012eb2dda1c4d160d"
+            ]
+        ],
+        "timestamp": "2026-11-15T23:11:28.552737624",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "clocks only - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_agreement.tsv:md5,94570ddacf5cddfaafb1250eb2684f36"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_cells_measures.tsv:md5,5171816fe4fa28ee0f5b42234ecb96ab"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_batch.tsv:md5,378cadd9d9ba1bb2cae0d27663993a3e"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_phenotypes.tsv:md5,f8639e17b0b8d6cfba0d2689a8717e28"
+                    ]
+                ],
+                "5": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_quartiles.tsv:md5,fe324338b369730600fb20b791bf02e5"
+                    ]
+                ],
+                "6": [
+                    
+                ],
+                "7": [
+                    "versions.yml:md5,2637a135f7af8c831915758762c98dd1"
+                ],
+                "agreement": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_agreement.tsv:md5,94570ddacf5cddfaafb1250eb2684f36"
+                    ]
+                ],
+                "batch": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_batch.tsv:md5,378cadd9d9ba1bb2cae0d27663993a3e"
+                    ]
+                ],
+                "cells_measures": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_cells_measures.tsv:md5,5171816fe4fa28ee0f5b42234ecb96ab"
+                    ]
+                ],
+                "cells_phenotypes": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c"
+                    ]
+                ],
+                "multiqc": [
+                    
+                ],
+                "phenotypes": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_phenotypes.tsv:md5,f8639e17b0b8d6cfba0d2689a8717e28"
+                    ]
+                ],
+                "quartiles": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_quartiles.tsv:md5,fe324338b369730600fb20b791bf02e5"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,2637a135f7af8c831915758762c98dd1"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T23:11:32.192431795",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

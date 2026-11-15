@@ -1,0 +1,107 @@
+name: clocks_compute
+description: Epigenetic clocks with dnaMethyAge and DunedinPACE on the detection-masked, CpG-level betas of the arrays that passed QC, with EPIC v2 coverage per clock and age acceleration
+keywords:
+  - dna methylation
+  - methylation array
+  - epigenetic clock
+  - biological age
+tools:
+  - dnamethyage:
+      description: "Predict epigenetic age (and other DNA methylation biomarkers) with published clocks"
+      homepage: https://github.com/yiluyucheng/dnaMethyAge
+      documentation: https://github.com/yiluyucheng/dnaMethyAge
+      doi: 10.1007/s11357-023-00871-w
+      licence: ["GPL-3.0-only"]
+      identifier: ""
+  - dunedinpace:
+      description: "DunedinPACE: pace of ageing from blood DNA methylation"
+      homepage: https://github.com/danbelsky/DunedinPACE
+      documentation: https://github.com/danbelsky/DunedinPACE
+      doi: 10.7554/eLife.73420
+      licence: ["GPL-3.0-only"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the preprocessing method as id
+          e.g. [ id:'minfi' ]
+    - se:
+        type: directory
+        description: SummarizedExperiment of the preprocessing route (assay beta, detection-masked)
+    - retained:
+        type: file
+        description: Arrays that passed sample QC, one name per line
+        pattern: "*.txt"
+        ontologies:
+          - edam: http://edamontology.org/format_2330
+    - annotation:
+        type: file
+        description: Probe annotation table (cpg_id, epicv1_id, hm450_id)
+        pattern: "*.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - samples:
+        type: file
+        description: Sample metadata with 'sample', 'reported_age' and 'reported_sex' columns
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - cell_fractions:
+        type: file
+        description: EpiDISH cell fractions (dhs7_* columns) for intrinsic age acceleration; [] without cell composition
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+  - dnamethyage_source:
+      type: file
+      description: dnaMethyAge source package (tar.gz of a pinned GitHub commit), installed into the task directory
+      pattern: "*.tar.gz"
+      ontologies: []
+  - dunedinpace_source:
+      type: file
+      description: DunedinPACE source package (tar.gz of a pinned GitHub commit), installed into the task directory
+      pattern: "*.tar.gz"
+      ontologies: []
+output:
+  clocks:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}.tsv":
+          type: file
+          description: Per array the reported age, every clock, and with ages the age acceleration (eaa_*) and intrinsic age acceleration (ieaa_*)
+          pattern: "*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  coverage:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_coverage.tsv":
+          type: file
+          description: Per clock the CpGs, those present (and present only through an EPIC v1 or 450K ID), the share present, the filled values and notes
+          pattern: "*_coverage.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_coverage_mqc.tsv":
+          type: file
+          description: MultiQC table of the clock coverage
+          pattern: "*_mqc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

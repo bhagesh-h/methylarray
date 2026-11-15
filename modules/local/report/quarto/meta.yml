@@ -1,0 +1,43 @@
+name: report_quarto
+description: Renders the self-contained HTML analysis report of a run with Quarto from the pipeline's result tables, software versions, methods text and parameters
+keywords:
+  - report
+  - quarto
+  - dna methylation
+tools:
+  - quarto:
+      description: "Open-source scientific and technical publishing system"
+      homepage: https://quarto.org
+      documentation: https://quarto.org/docs/guide/
+      licence: ["MIT"]
+      identifier: ""
+input:
+  - qmd:
+      type: file
+      description: The report document (assets/report/methylarray_report.qmd)
+      pattern: "*.qmd"
+      ontologies: []
+  - inputs:
+      type: file
+      description: Result tables of the run (sample QC, attrition, cell fractions, clocks, scores, PCA, EWAS, DMRs, enrichment), software versions, methods description and parameters JSON; sections whose files are missing are left out
+      pattern: "*"
+      ontologies: []
+output:
+  report:
+    - methylarray_report.html:
+        type: file
+        description: Self-contained HTML report
+        pattern: "methylarray_report.html"
+        ontologies:
+          - edam: http://edamontology.org/format_2331
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

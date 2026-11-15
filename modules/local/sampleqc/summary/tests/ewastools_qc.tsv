@@ -1,0 +1,7 @@
+sample	platform	control_failed	failed_controls	sex_x	sex_y	predicted_sex	snp_outlier	num_snp_probes	inferred_donor	identity_conflict
+A1	EPICv2	FALSE		1.06	0.20	female	-6.1	61	1	FALSE
+A2	EPICv2	TRUE	Bisulfite Conversion II;Extension Red	0.79	0.81	male	-5.2	61	2	FALSE
+A3	EPICv2	FALSE		0.78	0.80	male	-3.1	61	3	FALSE
+A4	EPICv2	FALSE		0.80	0.79	male	-5.9	61	4	TRUE
+A5	EPICv2	FALSE		0.92	0.70		-5.5	61	5	TRUE
+A7	EPICv2	FALSE		1.05	0.21	female	-6.0	61	6	FALSE

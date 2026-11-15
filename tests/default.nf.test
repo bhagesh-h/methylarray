@@ -1,0 +1,48 @@
+nextflow_pipeline {
+
+    name "Test pipeline"
+    script "../main.nf"
+    tag "pipeline"
+
+    test("-profile test") {
+
+        when {
+            params {
+                outdir = "$outputDir"
+            }
+        }
+
+        then {
+            // stable_path: All files + folders in ${params.outdir}/ with a stable path (including file name)
+            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            // stable_content: All files in ${params.outdir}/ with stable content
+            def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
+            def qc = path("$outputDir/qc/sample_qc.tsv").readLines().collect { line -> line.split('\t', -1) as List }
+            def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }.collectEntries { row -> [row.sample, row] }
+            def attrition = path("$outputDir/probe_filter/minfi_filtered_attrition.tsv").readLines().drop(1).collectEntries { line ->
+                def f = line.split('\t'); [ f[0], f[2] as int ]
+            }
+            assert workflow.success
+            assertAll(
+                // probe filtering on the six test arrays: every EPIC v2 probe of the minfi route in, 858,273 kept
+                { assert attrition.start == 936990 },
+                { assert attrition.cross_hybridisation == 858273 },
+                // six arrays, predicted sex matches the reported sex for all of them
+                { assert rows.size() == 6 },
+                { assert rows.values().every { row -> row.sex_check == 'match' } },
+                { assert rows.values().every { row -> row.status in ['PASS', 'FLAG'] } },
+                // the technical replicate pair has one genotype, the other arrays their own
+                { assert rows.CALERIE_1.inferred_donor == rows.CALERIE_1_rep.inferred_donor },
+                { assert rows.values().collect { row -> row.inferred_donor }.unique().size() == 5 },
+                { assert snapshot(
+                    // pipeline versions.yml file for multiqc from which Nextflow version is removed because we test pipelines on multiple Nextflow versions
+                    removeNextflowVersion("$outputDir/pipeline_info/methylarray_software_mqc_versions.yml"),
+                    // All stable path name, with a relative path
+                    stable_path,
+                    // All files with stable contents
+                    stable_content
+                ).match() }
+            )
+        }
+    }
+}

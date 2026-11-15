@@ -1,0 +1,70 @@
+nextflow_process {
+
+    name "Test Process EPIDISH_RPC"
+    script "../main.nf"
+    process "EPIDISH_RPC"
+
+    tag "modules"
+    tag "modules_local"
+    tag "epidish"
+    tag "epidish/rpc"
+
+    // The reference CpGs of a filtered SummarizedExperiment from the six public
+    // whole-blood test arrays, and their rows of the probe annotation (make_fixture.R)
+
+    test("whole blood - cent12CT and centDHSbloodDMC") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [ [ id: 'minfi' ], file("$moduleTestDir/test_se", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            def table = path(process.out.fractions[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def rows = table.drop(1).collect { values -> [table[0], values].transpose().collectEntries() }
+            def cov = path(process.out.coverage[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def coverage = cov.drop(1).collect { values -> [cov[0], values].transpose().collectEntries() }.collectEntries { row -> [row.reference, row] }
+            def byName = rows.collectEntries { row -> [row.sample, row] }
+            def lineages = ['lineage_B', 'lineage_CD4T', 'lineage_CD8T', 'lineage_NK', 'lineage_Mono', 'lineage_Gran']
+            assertAll(
+                { assert process.success },
+                { assert rows.size() == 6 },
+                // autosomal coverage of both references above the 90% minimum; the missing CpGs are
+                // mostly not on EPIC v2, and sex-chromosome CpGs are left out on purpose
+                { assert coverage.values().every { row -> (row.coverage as double) >= 0.9 } },
+                { assert coverage.cent12CT.found == '569' && coverage.cent12CT.not_on_array == '21' && coverage.cent12CT.sex_chromosome == '7' },
+                // whole blood: granulocytes are the largest lineage of every array
+                { assert rows.every { row -> lineages.every { l -> (row.lineage_Gran as double) >= (row[l] as double) } } },
+                // the technical replicate pair agrees within 0.02 for every lineage
+                { assert lineages.every { l -> Math.abs((byName.CALERIE_1[l] as double) - (byName.CALERIE_1_rep[l] as double)) < 0.02 } },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("whole blood - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [ [ id: 'minfi' ], file("$moduleTestDir/test_se", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

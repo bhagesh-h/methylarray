@@ -1,0 +1,44 @@
+name: sesame_cache
+description: Download the sesameData resources for one array platform into a local ExperimentHub cache, so that later SeSAMe tasks run offline
+keywords:
+  - dna methylation
+  - illumina
+  - methylation array
+  - epic
+  - reference
+tools:
+  - sesame:
+      description: "SEnsible Step-wise Analysis of DNA MEthylation BeadChips"
+      homepage: https://bioconductor.org/packages/sesame
+      documentation: https://zwdzwd.github.io/sesame/
+      doi: 10.1093/nar/gky691
+      licence: ["MIT"]
+      identifier: biotools:sesame
+input:
+  - platform:
+      type: string
+      description: Array platform, e.g. EPICv2
+output:
+  cache:
+    - sesame_cache:
+        type: directory
+        description: ExperimentHub cache with the sesameData resources for the platform
+        pattern: "sesame_cache"
+  resources:
+    - sesame_resources.tsv:
+        type: file
+        description: Downloaded resources with title, ExperimentHub ID, cached file and MD5 checksum
+        pattern: "sesame_resources.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

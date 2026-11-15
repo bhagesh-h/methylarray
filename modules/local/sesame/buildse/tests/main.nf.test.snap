@@ -1,0 +1,101 @@
+{
+    "two EPICv2 arrays - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_qc_mqc.tsv:md5,c9aa8a5ac6841ffb3a6cc2de45b44797"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,da124647d4d2096d139fcb3396f09990"
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_qc_mqc.tsv:md5,c9aa8a5ac6841ffb3a6cc2de45b44797"
+                    ]
+                ],
+                "qc": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        "test_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
+                    ]
+                ],
+                "se": [
+                    [
+                        {
+                            "id": "test"
+                        },
+                        [
+                            "assays.h5:md5,d41d8cd98f00b204e9800998ecf8427e",
+                            "se.rds:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        ]
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,da124647d4d2096d139fcb3396f09990"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-14T23:40:03.24244316",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "two EPICv2 arrays - SummarizedExperiment": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_qc.tsv:md5,38563ed6c4929f761b9d493dab9a4423"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "test"
+                    },
+                    "test_qc_mqc.tsv:md5,05edfc03754dfe14eee7e98427d7deef"
+                ]
+            ],
+            [
+                "versions.yml:md5,5027b0f308498048c3599942060d0aa6"
+            ]
+        ],
+        "timestamp": "2026-11-14T23:39:56.778968184",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

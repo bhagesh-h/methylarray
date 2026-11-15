@@ -1,0 +1,296 @@
+#!/usr/bin/env bash
+#
+# nfdev: run the methylarray developer toolchain inside containers.
+#
+# Developer use only. End users run the pipeline with their own Nextflow
+# installation and do not need this script.
+#
+# Configuration is read from an untracked env file (default: <repo>/.nfdev.env,
+# override with NFDEV_ENV). Variables:
+#   NFDEV_OUT_ROOT   absolute path that receives every output, work directory,
+#                    test result, cache and log (required)
+#   NFDEV_DATA_DIRS  colon-separated absolute paths mounted read-only (optional)
+#   NFDEV_IMAGE      devkit image tag (default: methylarray-devkit:dev)
+#   NFDEV_APPTAINER_IMAGE  Apptainer devkit image tag (default: methylarray-apptainer-kit:dev)
+#   NFDEV_JAVA_OPTS  JVM options for Nextflow (default: -Xms512m -Xmx4g)
+#   NFDEV_DIND_IMAGE Docker-in-Docker daemon image (default: docker:29.9.3-dind)
+#   NFDEV_TASK_MEMORY_GB  memory cap in GB for all tasks of a run together (default: 28)
+#
+# NXF_VER=<version> in the calling environment runs that Nextflow release instead
+# of the pinned one (as in the CI matrix). Its -dist binary is downloaded once
+# into $NFDEV_OUT_ROOT/cache/nextflow-dist/<version>/ and mounted over the pinned one.
+
+set -euo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_FILE="${NFDEV_ENV:-${REPO}/.nfdev.env}"
+
+usage() {
+    cat <<EOF
+Usage: dev/nfdev [--engine docker] <command> [args...]
+
+Commands:
+  build              Build the devkit image from dev/docker/devkit
+  shell              Interactive shell in the devkit container
+  nextflow <args>    Run Nextflow (launch directory: \$NFDEV_OUT_ROOT)
+  exec <cmd...>      Run any command in the devkit container (working directory: repo)
+  test [args]        Run nf-test in the repository (work directory: \$NFDEV_OUT_ROOT/tests/nf-test)
+  lint               Lint an export of the staged tree (\$NFDEV_OUT_ROOT/tests/lint/<time>) with
+                     nf-core pipelines lint and nextflow lint, then run prek in the repository
+  metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
+  image <module> <name:tag>
+                     Build a module's Docker image from its environment.yml with
+                     containers/conda.Dockerfile (when Wave cannot build it), then print
+                     the push command
+  container <module> [--write]
+                     Build the Docker and Singularity images of a local module from its
+                     environment.yml with Wave (community.wave.seqera.io) and print, or
+                     with --write set, the module's container directive
+  dind-stop          Stop and remove the Docker-in-Docker daemon container (dind engine)
+  clean              Delete work and results directories, test results, download caches and old logs under
+                     \$NFDEV_OUT_ROOT; keep images, environments and the 10 newest logs
+
+Engines:
+  docker             Docker outside of Docker through the host socket (default)
+  dind               Docker in Docker: tasks run on a separate daemon in a sidecar container
+  apptainer          Apptainer inside a privileged container (developer workstation only);
+                     use with -profile apptainer or -profile singularity
+  conda              Tasks run in micromamba environments inside the devkit container;
+                     use with -profile conda or -profile mamba
+
+Configuration file: ${ENV_FILE}
+EOF
+}
+
+die() { echo "nfdev: $*" >&2; exit 1; }
+
+[[ -f "${ENV_FILE}" ]] || die "configuration file not found: ${ENV_FILE} (see the header of this script)"
+# shellcheck disable=SC1090
+source "${ENV_FILE}"
+
+: "${NFDEV_OUT_ROOT:?NFDEV_OUT_ROOT must be set in ${ENV_FILE}}"
+NFDEV_DATA_DIRS="${NFDEV_DATA_DIRS:-}"
+NFDEV_IMAGE="${NFDEV_IMAGE:-methylarray-devkit:dev}"
+NFDEV_APPTAINER_IMAGE="${NFDEV_APPTAINER_IMAGE:-methylarray-apptainer-kit:dev}"
+NFDEV_JAVA_OPTS="${NFDEV_JAVA_OPTS:--Xms512m -Xmx4g}"
+NFDEV_DIND_IMAGE="${NFDEV_DIND_IMAGE:-docker:29.9.3-dind}"
+NFDEV_TASK_MEMORY_GB="${NFDEV_TASK_MEMORY_GB:-28}"
+DIND_NAME="nfdev-dind"
+DIND_NETWORK="nfdev-net"
+
+[[ "${NFDEV_OUT_ROOT}" = /* ]] || die "NFDEV_OUT_ROOT must be an absolute path"
+[[ -d "${NFDEV_OUT_ROOT}" ]] || die "NFDEV_OUT_ROOT does not exist: ${NFDEV_OUT_ROOT}"
+
+ENGINE="docker"
+if [[ "${1:-}" == "--engine" ]]; then
+    ENGINE="${2:-}"
+    shift 2
+fi
+COMMAND="${1:-}"
+[[ -n "${COMMAND}" ]] || { usage; exit 1; }
+shift
+
+# Engine-specific image and container options.
+case "${ENGINE}" in
+    docker)
+        IMAGE="${NFDEV_IMAGE}"
+        engine_opts=( --group-add "$(stat -c %g /var/run/docker.sock)"
+                      -v /var/run/docker.sock:/var/run/docker.sock )
+        ;;
+    apptainer)
+        # Apptainer needs mount namespaces, which the host only grants to a
+        # privileged container (unprivileged user namespaces are restricted).
+        IMAGE="${NFDEV_APPTAINER_IMAGE}"
+        engine_opts=( --privileged
+                      --env APPTAINER_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer"
+                      --env NXF_APPTAINER_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer"
+                      --env NXF_SINGULARITY_CACHEDIR="${NFDEV_OUT_ROOT}/cache/apptainer" )
+        ;;
+    dind)
+        IMAGE="${NFDEV_IMAGE}"
+        engine_opts=( --network "${DIND_NETWORK}"
+                      --env DOCKER_HOST="tcp://docker:2376"
+                      --env DOCKER_TLS_VERIFY=1
+                      --env DOCKER_CERT_PATH=/certs/client
+                      -v nfdev-dind-certs:/certs:ro )
+        ;;
+    conda)
+        # No container engine: tasks run in micromamba environments created
+        # inside this container. Environments and packages are cached under
+        # the output root so they survive between runs.
+        IMAGE="${NFDEV_IMAGE}"
+        engine_opts=( --env NXF_CONDA_CACHEDIR="${NFDEV_OUT_ROOT}/cache/conda/envs"
+                      --env CONDA_PKGS_DIRS="${NFDEV_OUT_ROOT}/cache/conda/pkgs" )
+        ;;
+    *) die "engine '${ENGINE}' is not implemented yet" ;;
+esac
+
+mkdir -p "${NFDEV_OUT_ROOT}/logs" "${NFDEV_OUT_ROOT}/cache/home" "${NFDEV_OUT_ROOT}/cache/nextflow" \
+         "${NFDEV_OUT_ROOT}/cache/apptainer" "${NFDEV_OUT_ROOT}/cache/conda/envs" "${NFDEV_OUT_ROOT}/cache/conda/pkgs" \
+         "${NFDEV_OUT_ROOT}/tests/nf-test" "${NFDEV_OUT_ROOT}/tests/metro"
+
+# Workstation settings go to the NXF_HOME config, which every Nextflow and
+# nf-test run here reads first, so the pipeline's own configs stay unchanged.
+# - The devkit ships micromamba, not conda.
+# - All tasks together get at most NFDEV_TASK_MEMORY_GB (local executor), and
+#   no single task asks for more; a profile with its own resourceLimits (test)
+#   lowers this further. With the Nextflow JVM (NFDEV_JAVA_OPTS -Xmx) on top,
+#   the defaults keep a run under 32 GB.
+[[ "${NFDEV_TASK_MEMORY_GB}" =~ ^[1-9][0-9]*$ ]] || die "NFDEV_TASK_MEMORY_GB must be a whole number of GB"
+cat > "${NFDEV_OUT_ROOT}/cache/nextflow/config" <<EOF
+// Written by dev/nfdev on every run; change the settings in .nfdev.env instead.
+conda.useMicromamba = true
+executor.memory = '${NFDEV_TASK_MEMORY_GB} GB'
+process.resourceLimits = [ memory: ${NFDEV_TASK_MEMORY_GB}.GB ]
+EOF
+
+LOG="${NFDEV_OUT_ROOT}/logs/nfdev_$(date +%Y%m%d_%H%M%S)_${ENGINE}_${COMMAND}.log"
+
+# Mounts at identical absolute paths (path parity), so that the host Docker
+# daemon resolves the bind mounts that Nextflow generates for task containers.
+mounts=( -v "${REPO}:${REPO}"
+         -v "${NFDEV_OUT_ROOT}:${NFDEV_OUT_ROOT}" )
+if [[ -n "${NFDEV_DATA_DIRS}" ]]; then
+    IFS=':' read -r -a data_dirs <<< "${NFDEV_DATA_DIRS}"
+    for d in "${data_dirs[@]}"; do
+        [[ "${d}" = /* && -d "${d}" ]] || die "data directory must be an existing absolute path: ${d}"
+        mounts+=( -v "${d}:${d}:ro" )
+    done
+fi
+
+# Start the Docker-in-Docker daemon if it is not running. It mounts the same
+# paths as the devkit container so that task bind mounts resolve inside it.
+# Its TLS certificate is issued for the name "docker", so that is its network alias.
+start_dind() {
+    if [[ -n "$(docker ps --quiet --filter "name=^${DIND_NAME}$" --filter status=running)" ]]; then
+        return 0
+    fi
+    docker network inspect "${DIND_NETWORK}" >/dev/null 2>&1 || docker network create "${DIND_NETWORK}" >/dev/null
+    docker run --detach --name "${DIND_NAME}" --privileged \
+        --network "${DIND_NETWORK}" --network-alias docker \
+        --env DOCKER_TLS_CERTDIR=/certs \
+        -v nfdev-dind-certs:/certs \
+        -v nfdev-dind-storage:/var/lib/docker \
+        "${mounts[@]}" \
+        "${NFDEV_DIND_IMAGE}" >/dev/null
+    local _
+    for _ in $(seq 1 60); do
+        if docker exec "${DIND_NAME}" docker info >/dev/null 2>&1; then
+            # Let the unprivileged devkit user read the client certificates.
+            docker exec "${DIND_NAME}" chown -R "$(id -u):$(id -g)" /certs/client
+            return 0
+        fi
+        sleep 1
+    done
+    die "the Docker-in-Docker daemon did not start; see: docker logs ${DIND_NAME}"
+}
+
+tty_flags=()
+[[ -t 0 && -t 1 ]] && tty_flags=( -it )
+
+run_in_devkit() {
+    local workdir="$1"; shift
+    [[ "${ENGINE}" == "dind" ]] && start_dind
+    local version_opts=()
+    if [[ -n "${NXF_VER:-}" ]]; then
+        [[ "${NXF_VER}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-edge)?$ ]] || die "NXF_VER must look like 26.04.2"
+        local dist="${NFDEV_OUT_ROOT}/cache/nextflow-dist/${NXF_VER}/nextflow"
+        if [[ ! -x "${dist}" ]]; then
+            mkdir -p "$(dirname "${dist}")"
+            docker run --rm --user "$(id -u):$(id -g)" -v "$(dirname "${dist}"):/dist" "${NFDEV_IMAGE}" \
+                python -c "import sys, urllib.request; urllib.request.urlretrieve(sys.argv[1], '/dist/nextflow.part')" \
+                "https://github.com/nextflow-io/nextflow/releases/download/v${NXF_VER}/nextflow-${NXF_VER}-dist" \
+                || die "could not download Nextflow ${NXF_VER}"
+            chmod +x "${dist}.part" && mv "${dist}.part" "${dist}"
+        fi
+        version_opts=( -v "${dist}:/usr/local/bin/nextflow:ro" )
+    fi
+    local cmd=( docker run --rm --init "${tty_flags[@]}"
+        --user "$(id -u):$(id -g)"
+        "${engine_opts[@]}"
+        "${mounts[@]}"
+        --workdir "${workdir}"
+        --env HOME="${NFDEV_OUT_ROOT}/cache/home"
+        --env NXF_HOME="${NFDEV_OUT_ROOT}/cache/nextflow"
+        --env NXF_OPTS="${NFDEV_JAVA_OPTS}"
+        --env NXF_ANSI_LOG=false
+        --env NFT_WORKDIR="${NFDEV_OUT_ROOT}/tests/nf-test"
+        "${version_opts[@]}"
+        "${IMAGE}" "$@" )
+    printf '%q ' "${cmd[@]}" > "${LOG}"
+    printf '\n\n' >> "${LOG}"
+    "${cmd[@]}" 2>&1 | tee -a "${LOG}"
+    return "${PIPESTATUS[0]}"
+}
+
+case "${COMMAND}" in
+    build)
+        DOCKER_BUILDKIT=0 docker build -t "${NFDEV_IMAGE}" "${REPO}/dev/docker/devkit" 2>&1 | tee "${LOG}"
+        if [[ "${ENGINE}" == "apptainer" ]]; then
+            DOCKER_BUILDKIT=0 docker build --build-arg DEVKIT_IMAGE="${NFDEV_IMAGE}" \
+                -t "${NFDEV_APPTAINER_IMAGE}" "${REPO}/dev/docker/apptainer-kit" 2>&1 | tee -a "${LOG}"
+        fi
+        ;;
+    shell)
+        run_in_devkit "${REPO}" bash
+        ;;
+    nextflow)
+        run_in_devkit "${NFDEV_OUT_ROOT}" nextflow "$@"
+        ;;
+    exec)
+        run_in_devkit "${REPO}" "$@"
+        ;;
+    test)
+        run_in_devkit "${REPO}" nf-test test "$@"
+        ;;
+    lint)
+        # Lint exactly what would be committed: the git index, exported outside
+        # the repository, so untracked local material (such as ref/) is ignored
+        # and no lint artefacts are written into the repository.
+        # The export is committed to a throwaway git repository because some
+        # nf-core lint tests behave differently outside a git checkout (as in CI).
+        lint_dir="${NFDEV_OUT_ROOT}/tests/lint/$(date +%Y%m%d_%H%M%S)"
+        git -C "${REPO}" checkout-index --all --prefix="${lint_dir}/"
+        git -C "${lint_dir}" init --quiet
+        git -C "${lint_dir}" add --all
+        git -C "${lint_dir}" -c user.name=nfdev -c user.email=nfdev@localhost commit --quiet --message "lint snapshot"
+        run_in_devkit "${lint_dir}" bash -c 'nf-core pipelines lint && nextflow lint .'
+        run_in_devkit "${REPO}" prek run --all-files
+        ;;
+    container)
+        run_in_devkit "${REPO}" python3 dev/wave_container.py "$@"
+        ;;
+    image)
+        [[ $# -eq 2 && -f "${REPO}/${1%/}/environment.yml" ]] || die "usage: dev/nfdev image <module folder> <name:tag>"
+        DOCKER_BUILDKIT=0 docker build -f "${REPO}/containers/conda.Dockerfile" \
+            --build-arg ENVIRONMENT="${1%/}/environment.yml" -t "$2" "${REPO}" 2>&1 | tee "${LOG}"
+        echo "Push with: docker push $2"
+        echo "Then pin the digest shown by: docker images --digests ${2%%:*}"
+        ;;
+    metro)
+        run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd -o docs/images/metro_map.svg --embed-font --validate \
+            && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_light_1000px.png' --mode light --raster-width 1000 \
+            && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_dark_1000px.png' --mode dark --raster-width 1000"
+        ;;
+    dind-stop)
+        docker rm --force "${DIND_NAME}" >/dev/null 2>&1 || true
+        echo "stopped ${DIND_NAME} (the image store volume nfdev-dind-storage is kept)"
+        ;;
+    clean)
+        [[ "${NFDEV_OUT_ROOT}" == /* && -d "${NFDEV_OUT_ROOT}/cache" ]] || die "NFDEV_OUT_ROOT does not look like an nfdev output root: ${NFDEV_OUT_ROOT}"
+        find "${NFDEV_OUT_ROOT}" -mindepth 1 -maxdepth 1 \( -name 'work*' -o -name 'results*' -o -name '.nextflow' -o -name '.nextflow.log*' -o -name '.nf-test.log' \) -exec rm -rf {} +
+        find "${NFDEV_OUT_ROOT}/tests" -mindepth 1 -maxdepth 1 -exec rm -rf {} + 2>/dev/null || true
+        # Download caches duplicated by the Apptainer images and conda environments kept in cache/
+        rm -rf "${NFDEV_OUT_ROOT}/cache/apptainer/cache"
+        find "${NFDEV_OUT_ROOT}/cache/conda/pkgs" -maxdepth 1 -type f \( -name '*.conda' -o -name '*.tar.bz2' \) -delete 2>/dev/null || true
+        find "${NFDEV_OUT_ROOT}/logs" -maxdepth 1 -type f -printf '%T@ %p\n' 2>/dev/null | sort -rn | tail -n +11 | cut -d' ' -f2- | xargs -r rm -f
+        du -sh "${NFDEV_OUT_ROOT}"
+        ;;
+    -h|--help|help)
+        usage
+        ;;
+    *)
+        usage
+        die "unknown command: ${COMMAND}"
+        ;;
+esac

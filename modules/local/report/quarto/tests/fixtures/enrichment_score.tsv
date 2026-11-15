@@ -1,0 +1,4 @@
+collection	contrast	set	term	ontology	n	de	p_value	fdr
+GO	score	GO:0006955	immune response	BP	1200	12.5	0.0004	0.21
+sets	score	PLANTED	PLANTED		30	30	7.3e-35	2.2e-34
+sets	score	CONTROL_A	CONTROL_A		30	1	0.96	0.96

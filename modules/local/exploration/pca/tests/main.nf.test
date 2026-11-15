@@ -1,0 +1,113 @@
+nextflow_process {
+
+    name "Test Process EXPLORATION_PCA"
+    script "../main.nf"
+    process "EXPLORATION_PCA"
+
+    tag "modules"
+    tag "modules_local"
+    tag "exploration"
+    tag "exploration/pca"
+
+    // 5,000 CpGs of the filtered data of the six public test arrays with their
+    // sample, QC, control-probe and cell tables (make_fixture.R), and a made-up
+    // phenotype table
+
+    test("control-probe PCs, PCA and associations") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/controls.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def assoc = path(process.out.associations[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def rows = assoc.drop(1).collect { values -> [assoc[0], values].transpose().collectEntries() }
+            def ctrl = path(process.out.ctrl_pcs[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                // auto rule: the smallest number of control-probe PCs explaining at least 90% of the variance
+                { assert ctrl[0].split('\t') as List == ['sample', 'ctrl_PC1', 'ctrl_PC2', 'ctrl_PC3'] && ctrl.size() == 7 },
+                // every variable group is tested, including the phenotype columns
+                { assert rows.collect { row -> row.group }.unique().sort() == ['biological', 'phenotype', 'technical'] },
+                { assert rows.collect { row -> row.variable }.containsAll(['batch', 'frac_detected', 'ctrl_PC1', 'predicted_sex', 'age', 'Gran', 'score', 'group']) },
+                // PC1 separates the two GEO studies (batch) in this test set
+                { assert rows.find { row -> row.variable == 'batch' && row.pc == 'PC1' }.r_squared as double > 0.9 },
+                { assert process.out.multiqc[0][1].collect { f -> file(f).name }.sort() == ['pca_associations_mqc.json', 'pca_scatter_mqc.json', 'pca_scree_mqc.tsv'] },
+                { assert snapshot(process.out.ctrl_pcs, process.out.variance, process.out.associations, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("without controls, cells and phenotypes") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    [],
+                    [],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def assoc = path(process.out.associations[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.ctrl_pcs[0][1]).readLines()[0] == 'sample' },
+                { assert assoc.drop(1).every { row -> row[1] in ['technical', 'biological'] } }
+            )
+        }
+    }
+
+    test("control-probe PCs, PCA and associations - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    [],
+                    [],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

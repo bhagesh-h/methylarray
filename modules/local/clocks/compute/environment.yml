@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+# dnaMethyAge and DunedinPACE are not on conda or CRAN: the module installs their
+# staged sources (pinned GitHub commits) into the task directory. These are their
+# dependencies and the pipeline's own.
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bioconductor-hdf5array=1.38.0
+  # dnaMethyAge's Horvath preprocessing uses impute and RPMM (BMIQ) and would
+  # otherwise try to install them at run time
+  - bioconda::bioconductor-impute=1.84.0
+  - bioconda::bioconductor-preprocesscore=1.72.0
+  - bioconda::bioconductor-summarizedexperiment=1.40.0
+  # Reference BLAS: preprocessCore (DunedinPACE quantile normalisation) cannot
+  # start its threads next to OpenBLAS on recent glibc ('pthread_create() is 22')
+  - conda-forge::libblas=3.11.0=*_netlib
+  - conda-forge::liblapack=3.11.0=*_netlib
+  - conda-forge::procps-ng=4.0.6
+  - conda-forge::r-base=4.5.3
+  - conda-forge::r-data.table=1.18.6.1
+  - conda-forge::r-rpmm=1.25

@@ -1,0 +1,111 @@
+{
+    "planted region": {
+        "content": [
+            [
+                "versions.yml:md5,2e37b1208279e258880e027e91c64164"
+            ]
+        ],
+        "timestamp": "2026-11-15T15:11:15.43449508",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "planted region - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_dmrcate.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_dmrff.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_consensus.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_consensus.bed:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "5": [
+                    "versions.yml:md5,bcc28738990dfd8263ba5850ad9e0dd2"
+                ],
+                "bed": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_consensus.bed:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "consensus": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_consensus.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "dmrcate": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_dmrcate.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "dmrff": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_dmrff.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,bcc28738990dfd8263ba5850ad9e0dd2"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-15T15:10:51.5768016",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}
