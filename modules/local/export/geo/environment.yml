@@ -1,0 +1,18 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - bioconda::bioconductor-enmix=1.46.2
+  - bioconda::bioconductor-hdf5array=1.38.0
+  - bioconda::bioconductor-illuminahumanmethylationepicv2anno.20a1.hg38=1.0.0
+  - bioconda::bioconductor-illuminahumanmethylationepicv2manifest=1.0.0
+  - bioconda::bioconductor-minfi=1.56.0
+  - bioconda::bioconductor-summarizedexperiment=1.40.0
+  # Reference BLAS: preprocessCore (quantile steps in minfi and ENmix) cannot
+  # start its threads next to OpenBLAS on recent glibc ('pthread_create() is 22')
+  - conda-forge::libblas=3.11.0=*_netlib
+  - conda-forge::liblapack=3.11.0=*_netlib
+  - conda-forge::procps-ng=4.0.6
+  - conda-forge::r-base=4.5.3

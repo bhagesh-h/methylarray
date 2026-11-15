@@ -8,6 +8,7 @@ nextflow_pipeline {
     // Stub run: covers the routing and the hand-over of the SeSAMe
     // SummarizedExperiment to MINFI_PREPROCESS. The module tests and the default
     // pipeline test process real arrays; keeping this one a stub keeps CI short.
+    // Also covers the opt-in GEO export.
     test("-profile test --preprocessing combined - stub") {
 
         tag "fast"
@@ -19,6 +20,7 @@ nextflow_pipeline {
                 outdir        = "$outputDir"
                 preprocessing = 'combined'
                 models        = "${projectDir}/tests/data/models_test.yml"
+                export_geo    = true
             }
         }
 
@@ -29,6 +31,7 @@ nextflow_pipeline {
                 { assert workflow.success },
                 { assert path("$outputDir/preprocessing/combined/combined_se").exists() },
                 { assert path("$outputDir/preprocessing/sesame/sesame_se").exists() },
+                { assert path("$outputDir/geo/geo_processed_matrix.tsv.gz").exists() && path("$outputDir/geo/geo_signal_intensities.tsv.gz").exists() },
                 { assert snapshot(
                     removeNextflowVersion("$outputDir/pipeline_info/methylarray_software_mqc_versions.yml"),
                     stable_path,

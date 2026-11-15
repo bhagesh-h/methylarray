@@ -615,6 +615,12 @@
                     "type": "boolean",
                     "description": "Skip the HTML analysis report (report/methylarray_report.html).",
                     "fa_icon": "fas fa-forward"
+                },
+                "export_geo": {
+                    "type": "boolean",
+                    "description": "Write GEO submission files for the arrays that passed sample QC (geo/).",
+                    "help_text": "A processed matrix (normalised beta values without detection masking, with detection p-values), a matrix of the unnormalised methylated and unmethylated signal intensities read from the IDAT files, and a sample table with the IDAT file names. Columns are named after the samplesheet sample names: rename them before submission if they identify participants.",
+                    "fa_icon": "fas fa-file-export"
                 }
             }
         }

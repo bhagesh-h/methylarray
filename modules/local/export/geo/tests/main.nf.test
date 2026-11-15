@@ -1,0 +1,103 @@
+nextflow_process {
+
+    name "Test Process EXPORT_GEO"
+    script "../main.nf"
+    process "EXPORT_GEO"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "export"
+    tag "export/geo"
+
+    // Two public EPIC v2 whole-blood arrays (GEO GSE286313), preprocessed with
+    // MINFI_PREPROCESS (Noob) in the setup block
+
+    setup {
+        run("MINFI_PREPROCESS") {
+            script "../../../minfi/preprocess/main.nf"
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    [
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Red.idat.gz', checkIfExists: true),
+                        file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Grn.idat.gz', checkIfExists: true)
+                    ],
+                    []
+                ]
+                """
+            }
+        }
+    }
+
+    test("minfi route") {
+
+        when {
+            process {
+                """
+                input[0] = MINFI_PREPROCESS.out.se.map { meta, se ->
+                    [
+                        meta,
+                        file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                        [
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Red.idat.gz', checkIfExists: true),
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723468/suppl/GSM8723468_207059430159_R01C01_Grn.idat.gz', checkIfExists: true),
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Red.idat.gz', checkIfExists: true),
+                            file('https://ftp.ncbi.nlm.nih.gov/geo/samples/GSM8723nnn/GSM8723484/suppl/GSM8723484_207805830137_R01C01_Grn.idat.gz', checkIfExists: true)
+                        ],
+                        se,
+                        file("$moduleTestDir/retained.txt", checkIfExists: true)
+                    ]
+                }
+                """
+            }
+        }
+
+        then {
+            def processed = path(process.out.processed[0][1]).linesGzip
+            def intensities = path(process.out.intensities[0][1]).linesGzip
+            def samples = path(process.out.samples[0][1]).readLines()
+            assertAll(
+                { assert process.success },
+                { assert processed[0].split('\t') as List == ['ID_REF', 'BeCOME_1', 'BeCOME_1 Detection Pval', 'CALERIE_1', 'CALERIE_1 Detection Pval'] },
+                { assert intensities[0].split('\t') as List == ['ID_REF', 'BeCOME_1 Unmethylated signal', 'BeCOME_1 Methylated signal', 'BeCOME_1 Detection Pval',
+                                                                'CALERIE_1 Unmethylated signal', 'CALERIE_1 Methylated signal', 'CALERIE_1 Detection Pval'] },
+                // every probe of the EPIC v2 array, in both files
+                { assert processed.size() > 900000 && intensities.size() > 0.9 * processed.size() },
+                { assert samples[0].split('\t') as List == ['sample', 'idat_red', 'idat_grn', 'processing'] && samples.size() == 3 },
+                { assert snapshot(process.out.processed, process.out.intensities, process.out.samples, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("minfi route - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    [],
+                    [],
+                    file("$moduleTestDir/retained.txt", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

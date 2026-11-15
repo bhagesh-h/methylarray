@@ -15,11 +15,13 @@ include { EXPLORATION            } from '../subworkflows/local/exploration'
 include { EWAS                   } from '../subworkflows/local/ewas'
 include { DMR                    } from '../subworkflows/local/dmr'
 include { ENRICHMENT             } from '../subworkflows/local/enrichment'
+include { EXPORT_GEO             } from '../modules/local/export/geo'
 include { REPORT_QUARTO          } from '../modules/local/report/quarto'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_methylarray_pipeline'
+include { sampleTable            } from '../subworkflows/local/utils_nfcore_methylarray_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -124,7 +126,8 @@ workflow METHYLARRAY {
     //
     EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
     ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
-    ch_report_files = ch_report_files.mix(EXPLORATION.out.variance.map { _meta, f -> f }, EXPLORATION.out.associations.map { _meta, f -> f })
+    ch_report_files = ch_report_files.mix(EXPLORATION.out.variance.map { _meta, f -> f }, EXPLORATION.out.associations.map { _meta, f -> f },
+        EXPLORATION.out.outliers.map { _meta, f -> f })
 
     //
     // SUBWORKFLOW: Epigenome-wide association, one model per entry of --models
@@ -148,6 +151,19 @@ workflow METHYLARRAY {
     if (!params.skip_enrichment) {
         ENRICHMENT(EWAS.out.stats, EWAS.out.resolved, params.gene_set_gmts)
         ch_report_files = ch_report_files.mix(ENRICHMENT.out.enrichment.map { _meta, f -> f })
+    }
+
+    //
+    // MODULE: GEO submission files (opt-in)
+    //
+    if (params.export_geo) {
+        EXPORT_GEO(
+            ch_route_se
+                .combine(sampleTable(ch_arrays, true))
+                .combine(ch_arrays.map { _meta, idat_red, idat_grn -> [ idat_red, idat_grn ] }.collect().map { idats -> [ idats ] })
+                .combine(SAMPLE_QC.out.retained.map { _meta, retained -> retained })
+                .map { meta, se, samples, idats, retained -> [ meta, samples, idats, se, retained ] }
+        )
     }
 
     //
