@@ -78,10 +78,10 @@
                 },
                 "preprocessing": {
                     "type": "string",
-                    "default": "sesame",
+                    "default": "minfi",
                     "enum": ["sesame", "minfi", "enmix", "combined"],
                     "description": "Preprocessing method.",
-                    "help_text": "`sesame` (default): SeSAMe per-array preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays. `minfi`: minfi import, detection p-values and Noob (or `--minfi_norm`). `enmix`: minfi import, ENmix out-of-band background with RELIC dye-bias correction and RCP probe-type correction. `combined`: the `enmix` route with the SeSAMe quality and pOOBAH masks applied last.",
+                    "help_text": "`minfi` (default): minfi import, detection p-values and Noob (or `--minfi_norm`). `sesame`: SeSAMe per-array preprocessing (`prepSesame`), so the result for one array does not depend on the other arrays. `enmix`: minfi import, ENmix out-of-band background with RELIC dye-bias correction and RCP probe-type correction. `combined`: the `enmix` route with the SeSAMe quality and pOOBAH masks applied last.",
                     "fa_icon": "fas fa-cogs"
                 },
                 "sesame_prep": {

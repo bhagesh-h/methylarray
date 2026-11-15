@@ -26,17 +26,17 @@ With `--preprocessing combined`, `preprocessing/sesame/` also holds the SeSAMe r
 Load the directory in R, wherever it has been copied to:
 
 ```r
-se <- HDF5Array::loadHDF5SummarizedExperiment("preprocessing/sesame/sesame_se")
+se <- HDF5Array::loadHDF5SummarizedExperiment("preprocessing/minfi/minfi_se")
 ```
 
 Rows are probes (EPIC v2 probe IDs such as `cg00000029_TC21`; `rowData(se)$cpg_id` holds the CpG name without the suffix) and columns are arrays, sorted by sample name. Arrays marked `exclude` in the samplesheet are not included. Assays:
 
-| Assay            | Content                                                                                                                        |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `beta`           | Beta values after `prepSesame` (default `QCDPB`); probes failing the quality mask, pOOBAH detection or the bead count are `NA` |
-| `beta_unmasked`  | The same beta values without masking, for methods that need complete data                                                      |
-| `detp`           | pOOBAH detection p-values, computed on the signal after the steps before `P`                                                   |
-| `meth`, `unmeth` | Methylated and unmethylated intensities after preprocessing                                                                    |
+| Assay            | Content                                                                                                                                        |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `beta`           | Beta values after preprocessing; values failing detection or the bead count (and the SeSAMe quality mask for `sesame` and `combined`) are `NA` |
+| `beta_unmasked`  | The same beta values without masking, for methods that need complete data                                                                      |
+| `detp`           | Detection p-values: minfi `detectionP` for `minfi`, ENmix `QCinfo` for `enmix`, SeSAMe pOOBAH for `sesame` and `combined`                      |
+| `meth`, `unmeth` | Methylated and unmethylated intensities after preprocessing                                                                                    |
 
 `colData(se)` holds the samplesheet metadata and the QC statistics described below. `metadata(se)` records the platform, the preprocessing method, its settings and the software versions.
 

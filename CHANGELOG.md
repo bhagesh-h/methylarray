@@ -18,6 +18,7 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 
 ### `Changed`
 
+- minfi (Noob) is the default preprocessing route (`--preprocessing minfi`); SeSAMe stays available with `--preprocessing sesame`.
 - Task images come from Seqera Containers (`community.wave.seqera.io`), built by Wave from each module's `environment.yml`, with separate Docker and Singularity images. The minfi module keeps its Docker Hub image, because installing the EPIC v2 annotation packages exceeds the Wave build time limit.
 
 ### `Fixed`
