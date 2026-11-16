@@ -244,6 +244,22 @@ Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked bet
 
 PCGrimAge needs the reported age and sex (`reported_age`, `reported_sex` in the samplesheet); arrays without them get NA. Age acceleration is computed when at least six arrays have a reported age. GrimAge, GrimAge2 and FitAge need licensed coefficients and are not available. BernabeuE2023c (cAge) is not in the default list: dnaMethyAge 0.2.0 fails for it when an array's estimate is below 20 years. A clock that fails gives NA, with the error in the notes of `clocks/clocks_coverage.tsv`. Intrinsic age acceleration needs at least five residual degrees of freedom after adjusting for age and six cell fractions, so at least 14 arrays with ages. Neither dnaMethyAge nor DunedinPACE is on conda or CRAN: the clock task installs them from their source packages at fixed GitHub commits. For runs without network access, download the two files once and pass their local paths.
 
+### Methylation QTLs and genotype-robust clocks
+
+Many clock CpGs are under genetic control: their methylation depends on a nearby genotype (a cis-meQTL), whose allele frequencies differ between populations. With a meQTL table (`--meqtl`), the pipeline:
+
+- marks the clock CpGs with a cis-meQTL (`meqtl` column of `clocks/clocks_weights.tsv`) and shows each clock's weight on them in the report
+- computes every clock again with the CpGs that have a common SNP or a cis-meQTL held at their mean over the arrays (`clocks/clocks_robust.tsv`), after Meeks et al. (2025), and repeats the phenotype associations with these accelerations (`genotype-robust` version)
+- reports, per association model, how many hits have a cis-meQTL compared with all tested CpGs (`ewas/ewas_summary_meqtl.tsv`)
+
+The pipeline does not ship meQTL data. The table needs a `cpg` column (450K, EPIC v1 or EPIC v2 names); `cistrans` (TRUE for cis) and `pval` are used when present, keeping cis associations with P < `--meqtl_p` (default 1e-8). For the GoDMC blood meQTLs (Min et al. 2021), download `assoc_meta_all.csv.gz` (about 6 GB) from the GoDMC database and keep the cis associations below the threshold once, which gives a file of a few MB:
+
+```bash
+zcat assoc_meta_all.csv.gz | awk -F, 'NR == 1 || ($11 == "TRUE" && $5 + 0 < 1e-8)' | gzip > godmc_cis.csv.gz
+```
+
+Then run with `--meqtl godmc_cis.csv.gz`. Check the terms of use of the meQTL resource before sharing derived results. GoDMC is based on people of European ancestry, so it misses meQTLs that are common only in other populations.
+
 ## Clocks, scores and cell fractions
 
 After the clocks, scores and cell composition, the pipeline relates them to each other and to the data it has: how the accelerations of the clocks (residuals on reported age) and the scores agree, how they follow the cell fractions, whether the DNA plate or BeadChip explains part of them, how each goes with every phenotype column (plain, and with the cell fractions held), and what characterises the bottom and top quarters of each acceleration. Phenotype columns are used as they are: numeric columns with more than two values as continuous, two-value columns as binary. Code categorical traits with more levels as separate yes/no columns if they should be included. The tables are in `biomarkers/` and the plots in the report; neither shows values of single arrays.

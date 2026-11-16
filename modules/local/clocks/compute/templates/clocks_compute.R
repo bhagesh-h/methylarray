@@ -15,6 +15,12 @@
 # With reported ages: age acceleration (EAA, residual of clock on age) and, with
 # cell fractions, intrinsic EAA (also adjusted for six of the seven EpiDISH
 # centDHSbloodDMC fractions).
+# With a cis-meQTL list (--meqtl): every clock again without the CpGs that have a
+# common SNP or a cis-meQTL (genotype-robust clocks, after Meeks et al. 2025).
+# Each of these CpGs is set to its mean over the arrays, so it no longer varies
+# between people while the weights, the intercept and the level of the clock
+# stay as they are. The robust values are not recalibrated; compare their
+# accelerations rather than their ages.
 #
 
 prefix <- "${prefix}"
@@ -23,6 +29,7 @@ retained_file <- "${retained}"
 annotation_file <- "${annotation}"
 samples_file <- "${samples}"
 cells_file <- "${cell_fractions}"
+meqtl_file <- "${meqtl_cpgs}"
 dnamethyage_source <- "${dnamethyage_source}"
 dunedinpace_source <- "${dunedinpace_source}"
 
@@ -145,6 +152,7 @@ clock_weights <- function(clock) {
     if (!is.data.frame(coefs) || !all(c("Probe", "Coefficient") %in% names(coefs))) return(NULL)
     data.table(cpg = sub("_2\$", "", as.character(coefs[["Probe"]])), weight = as.numeric(coefs[["Coefficient"]]))[!cpg %in% c("Intercept", "(Intercept)")]
 }
+meqtl_cpgs <- if (nzchar(meqtl_file)) fread(meqtl_file, colClasses = list(character = "cpg_id"))[["cpg_id"]] else NULL
 weights <- rbindlist(lapply(clocks, function(clock) {
     w <- clock_weights(clock)
     if (is.null(w) || nrow(w) == 0) return(NULL)
@@ -154,11 +162,12 @@ weights <- rbindlist(lapply(clocks, function(clock) {
     w[, standardised := weight * sd_beta]
     info <- cpg_info[match(to_cpg(w[["cpg"]]), cpg_id)]
     w[, `:=`(clock = clock, gene = info[["gene"]], snp = info[["snp"]])]
-    setcolorder(w, c("clock", "cpg", "gene", "weight", "sd_beta", "standardised", "snp"))
+    w[, meqtl := if (is.null(meqtl_cpgs)) NA else to_cpg(cpg) %in% meqtl_cpgs]
+    setcolorder(w, c("clock", "cpg", "gene", "weight", "sd_beta", "standardised", "snp", "meqtl"))
     w[order(-abs(standardised))]
 }), fill = TRUE)
 if (nrow(weights) == 0) weights <- data.table(clock = character(), cpg = character(), gene = character(), weight = numeric(),
-                                              sd_beta = numeric(), standardised = numeric(), snp = logical())
+                                              sd_beta = numeric(), standardised = numeric(), snp = logical(), meqtl = logical())
 weights[, `:=`(weight = signif(weight, 6), sd_beta = signif(sd_beta, 4), standardised = signif(standardised, 4))]
 fwrite(weights, paste0(prefix, "_weights.tsv"), sep = "\\t", na = "")
 
@@ -170,7 +179,6 @@ sex <- c(F = "Female", M = "Male")[samples[["reported_sex"]]]
 age_info <- data.frame(Sample = colnames(beta), Age = age, Sex = unname(sex))
 complete_age_sex <- !is.na(age_info[["Age"]]) & !is.na(age_info[["Sex"]])
 
-result <- data.table(sample = colnames(beta), age = age)
 notes <- setNames(rep("", length(clocks)), clocks)
 # A clock that fails gives NA with the error in the coverage notes, so that one
 # clock does not stop the others (dnaMethyAge 0.2.0, for example, fails for
@@ -179,26 +187,29 @@ run_clock <- function(clock, ...) {
     tryCatch(suppressMessages(suppressWarnings(methyAge(..., clock = clock, do_plot = FALSE, use_cores = cores))),
              error = function(e) { notes[[clock]] <<- paste("failed:", trimws(conditionMessage(e))); NULL })
 }
-for (clock in clocks) {
-    values <- rep(NA_real_, ncol(beta))
-    if (clock == "DunedinPACE") {
-        pace <- tryCatch(PACEProjector(beta, proportionOfProbesRequired = dunedinpace_min)[["DunedinPACE"]],
-                         error = function(e) { notes[[clock]] <<- conditionMessage(e); NULL })
-        if (!is.null(pace)) values <- unname(pace[colnames(beta)])
-    } else if (clock == "PCGrimAge") {
-        if (any(complete_age_sex)) {
-            fit <- run_clock(clock, beta[, complete_age_sex, drop = FALSE], age_info = age_info[complete_age_sex, ])
+compute_clocks <- function(beta) {
+    result <- data.table(sample = colnames(beta), age = age)
+    for (clock in clocks) {
+        values <- rep(NA_real_, ncol(beta))
+        if (clock == "DunedinPACE") {
+            pace <- tryCatch(PACEProjector(beta, proportionOfProbesRequired = dunedinpace_min)[["DunedinPACE"]],
+                             error = function(e) { notes[[clock]] <<- conditionMessage(e); NULL })
+            if (!is.null(pace)) values <- unname(pace[colnames(beta)])
+        } else if (clock == "PCGrimAge") {
+            if (any(complete_age_sex)) {
+                fit <- run_clock(clock, beta[, complete_age_sex, drop = FALSE], age_info = age_info[complete_age_sex, ])
+                if (!is.null(fit)) values <- fit[["mAge"]][match(colnames(beta), fit[["Sample"]])]
+            }
+            if (!all(complete_age_sex) && !nzchar(notes[[clock]])) notes[[clock]] <<- "needs reported age and sex; NA for arrays without them"
+        } else {
+            fit <- run_clock(clock, beta)
             if (!is.null(fit)) values <- fit[["mAge"]][match(colnames(beta), fit[["Sample"]])]
         }
-        if (!all(complete_age_sex) && !nzchar(notes[[clock]])) notes[[clock]] <- "needs reported age and sex; NA for arrays without them"
-    } else {
-        fit <- run_clock(clock, beta)
-        if (!is.null(fit)) values <- fit[["mAge"]][match(colnames(beta), fit[["Sample"]])]
+        result[, (clock) := round(values, 5)]
+        message(clock, ": ", if (nzchar(notes[[clock]])) notes[[clock]] else "done")
     }
-    result[, (clock) := round(values, 5)]
-    message(clock, ": ", if (nzchar(notes[[clock]])) notes[[clock]] else "done")
+    add_acceleration(result)
 }
-coverage[, note := ifelse(nzchar(notes[clock]), notes[clock], NA_character_)]
 
 # Age acceleration for the clocks that estimate age, when ages are given
 age_clocks <- intersect(clocks, c("HorvathS2013", "HannumG2013", "LevineM2018", "HorvathS2018", "ZhangQ2019",
@@ -208,24 +219,40 @@ if (nzchar(cells_file)) {
     cells <- fread(cells_file)
     cells <- cells[match(colnames(beta), sample)]
 }
-if (sum(!is.na(age)) >= 6) {
-    for (clock in age_clocks) {
-        y <- result[[clock]]
-        if (sum(!is.na(y) & !is.na(age)) < 6) next
-        result[, (paste0("eaa_", clock)) := round(residuals(lm(y ~ age, na.action = na.exclude)), 5)]
-        if (!is.null(cells)) {
-            # six of the seven fractions: they sum to about one, so one is left out
-            cell_columns <- setdiff(grep("^dhs7_", names(cells), value = TRUE), "dhs7_Neutro")
-            design <- data.frame(y = y, age = age, cells[, ..cell_columns])
-            # at least five residual degrees of freedom, so that the residuals are not forced to zero
-            if (sum(complete.cases(design)) - (ncol(design) + 1) >= 5) {
-                result[, (paste0("ieaa_", clock)) := round(residuals(lm(y ~ ., data = design, na.action = na.exclude)), 5)]
+add_acceleration <- function(result) {
+    if (sum(!is.na(age)) >= 6) {
+        for (clock in age_clocks) {
+            y <- result[[clock]]
+            if (sum(!is.na(y) & !is.na(age)) < 6) next
+            result[, (paste0("eaa_", clock)) := round(residuals(lm(y ~ age, na.action = na.exclude)), 5)]
+            if (!is.null(cells)) {
+                # six of the seven fractions: they sum to about one, so one is left out
+                cell_columns <- setdiff(grep("^dhs7_", names(cells), value = TRUE), "dhs7_Neutro")
+                design <- data.frame(y = y, age = age, cells[, ..cell_columns])
+                # at least five residual degrees of freedom, so that the residuals are not forced to zero
+                if (sum(complete.cases(design)) - (ncol(design) + 1) >= 5) {
+                    result[, (paste0("ieaa_", clock)) := round(residuals(lm(y ~ ., data = design, na.action = na.exclude)), 5)]
+                }
             }
         }
     }
+    setorder(result, sample)
+    result
 }
-setorder(result, sample)
+result <- compute_clocks(beta)
+coverage[, note := ifelse(nzchar(notes[clock]), notes[clock], NA_character_)]
 fwrite(result, paste0(prefix, ".tsv"), sep = "\\t", na = "")
+
+# Genotype-robust clocks: without the CpGs with a common SNP or a cis-meQTL
+if (!is.null(meqtl_cpgs)) {
+    excluded <- union(cpg_info[snp %in% TRUE, cpg_id], meqtl_cpgs)
+    flat <- to_cpg(rownames(beta)) %in% excluded
+    coverage[, robust_removed := vapply(clock, function(k) sum(to_cpg(coefficient_cpgs(k)) %in% excluded), integer(1))]
+    beta_robust <- beta
+    beta_robust[flat, ] <- rowMeans(beta[flat, , drop = FALSE])
+    robust <- compute_clocks(beta_robust)
+    fwrite(robust, paste0(prefix, "_robust.tsv"), sep = "\\t", na = "")
+}
 fwrite(coverage, paste0(prefix, "_coverage.tsv"), sep = "\\t", na = "")
 
 # MultiQC: clock coverage on the array

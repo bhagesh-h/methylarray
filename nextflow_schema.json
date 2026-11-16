@@ -324,6 +324,24 @@
                     "help_text": "DunedinPACE is not on conda or CRAN. The default is version 0.99.0 at a fixed GitHub commit. Download it once and give the local path for runs without network access.",
                     "fa_icon": "fas fa-box"
                 },
+                "meqtl": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.(csv|tsv|txt)(\\.gz)?$",
+                    "description": "Optional table of CpG methylation QTLs (CSV or TSV, may be gzipped), for example from GoDMC.",
+                    "help_text": "Needs a `cpg` column (450K, EPIC v1 or EPIC v2 CpG names); `cistrans` (TRUE for cis) and `pval` are used when present. With it, the clock weights and the EWAS hits are annotated with cis-meQTL status, and every clock is computed again without the CpGs that have a common SNP or a cis-meQTL (genotype-robust clocks). The pipeline does not ship meQTL data: see the usage documentation for how to prepare the GoDMC table.",
+                    "fa_icon": "fas fa-file-csv"
+                },
+                "meqtl_p": {
+                    "type": "number",
+                    "default": 1e-8,
+                    "exclusiveMinimum": 0,
+                    "maximum": 1,
+                    "description": "Keep meQTL associations with a P below this value (when the table has a `pval` column).",
+                    "help_text": "The default is the cis threshold of GoDMC (Min et al. 2021).",
+                    "fa_icon": "fas fa-filter"
+                },
                 "skip_dnam_scores": {
                     "type": "boolean",
                     "description": "Skip the DNA methylation scores (smoking, alcohol, BMI, IL-6).",

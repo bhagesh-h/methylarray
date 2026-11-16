@@ -38,6 +38,12 @@ dnam_smoking	Age	continuous	ancestry held	0.03126	0.7858	78	0.7858
 dnam_smoking	Men	binary	ancestry held	-0.1973	0.3897	78	0.5036
 dnam_smoking	bmi	continuous	ancestry held	0.06304	0.5835	78	0.5835
 dnam_smoking	mets (yes)	binary	ancestry held	0.2372	0.3038	78	0.405
+HorvathS2013 acceleration	Men	binary	genotype-robust	-0.1138	0.6203	78	0.6203
+HorvathS2013 acceleration	bmi	continuous	genotype-robust	0.4239	0.00011	78	0.0002199
+HorvathS2013 acceleration	mets (yes)	binary	genotype-robust	0.4864	0.03291	78	0.06582
+HannumG2013 acceleration	Men	binary	genotype-robust	0.217	0.3439	78	0.6203
+HannumG2013 acceleration	bmi	continuous	genotype-robust	0.05517	0.6314	78	0.6314
+HannumG2013 acceleration	mets (yes)	binary	genotype-robust	-0.03885	0.8667	78	0.8667
 HorvathS2013 acceleration	Men	binary	low contamination	-0.203	0.3865	75	0.3865
 HorvathS2013 acceleration	bmi	continuous	low contamination	0.4108	0.0002516	75	0.0005032
 HorvathS2013 acceleration	mets (yes)	binary	low contamination	0.4195	0.07209	75	0.1442

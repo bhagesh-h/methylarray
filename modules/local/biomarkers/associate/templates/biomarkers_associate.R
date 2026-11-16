@@ -25,6 +25,10 @@
 #     measures residualised on the ancestry PCs ('ancestry held'). Clocks are
 #     less accurate in admixed individuals (Cruz-Gonzalez et al. 2026), so a
 #     difference in acceleration between ancestries can be calibration error
+#   - genotype-robust clocks (with --meqtl): each acceleration against the one
+#     from the same clock without the CpGs with a common SNP or cis-meQTL
+#     (Spearman), and the phenotype associations with the robust accelerations
+#     ('genotype-robust')
 #   - quartile groups: bottom quarter (decelerated), middle half (normal) and top
 #     quarter (accelerated) of each acceleration, with the median (or percentage)
 #     of every characteristic per group and a trend test across the ordered
@@ -44,6 +48,7 @@ cells_file <- "${cell_fractions}"
 scores_file <- "${dnam_scores}"
 phenotypes_file <- "${phenotypes}"
 ancestry_file <- "${ancestry_pcs}"
+robust_file <- "${clocks_robust}"
 
 defaults <- list(min_n = "20")
 parse_args <- function(x, defaults) {
@@ -270,6 +275,30 @@ if (length(ancestry_pcs) > 0 && length(measures) > 0) {
 }
 write_tsv(round_table(ancestry_table), paste0(prefix, "_ancestry.tsv"))
 
+# Genotype-robust clocks: the same measure from the clocks without the CpGs
+# with a common SNP or a cis-meQTL
+robust_clocks <- read_table(robust_file)
+measures_robust <- list()
+robust_table <- empty(c("measure", "rho", "n"))
+if (!is.null(robust_clocks)) {
+    robust_clocks <- robust_clocks[match(data[["sample"]], robust_clocks[["sample"]]), , drop = FALSE]
+    has_age <- sum(is.finite(age)) >= min_n
+    for (clock in intersect(clock_columns, names(robust_clocks))) {
+        name <- if (has_age) paste(clock, "acceleration") else clock
+        if (!name %in% names(measures)) next
+        y <- suppressWarnings(as.numeric(robust_clocks[[clock]]))
+        measures_robust[[name]] <- if (paste0("eaa_", clock) %in% names(robust_clocks)) as.numeric(robust_clocks[[paste0("eaa_", clock)]])
+                                   else if (has_age) residual(y, data.frame(age = age)) else y
+    }
+    if (length(measures_robust) > 0) {
+        robust_table <- do.call(rbind, lapply(names(measures_robust), function(m) {
+            r <- spearman(measures[[m]], measures_robust[[m]])
+            data.frame(measure = m, rho = r[["rho"]], n = r[["n"]])
+        }))
+    }
+}
+write_tsv(round_table(robust_table), paste0(prefix, "_robust.tsv"))
+
 # Ageing measures against the phenotypes, plain, with cells held, with the
 # ancestry PCs held and without the arrays above the contamination cutoff
 association <- function(a, trait) {
@@ -287,6 +316,7 @@ association <- function(a, trait) {
 }
 versions <- list(plain = measures, `cells held` = measures_cells)
 if (length(measures_ancestry) > 0) versions[["ancestry held"]] <- measures_ancestry
+if (length(measures_robust) > 0) versions[["genotype-robust"]] <- measures_robust
 if (any(above_cutoff)) versions[["low contamination"]] <- lapply(measures, function(a) replace(a, above_cutoff, NA))
 measure_traits <- empty(c("measure", "trait", "type", "version", "estimate", "p", "n", "q"))
 rows <- list()

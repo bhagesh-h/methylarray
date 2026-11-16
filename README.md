@@ -59,6 +59,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 8. Exploratory analysis:
    - control-probe principal components, used as model covariates
    - genetic ancestry components from the SNP probes (EpiAnceR+ approach), used as model covariates with `@ancestry`
+   - with a user-supplied meQTL table (`--meqtl`): the clock weight on CpGs under genetic control, genotype-robust clocks and the association hits with a cis-meQTL
    - principal components of the most variable CpGs (number estimated with [isva](https://cran.r-project.org/package=isva)) and their associations with technical, biological and phenotype variables
    - PCA outlier flags (report only, no array is removed)
 9. When a models file is given, for every model:

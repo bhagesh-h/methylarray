@@ -13,7 +13,8 @@ The directories listed below will be created in the results directory after the 
 - [Sample QC](#sample-qc): control metrics, sex check, SNP genotypes and one status per array
 - [Probe filtering](#probe-filtering): filtered data for analysis, one row per CpG and one row per probe, with the probe attrition
 - [Cell composition](#cell-composition): blood cell-type fractions per array
-- [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration and clock coverage per array
+- [Methylation QTLs](#methylation-qtls): CpGs with a cis-meQTL from a supplied meQTL table, with `--meqtl`
+- [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration clock coverage and genotype-robust clocks per array
 - [Exploratory analysis](#exploratory-analysis): control-probe PCs, PCA of the methylation data and its associations with technical and biological variables
 - [Association models](#association-models): epigenome-wide association results per model of `--models`
 - [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
@@ -112,13 +113,19 @@ Only with `--tissue blood` (default).
   - `sum_cent12`, `sum_dhs7`: sum of the fractions of each reference
 - `cell_composition/cell_fractions_reference_coverage.tsv`: for each reference, the number of reference CpGs, the missing ones by reason (`sex_chromosome`: left out on purpose, because X inactivation can mimic a cell-type signal; `not_on_array`: not measured by EPIC v2; `removed_by_filter`: removed by the probe filter), the CpGs found and how many of them only through their EPIC v1 or 450K ID, the coverage of the autosomal reference CpGs, the missing values set to the CpG median, and the status (`ok`, or `warn` below 98%; the run stops below `--min_reference_coverage`).
 
+### Methylation QTLs
+
+- `meqtl/meqtl_cpgs.tsv` (with `--meqtl`): the EPIC v2 CpGs with a cis-meQTL in the supplied table: the name in the table, the number of SNPs, and the strongest SNP with its P and effect.
+- `meqtl/meqtl_cpgs_summary.tsv`: rows read, cis rows, rows below `--meqtl_p`, CpGs in the table and CpGs matched on the array.
+
 ### Epigenetic clocks
 
 Not with `--skip_clocks`.
 
 - `clocks/clocks.tsv`: one row per array that passed QC, with the reported age (`age`) and one column per clock of `--clocks`. With at least six reported ages, `eaa_<clock>` holds the age acceleration (residual of the clock on age) of the clocks that estimate age, and, with at least 14 such arrays, `ieaa_<clock>` the intrinsic age acceleration (also adjusted for six of the seven `centDHSbloodDMC` cell fractions).
 - `clocks/clocks_coverage.tsv`: for each clock, its CpGs, how many are in the data (`present`), how many have a common SNP (minor allele frequency 1% or more) at the CpG or extension base (`snp_cpgs`), how many are present only under their EPIC v1 or 450K ID (`present_by_legacy_id`), the share present, the values that failed detection and were set to the CpG mean (`filled_values`), and notes.
-- `clocks/clocks_weights.tsv`: for each clock that is a weighted sum of CpGs (not the principal-component clocks or epiTOC2), every CpG with its gene, published weight, SD of its beta value in these arrays, standardised weight (weight times SD, in the clock's units per SD of methylation; sorted by its size) and whether it has a common SNP.
+- `clocks/clocks_robust.tsv` (with `--meqtl`): the same columns as `clocks.tsv`, from the clocks computed with the CpGs that have a common SNP or a cis-meQTL held at their mean over the arrays (genotype-robust clocks). Compare their accelerations with those of `clocks.tsv`, not their ages. `clocks_coverage.tsv` then also gives the clock CpGs held per clock (`robust_removed`).
+- `clocks/clocks_weights.tsv`: for each clock that is a weighted sum of CpGs (not the principal-component clocks or epiTOC2), every CpG with its gene, published weight, SD of its beta value in these arrays, standardised weight (weight times SD, in the clock's units per SD of methylation; sorted by its size) whether it has a common SNP, and, with `--meqtl`, whether it has a cis-meQTL (`meqtl`).
 
 ### Exploratory analysis
 
@@ -139,6 +146,7 @@ The MultiQC report shows the associations as a heatmap of -log10 P, the variance
 
 Only with `--models`.
 
+- `ewas/ewas_summary_meqtl.tsv` (with `--meqtl`): per model and contrast, the tested CpGs and the CpGs at FDR < 0.05 with a cis-meQTL, their shares, the odds ratio and Fisher's exact P. Hits with a cis-meQTL are candidates for genetic confounding.
 - `ewas/ewas_summary.tsv`: one row per model and contrast: status (`tested`, or why not), complete cases, CpGs tested, genomic lambda before and after bacon, bacon inflation and bias, CpGs at FDR < 0.05, at `--p_epigenome_wide` and at `--p_suggestive` (raw, and after bacon), and the top CpG. With more than one tested model or contrast: `meff`, the effective number of independent tests across them (Galwey 2009, from the correlation of their t statistics over the CpGs), `p_study_wide` (`--p_epigenome_wide` / Meff) and `hits_study_wide`, the CpGs below it.
 - `ewas/<model>/`
   - `ewas_<model>_stats.tsv.gz`: every CpG: `cpg_id`, position and gene context, `contrast`, `logfc_m` and `se_m` (coefficient and standard error on the M-value scale, per unit of the transformed trait or for the level against the reference), `delta_beta` (the same coefficient on beta values), moderated `t`, `p_value`, `fdr` (Benjamini-Hochberg), `p_bacon` and `fdr_bacon` (after bacon correction of bias and inflation), `mean_beta` and `n`.
@@ -184,6 +192,7 @@ Not with both `--skip_clocks` and `--skip_dnam_scores`. Only aggregates are writ
 - `biomarkers/biomarkers_batch.tsv`: each acceleration and score against the DNA plate, the BeadChip and the Sentrix row (adjusted R-squared and F-test).
 - `biomarkers/biomarkers_phenotypes.tsv`: each acceleration and score against every phenotype, plain, with cells held, with the ancestry components held (`ancestry held`) and, when some analysed arrays have a borderline SNP outlier score, without them (`low contamination`): Spearman correlation for a continuous phenotype, difference in SD between the groups of a binary one (t-test).
 - `biomarkers/biomarkers_ancestry.tsv` (with the ancestry components): Spearman correlation of each acceleration and score with each genetic ancestry component; the phenotype associations with the components held are the `ancestry held` version of `biomarkers_phenotypes.tsv`.
+- `biomarkers/biomarkers_robust.tsv` (with `--meqtl`): Spearman correlation of each clock acceleration with the one of the genotype-robust clock; the phenotype associations with the robust accelerations are the `genotype-robust` version of `biomarkers_phenotypes.tsv`.
 - `biomarkers/biomarkers_contamination.tsv` (with ewastools): Spearman correlation of the ewastools SNP outlier score with each acceleration and score on the analysed arrays, with the robust cutoff (median plus three MADs of the score) and the number of arrays above it. Contamination with another person's DNA pulls beta values towards the middle and can bias clocks; these arrays pass QC (their score is below `--snp_outlier_threshold`), so the `low contamination` version of the phenotype table shows whether they change the results.
 - `biomarkers/biomarkers_quartiles.tsv`: for each acceleration, the bottom quarter (decelerated), middle half (normal) and top quarter (accelerated): the median of every characteristic (percentage for binary ones), its mean z per group, and a trend test across the ordered groups (Kendall's tau, equivalent to the Jonckheere-Terpstra test).
 

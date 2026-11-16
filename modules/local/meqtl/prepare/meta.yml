@@ -1,0 +1,63 @@
+name: meqtl_prepare
+description: CpGs with a cis-meQTL from a user-supplied meQTL table (for example GoDMC), matched to the EPIC v2 CpGs through the legacy IDs of the probe annotation
+keywords:
+  - dna methylation
+  - methylation array
+  - meqtl
+  - genetics
+tools:
+  - data.table:
+      description: Fast reading and aggregation of large tables
+      homepage: https://r-datatable.com
+      documentation: https://rdatatable.gitlab.io/data.table/
+      licence: ["MPL-2.0"]
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with an id
+          e.g. [ id:'meqtl' ]
+    - meqtl:
+        type: file
+        description: meQTL table with a cpg column, and optionally cistrans, pval, snp and beta_a1 (CSV or TSV, may be gzipped)
+        pattern: "*.{csv,tsv,txt}{,.gz}"
+        ontologies:
+          - edam: http://edamontology.org/format_3752
+    - annotation:
+        type: file
+        description: Probe annotation (cpg_id, epicv1_id, hm450_id)
+        pattern: "*.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  cpgs:
+    - - meta:
+          type: map
+          description: Groovy Map with an id
+      - "${prefix}.tsv":
+          type: file
+          description: One row per EPIC v2 CpG with a cis-meQTL - name in the table, number of SNPs, strongest SNP with P and effect
+          pattern: "*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map with an id
+      - "${prefix}_summary.tsv":
+          type: file
+          description: Rows read, cis rows, rows kept, the P threshold and the CpGs in the table and on the array
+          pattern: "*_summary.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

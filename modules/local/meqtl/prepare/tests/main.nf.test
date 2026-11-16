@@ -1,0 +1,64 @@
+nextflow_process {
+
+    name "Test Process MEQTL_PREPARE"
+    script "../main.nf"
+    process "MEQTL_PREPARE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "meqtl"
+    tag "meqtl/prepare"
+
+    // A made-up table in the GoDMC format: two cis SNPs of one CpG, one weak and
+    // one trans association, a CpG under its 450K name, and a CpG not on the array
+
+    test("cis-meQTL CpGs on the array") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [ [ id: 'meqtl' ], file("$moduleTestDir/meqtl.csv.gz", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            def read = { f -> def t = path(f).readLines().collect { line -> line.split('\t', -1) as List }
+                t.drop(1).collect { values -> [t[0], values].transpose().collectEntries() } }
+            def cpgs = read(process.out.cpgs[0][1])
+            def summary = read(process.out.summary[0][1]).collectEntries { row -> [row.metric, row.value] }
+            assertAll(
+                { assert process.success },
+                // cg00000002 (P above 1e-8) and cg00000003 (trans) are left out; the 450K name maps to cg00000004
+                { assert cpgs.collect { row -> row.cpg_id } == ['cg00000001', 'cg00000004'] },
+                { assert cpgs[0].snps == '2' && cpgs[0].top_snp == 'chr1:100:SNP' },
+                { assert cpgs[1].meqtl_name == 'cg09999999' },
+                { assert summary.rows_read == '6' && summary.rows_cis == '5' && summary.rows_kept == '4' && summary.cpgs_on_array == '2' },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+
+    test("cis-meQTL CpGs - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [ [ id: 'meqtl' ], file("$moduleTestDir/meqtl.csv.gz", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true) ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

@@ -17,6 +17,7 @@ include { DMR                    } from '../subworkflows/local/dmr'
 include { ENRICHMENT             } from '../subworkflows/local/enrichment'
 include { EXPORT_GEO             } from '../modules/local/export/geo'
 include { ANCESTRY_PCS           } from '../modules/local/ancestry/pcs'
+include { MEQTL_PREPARE          } from '../modules/local/meqtl/prepare'
 include { BIOMARKERS_ASSOCIATE   } from '../modules/local/biomarkers/associate'
 include { REPORT_QUARTO          } from '../modules/local/report/quarto'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
@@ -104,13 +105,31 @@ workflow METHYLARRAY {
     }
 
     //
+    // MODULE: CpGs with a cis-meQTL, from a user-supplied meQTL table (--meqtl)
+    //
+    def ch_meqtl_cpgs = channel.value([])
+    if (params.meqtl) {
+        MEQTL_PREPARE(
+            PROBE_FILTER.out.annotation.map { annotation -> [ [ id: 'meqtl' ], file(params.meqtl, checkIfExists: true), annotation ] }
+        )
+        ch_meqtl_cpgs = MEQTL_PREPARE.out.cpgs.map { _meta, f -> f }
+        ch_report_files = ch_report_files.mix(MEQTL_PREPARE.out.summary.map { _meta, f -> f })
+    }
+
+    //
     // SUBWORKFLOW: Epigenetic clocks
     //
     def ch_clocks = channel.value([])
+    def ch_clocks_robust = channel.value([])
     if (!params.skip_clocks) {
-        CLOCKS(ch_arrays, ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation, ch_cell_fractions,
+        CLOCKS(ch_arrays, ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation, ch_cell_fractions, ch_meqtl_cpgs,
             params.dnamethyage_source, params.dunedinpace_source)
         ch_clocks = CLOCKS.out.clocks.map { _meta, f -> f }
+        if (params.meqtl) {
+            ch_report_files = ch_report_files.mix(CLOCKS.out.robust.map { _meta, f -> f })
+            // optional output: an empty channel would hold back every step that combines it
+            ch_clocks_robust = CLOCKS.out.robust.map { _meta, f -> f }.ifEmpty([])
+        }
         ch_multiqc_files = ch_multiqc_files.mix(CLOCKS.out.multiqc.map { _meta, table -> table })
         ch_report_files = ch_report_files.mix(CLOCKS.out.clocks.map { _meta, f -> f }, CLOCKS.out.coverage.map { _meta, f -> f },
             CLOCKS.out.weights.map { _meta, f -> f })
@@ -168,15 +187,16 @@ workflow METHYLARRAY {
                 .combine(ch_dnam_scores.map { f -> [ f ] })
                 .combine(ch_phenotypes.map { f -> [ f ] })
                 .combine(ch_ancestry_pcs.map { f -> [ f ] })
-                .map { samples, qc, clocks, cells, scores, phenotypes, ancestry ->
-                    [ [ id: 'biomarkers' ], samples, qc, clocks, cells, scores, phenotypes, ancestry ]
+                .combine(ch_clocks_robust.map { f -> [ f ] })
+                .map { samples, qc, clocks, cells, scores, phenotypes, ancestry, robust ->
+                    [ [ id: 'biomarkers' ], samples, qc, clocks, cells, scores, phenotypes, ancestry, robust ]
                 }
         )
         ch_multiqc_files = ch_multiqc_files.mix(BIOMARKERS_ASSOCIATE.out.multiqc.map { _meta, files -> files }.flatten())
         def ch_biomarker_tables = BIOMARKERS_ASSOCIATE.out.agreement
             .mix(BIOMARKERS_ASSOCIATE.out.cells_measures, BIOMARKERS_ASSOCIATE.out.cells_phenotypes, BIOMARKERS_ASSOCIATE.out.batch,
                 BIOMARKERS_ASSOCIATE.out.phenotypes, BIOMARKERS_ASSOCIATE.out.quartiles, BIOMARKERS_ASSOCIATE.out.contamination,
-                BIOMARKERS_ASSOCIATE.out.ancestry)
+                BIOMARKERS_ASSOCIATE.out.ancestry, BIOMARKERS_ASSOCIATE.out.robust)
             .map { _meta, f -> f }
         ch_report_files = ch_report_files.mix(ch_biomarker_tables)
     }
@@ -185,9 +205,9 @@ workflow METHYLARRAY {
     // SUBWORKFLOW: Epigenome-wide association, one model per entry of --models
     //
     EWAS(ch_models, ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, ch_phenotypes, ch_cell_fractions,
-        EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_ancestry_pcs, ch_dnam_scores)
+        EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_ancestry_pcs, ch_dnam_scores, ch_meqtl_cpgs)
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
-    ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f })
+    ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f }, EWAS.out.meqtl)
 
     //
     // SUBWORKFLOW: Differentially methylated regions of every model

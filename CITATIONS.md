@@ -150,6 +150,16 @@ This file is the single reference list for the pipeline. The README, the documen
 
   The pipeline implements the published method; it does not use the EpiAnceR scripts.
 
+- [GoDMC methylation QTLs](https://doi.org/10.1038/s41588-021-00923-x)
+
+  > Min JL, Hemani G, Hannon E, et al. Genomic and phenotypic insights from an atlas of genetic effects on DNA methylation. Nat Genet. 2021;53(9):1311-1321.
+
+  Source of the meQTL table described in the usage documentation (`--meqtl`); the pipeline does not ship it.
+
+- [Genotype-robust clocks](https://doi.org/10.1038/s42003-025-08893-0)
+
+  > Meeks GL, Scelza B, Asnake HM, et al. Common DNA sequence variation influences epigenetic aging in African populations. Commun Biol. 2025;8(1).
+
 - [Control-probe principal components](https://doi.org/10.1186/s13059-015-0600-x)
 
   > Lehne B, Drong AW, Loh M, et al. A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies. Genome Biol. 2015;16:37.

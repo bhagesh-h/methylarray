@@ -30,7 +30,8 @@ nextflow_process {
                     file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
                     file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true),
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
-                    file("$moduleTestDir/ancestry_pcs.tsv", checkIfExists: true)
+                    file("$moduleTestDir/ancestry_pcs.tsv", checkIfExists: true),
+                    file("$moduleTestDir/clocks_robust.tsv", checkIfExists: true)
                 ]
                 """
             }
@@ -44,6 +45,7 @@ nextflow_process {
             def quartiles = read(process.out.quartiles)
             def contamination = read(process.out.contamination)
             def ancestry = read(process.out.ancestry)
+            def robust = read(process.out.robust)
             assertAll(
                 { assert process.success },
                 // the three-level 'group' column is left out, 'mets' is binary
@@ -58,10 +60,13 @@ nextflow_process {
                 { assert phenotypes.findAll { row -> row.version == 'low contamination' && row.trait == 'bmi' }.every { row -> row.n == '75' } },
                 // ancestry: the planted correlation, and the 'ancestry held' version of the phenotype tests
                 { assert ancestry.find { row -> row.measure == 'HorvathS2013 acceleration' && row.pc == 'ancestry_pc1' }.q as double < 0.05 },
-                { assert phenotypes.collect { row -> row.version }.unique().sort() == ['ancestry held', 'cells held', 'low contamination', 'plain'] },
+                { assert phenotypes.collect { row -> row.version }.unique().sort() == ['ancestry held', 'cells held', 'genotype-robust', 'low contamination', 'plain'] },
+                // genotype-robust clocks: the Horvath acceleration agrees more closely than the Hannum one
+                { assert robust.collect { row -> row.measure } == ['HorvathS2013 acceleration', 'HannumG2013 acceleration'] },
+                { assert (robust[0].rho as double) > 0.8 && (robust[1].rho as double) < (robust[0].rho as double) },
                 { assert process.out.multiqc[0][1].size() == 5 },
                 { assert snapshot(process.out.agreement, process.out.cells_measures, process.out.cells_phenotypes, process.out.batch,
-                                  process.out.phenotypes, process.out.quartiles, process.out.contamination, process.out.ancestry, process.out.versions).match() }
+                                  process.out.phenotypes, process.out.quartiles, process.out.contamination, process.out.ancestry, process.out.robust, process.out.versions).match() }
             )
         }
     }
@@ -80,7 +85,7 @@ nextflow_process {
                     file("$moduleTestDir/clocks.tsv", checkIfExists: true),
                     file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
                     file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true),
-                    [], []
+                    [], [], []
                 ]
                 """
             }
@@ -111,7 +116,7 @@ nextflow_process {
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
                     file("$moduleTestDir/clocks.tsv", checkIfExists: true),
-                    [], [], [], []
+                    [], [], [], [], []
                 ]
                 """
             }

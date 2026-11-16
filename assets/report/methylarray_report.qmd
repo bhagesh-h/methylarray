@@ -231,6 +231,51 @@ if (has("^clocks_coverage\\.tsv$")) {
 }
 ```
 
+```{r meqtl, results = "asis", fig.width = 11, fig.height = 8, eval = has("^meqtl_cpgs_summary\\.tsv$")}
+heading("Genetic influence on the clocks")
+ms <- read(find("^meqtl_cpgs_summary\\.tsv$"))
+mv <- setNames(as.character(ms[["value"]]), ms[["metric"]])
+cat(sprintf("The meQTL table (`--meqtl`) gives %s CpGs with a cis-meQTL (%s associations kept of %s); %s of them are on this array. Clock CpGs whose methylation depends on a nearby genotype carry inherited variation into the clock, and their allele frequencies differ between ancestries (Meeks et al. 2025).\n\n",
+            mv[["cpgs_in_table"]], mv[["rows_kept"]], mv[["rows_read"]], mv[["cpgs_on_array"]]))
+if (has("^clocks_weights\\.tsv$")) {
+    w <- read(find("^clocks_weights\\.tsv$"))
+    if ("meqtl" %in% names(w) && any(!is.na(w[["meqtl"]]))) {
+        w <- w[is.finite(standardised)]
+        w[, class := ifelse(meqtl %in% TRUE, "cis-meQTL", ifelse(snp %in% TRUE, "SNP in the probe", "neither"))]
+        shares <- w[, .(share = sum(abs(standardised))), by = .(clock, class)][, share := 100 * share / sum(share), by = clock]
+        shares[, class := factor(class, levels = c("cis-meQTL", "SNP in the probe", "neither"))]
+        print(ggplot(shares, aes(share, clock, fill = class)) + geom_col() +
+            scale_fill_manual(values = c(`cis-meQTL` = "#c44e52", `SNP in the probe` = "#dd8452", neither = "#bbbbbb")) +
+            labs(x = "% of the clock's absolute standardised weight", y = NULL, fill = NULL, title = "Clock weight on CpGs under genetic influence"))
+    }
+}
+if (has("^clocks_robust\\.tsv$") && has("^clocks\\.tsv$")) {
+    full <- read(find("^clocks\\.tsv$"))
+    rob <- read(find("^clocks_robust\\.tsv$"))
+    shown <- intersect(grep("^eaa_", names(full), value = TRUE), names(rob))
+    value_of <- function(table, columns) melt(table[, c("sample", columns), with = FALSE], id.vars = "sample", variable.name = "clock")
+    if (length(shown) == 0) shown <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "DunedinPACE"), intersect(names(full), names(rob)))
+    if (length(shown) > 0) {
+        both <- merge(value_of(full, shown), value_of(rob, shown), by = c("sample", "clock"), suffixes = c("_full", "_robust"))
+        both <- both[is.finite(value_full) & is.finite(value_robust)]
+        rho <- both[, .(rho = suppressWarnings(cor(value_full, value_robust, method = "spearman"))), by = clock]
+        both <- merge(both, rho, by = "clock")
+        both[, panel := sprintf("%s (rho %.2f)", sub("^eaa_", "", clock), rho)]
+        print(ggplot(both, aes(value_full, value_robust)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
+            geom_point(size = 0.8, alpha = 0.6, colour = "#4c72b0") + facet_wrap(~panel, scales = "free") +
+            labs(x = if (startsWith(shown[1], "eaa_")) "Acceleration, full clock" else "Clock value, full clock",
+                 y = "Without SNP and cis-meQTL CpGs", title = "Genotype-robust clocks",
+                 subtitle = "CpGs with a common SNP or a cis-meQTL held at their mean; the phenotype tests of both versions are in the forest plots"))
+    }
+}
+if (has("^ewas_summary_meqtl\\.tsv$")) {
+    em <- read(find("^ewas_summary_meqtl\\.tsv$"))
+    if (nrow(em) > 0) print(kable(em[, .(Model = model, Contrast = contrast, `Hits (FDR < 0.05)` = hits_fdr, `Hits with a cis-meQTL` = hits_meqtl,
+                                         `Share of hits` = share_hits, `Share of tested CpGs` = share_tested, `Odds ratio` = odds_ratio, P = p_value)],
+                               caption = "Association hits with a cis-meQTL: candidates for genetic confounding, especially without ancestry covariates"))
+}
+```
+
 ```{r biomarkers, results = "asis", fig.width = 11, fig.height = 8, eval = has("^biomarkers_agreement\\.tsv$")}
 heading("Clocks, scores and cell fractions")
 stars <- function(q) ifelse(is.na(q), "", ifelse(q < 0.001, "***", ifelse(q < 0.01, "**", ifelse(q < 0.05, "*", ""))))
@@ -280,7 +325,7 @@ if (nrow(pt) > 0) {
         print(ggplot(pt[trait == t], aes(estimate, measure, colour = version, shape = q < 0.05)) + geom_vline(xintercept = 0, colour = "grey60") +
             geom_point(size = 2.6, position = position_dodge(width = 0.6)) +
             scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), labels = c(`TRUE` = "q < 0.05", `FALSE` = "q >= 0.05")) +
-            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `ancestry held` = "#8172b3", `low contamination` = "#55a868")) +
+            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `ancestry held` = "#8172b3", `genotype-robust` = "#937860", `low contamination` = "#55a868")) +
             labs(x = "Difference between the groups (SD)", y = NULL, colour = NULL, shape = NULL, title = paste0(t, ": every acceleration and score")))
     }
 }

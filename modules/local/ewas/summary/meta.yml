@@ -18,7 +18,26 @@ input:
       pattern: "*_summary.json"
       ontologies:
         - edam: http://edamontology.org/format_3464
+  - stats:
+      type: file
+      description: Per-model statistics from EWAS_LIMMA, for the study-wide threshold and the meQTL overlap
+      pattern: "*_stats.tsv.gz"
+      ontologies:
+        - edam: http://edamontology.org/format_3475
+  - meqtl_cpgs:
+      type: file
+      description: CpGs with a cis-meQTL from MEQTL_PREPARE, or []
+      pattern: "*.tsv"
+      ontologies:
+        - edam: http://edamontology.org/format_3475
 output:
+  meqtl:
+    - "${prefix}_meqtl.tsv":
+        type: file
+        description: Hits with a cis-meQTL per model and contrast, with Fisher's exact test (header only without a meQTL list)
+        pattern: "*_meqtl.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
   summary:
     - "${prefix}.tsv":
         type: file

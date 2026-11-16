@@ -51,3 +51,12 @@ with open("ancestry_pcs.tsv", "w") as out:
     out.write("sample\tancestry_pc1\tancestry_pc2\n")
     for r in rows:
         out.write("%s\t%.4f\t%.4f\n" % (r["sample"], 0.2 * r["eaa_h"] + ancestry_random.gauss(0, 0.8), ancestry_random.gauss(0, 1)))
+# Genotype-robust clocks from their own random stream: the Horvath acceleration
+# keeps most of its signal, the Hannum acceleration less
+robust_random = random.Random(13)
+with open("clocks_robust.tsv", "w") as out:
+    out.write("sample\tage\tHorvathS2013\tHannumG2013\teaa_HorvathS2013\teaa_HannumG2013\n")
+    for r in rows:
+        h = 0.9 * r["eaa_h"] + robust_random.gauss(0, 1)
+        hn = 0.5 * r["eaa_hn"] + robust_random.gauss(0, 2)
+        out.write("%s\t%s\t%.4f\t%.4f\t%.4f\t%.4f\n" % (r["sample"], r["age"], r["age"] + h, r["age"] + hn, h, hn))

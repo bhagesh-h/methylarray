@@ -60,6 +60,12 @@ input:
         pattern: "*.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475
+    - clocks_robust:
+        type: file
+        description: Genotype-robust clocks of CLOCKS_COMPUTE, or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
 output:
   agreement:
     - - meta:
@@ -139,6 +145,16 @@ output:
           type: file
           description: Each acceleration and score against each ancestry component (Spearman; header only without the components)
           pattern: "*_ancestry.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  robust:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_robust.tsv":
+          type: file
+          description: Each clock acceleration against the genotype-robust one (Spearman; header only without robust clocks)
+          pattern: "*_robust.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475
   multiqc:
