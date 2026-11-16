@@ -223,7 +223,7 @@ Bug reports and feature requests are welcome through GitHub issues. Development 
 
 ## Citations
 
-All tools, methods, reference data and frameworks used by the pipeline are listed in [CITATIONS.md](CITATIONS.md). A Zenodo DOI for the pipeline will be added at the first release.
+To cite methylarray, use the citation in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
 
 ## License
 
