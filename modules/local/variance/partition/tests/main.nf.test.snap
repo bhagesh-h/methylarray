@@ -1,0 +1,79 @@
+{
+    "variance of each CpG by variable": {
+        "content": [
+            [
+                "versions.yml:md5,4587d26a0ce3098c8f7154001bd51116"
+            ]
+        ],
+        "timestamp": "2026-11-16T15:16:08.041468445",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "variance partition - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "variance_partition.tsv.gz:md5,57f152c40ee6512f57f0c0a987ed883c"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "variance_partition_summary.tsv:md5,bdbedfeef66bb4e409bd79d7472b94ed"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "variance_partition_mqc.tsv:md5,d26428551d3dccb36915bbacf785079f"
+                    ]
+                ],
+                "3": [
+                    "versions.yml:md5,026fb66005c84300f6c166c4700e71cc"
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "variance_partition_mqc.tsv:md5,d26428551d3dccb36915bbacf785079f"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "variance_partition_summary.tsv:md5,bdbedfeef66bb4e409bd79d7472b94ed"
+                    ]
+                ],
+                "variance": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "variance_partition.tsv.gz:md5,57f152c40ee6512f57f0c0a987ed883c"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,026fb66005c84300f6c166c4700e71cc"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T15:18:55.376093823",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

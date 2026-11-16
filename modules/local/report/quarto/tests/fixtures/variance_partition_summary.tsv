@@ -1,0 +1,12 @@
+variable	type	median	mean	q90	cpgs_over_10	arrays	cpgs	formula	note
+residual	residual	40.546	41.063	52.996	600	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+plate	random	0.016	16.575	52.522	209	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+age	fixed	1.195	16.187	52.008	200	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+sex	random	0	15.681	53.552	200	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+sentrix_row	random	0	1.772	6.085	27	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+beadchip	random	0	1.715	6.658	18	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+cells_CD8T	fixed	0.905	1.504	3.891	1	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+cells_CD4T	fixed	0.753	1.495	4.183	6	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+cells_NK	fixed	0.657	1.376	3.769	3	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+cells_B	fixed	0.675	1.325	3.371	3	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	
+cells_Mono	fixed	0.633	1.308	3.436	3	48	600	~age + cells_B + cells_CD4T + cells_CD8T + cells_NK + cells_Mono +     (1 | plate) + (1 | beadchip) + (1 | sentrix_row) + (1 | sex)	

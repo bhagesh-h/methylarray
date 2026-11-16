@@ -149,10 +149,10 @@ workflow METHYLARRAY {
     //
     // SUBWORKFLOW: Exploratory analysis (control-probe PCs, PCA associations)
     //
-    EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
+    EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes, params.skip_variance_partition)
     ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
     ch_report_files = ch_report_files.mix(EXPLORATION.out.variance.map { _meta, f -> f }, EXPLORATION.out.associations.map { _meta, f -> f },
-        EXPLORATION.out.outliers.map { _meta, f -> f })
+        EXPLORATION.out.outliers.map { _meta, f -> f }, EXPLORATION.out.variance_partition)
 
     //
     // MODULE: Genetic ancestry PCs from the SNP CpGs and rs probes (EpiAnceR+ approach)

@@ -160,6 +160,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Meeks GL, Scelza B, Asnake HM, et al. Common DNA sequence variation influences epigenetic aging in African populations. Commun Biol. 2025;8(1).
 
+- [variancePartition](https://doi.org/10.1186/s12859-016-1323-z)
+
+  > Hoffman GE, Schadt EE. variancePartition: interpreting drivers of variation in complex gene expression studies. BMC Bioinformatics. 2016;17:483.
+
 - [Control-probe principal components](https://doi.org/10.1186/s13059-015-0600-x)
 
   > Lehne B, Drong AW, Loh M, et al. A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies. Genome Biol. 2015;16:37.

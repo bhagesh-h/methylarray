@@ -53,6 +53,11 @@
                 "SAMPLEQC_SUMMARY": {
                     "R": "4.5.3"
                 },
+                "VARIANCE_PARTITION": {
+                    "HDF5Array": "1.38.0",
+                    "lme4": "2.0.6",
+                    "variancePartition": "1.40.2"
+                },
                 "Workflow": {
                     "bhagesh-h/methylarray": "v1.0.0"
                 }
@@ -90,6 +95,8 @@
                 "exploration/pca_outliers.tsv",
                 "exploration/pca_scores.tsv",
                 "exploration/pca_variance.tsv",
+                "exploration/variance_partition.tsv.gz",
+                "exploration/variance_partition_summary.tsv",
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/llms-full.txt",
@@ -209,6 +216,21 @@
                 "pca_outliers.tsv:md5,12339f2f8cac80fee19bb11a80e21f5f",
                 "pca_scores.tsv:md5,0c62d7c6e16394c9ababb0cfcc1422bb",
                 "pca_variance.tsv:md5,d8b5f2de743b49d461af9b52b71ea860",
+                {
+                    "absolute": true,
+                    "absolutePath": "/home/bhagesh/Documents/sync_laptop/2026/300OB/methylarray/tests/nf-test/tests/7df3e197adb9822075f6f1cd285eba2e/output/exploration/variance_partition.tsv.gz",
+                    "canonicalPath": "/home/bhagesh/Documents/sync_laptop/2026/300OB/methylarray/tests/nf-test/tests/7df3e197adb9822075f6f1cd285eba2e/output/exploration/variance_partition.tsv.gz",
+                    "directory": false,
+                    "file": true,
+                    "freeSpace": 1520521326592,
+                    "hidden": false,
+                    "name": "variance_partition.tsv.gz",
+                    "parent": "/home/bhagesh/Documents/sync_laptop/2026/300OB/methylarray/tests/nf-test/tests/7df3e197adb9822075f6f1cd285eba2e/output/exploration",
+                    "path": "/home/bhagesh/Documents/sync_laptop/2026/300OB/methylarray/tests/nf-test/tests/7df3e197adb9822075f6f1cd285eba2e/output/exploration/variance_partition.tsv.gz",
+                    "totalSpace": 1966736678912,
+                    "usableSpace": 1420541075456
+                },
+                "variance_partition_summary.tsv:md5,2bf85d32bd2d6b86fdb20dd935b5efbe",
                 "multiqc_cell_fractions_plot.txt:md5,0ae9e09b8bb2126f4aafa3a7619cee9f",
                 "multiqc_citations.txt:md5,4c806e63a283ec1b7e78cdae3a923d4f",
                 "multiqc_clock_coverage.txt:md5,b0e84236a9fb9a73cfc9f0aeb38b26f1",
@@ -236,7 +258,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-16T15:10:59.02951012",
+        "timestamp": "2026-11-16T15:26:03.303151299",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

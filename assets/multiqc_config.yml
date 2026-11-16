@@ -37,6 +37,8 @@ report_section_order:
     order: 930
   pca_associations:
     order: 920
+  variance_partition:
+    order: 915
   ewas_summary:
     order: 910
   "bhagesh-h-methylarray-methods-description":

@@ -99,6 +99,11 @@
                     "sesame": "stub",
                     "sesameData": "stub"
                 },
+                "VARIANCE_PARTITION": {
+                    "HDF5Array": "stub",
+                    "lme4": "stub",
+                    "variancePartition": "stub"
+                },
                 "Workflow": {
                     "bhagesh-h/methylarray": "v1.0.0"
                 }
@@ -159,6 +164,8 @@
                 "exploration/pca_outliers.tsv",
                 "exploration/pca_scores.tsv",
                 "exploration/pca_variance.tsv",
+                "exploration/variance_partition.tsv.gz",
+                "exploration/variance_partition_summary.tsv",
                 "geo",
                 "geo/geo_processed_matrix.tsv.gz",
                 "geo/geo_samples.tsv",
@@ -252,6 +259,8 @@
                 "pca_outliers.tsv:md5,9a7a9681db36858bd2bcd7ca0392825d",
                 "pca_scores.tsv:md5,fc4f6d4673bc687f89061fe547ffe151",
                 "pca_variance.tsv:md5,220c70d77202755b60bb0c397eef2b37",
+                "variance_partition.tsv.gz:md5,57f152c40ee6512f57f0c0a987ed883c",
+                "variance_partition_summary.tsv:md5,bdbedfeef66bb4e409bd79d7472b94ed",
                 "geo_processed_matrix.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
                 "geo_samples.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
                 "geo_signal_intensities.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
@@ -274,7 +283,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-16T15:13:31.217815417",
+        "timestamp": "2026-11-16T15:20:48.510880809",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

@@ -62,6 +62,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
    - with a user-supplied meQTL table (`--meqtl`): the clock weight on CpGs under genetic control, genotype-robust clocks and the association hits with a cis-meQTL
    - principal components of the most variable CpGs (number estimated with [isva](https://cran.r-project.org/package=isva)) and their associations with technical, biological and phenotype variables
    - PCA outlier flags (report only, no array is removed)
+   - variance partition of the most variable CpGs with [variancePartition](https://bioconductor.org/packages/variancePartition/): the share explained by plate, BeadChip, row, sex, age and cell types
 9. When a models file is given, for every model:
    - [limma](https://bioconductor.org/packages/limma/) on M-values, with effect sizes reported as differences in beta values, and a design check (confounding with plate and Sentrix row, collinearity)
    - bias and inflation control with [bacon](https://bioconductor.org/packages/bacon/)

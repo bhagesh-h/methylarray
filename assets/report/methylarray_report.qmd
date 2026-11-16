@@ -418,6 +418,27 @@ if (has("^pca_outliers\\.tsv$")) {
 }
 ```
 
+```{r variance-partition, results = "asis", fig.width = 10, fig.height = 5.5, eval = has("^variance_partition_summary\\.tsv$")}
+vs <- read(find("^variance_partition_summary\\.tsv$"))
+heading("Variance partition")
+if ("note" %in% names(vs) && any(!is.na(vs[["note"]]) & vs[["note"]] != "")) {
+    cat(vs[["note"]][1], "\n\n")
+} else {
+    cat(sprintf("Share of the variance of the %s most variable CpGs explained by each variable, from one linear mixed model per CpG (variancePartition) on %s arrays: %s. Technical variables with large shares belong in the association models as covariates.\n\n",
+                format(vs[["cpgs"]][1], big.mark = ","), vs[["arrays"]][1], vs[["formula"]][1]))
+    if (has("^variance_partition\\.tsv\\.gz$")) {
+        vp <- read(find("^variance_partition\\.tsv\\.gz$"))
+        long <- melt(vp, id.vars = "cpg_id", variable.name = "variable", value.name = "share")
+        long[, variable := factor(variable, levels = vs[order(-mean), variable])]
+        print(ggplot(long, aes(variable, share)) + geom_violin(fill = "#4c72b0", colour = NA, alpha = 0.6, scale = "width") +
+            geom_boxplot(width = 0.08, outlier.shape = NA, fill = "white") +
+            labs(x = NULL, y = "% of variance explained", title = "Variance partition of the most variable CpGs") +
+            theme(axis.text.x = element_text(angle = 30, hjust = 1)))
+    }
+    print(kable(vs[, .(Variable = variable, Effect = type, `Median %` = median, `Mean %` = mean, `90th percentile %` = q90, `CpGs above 10%` = cpgs_over_10)]))
+}
+```
+
 ```{r ewas-summary, results = "asis", eval = has("^ewas_summary\\.tsv$")}
 heading("Association models")
 ewas <- read(find("^ewas_summary\\.tsv$"))

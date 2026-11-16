@@ -387,6 +387,19 @@
                     "help_text": "The control-probe PCs (Lehne et al. 2015) come from the log2, standardised intensities of the non-negative control probes in both channels, read by ewastools. `auto` keeps the smallest number that explains at least 90% of their variance, at most 20. Without ewastools (`--skip_ewastools`) there are no control-probe PCs.",
                     "fa_icon": "fas fa-layer-group"
                 },
+                "skip_variance_partition": {
+                    "type": "boolean",
+                    "description": "Skip the variance partition of the most variable CpGs.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "variance_partition_cpgs": {
+                    "type": "integer",
+                    "default": 20000,
+                    "minimum": 100,
+                    "description": "Number of most variable CpGs (M-values) for the variance partition.",
+                    "help_text": "variancePartition fits one linear mixed model per CpG, with plate, BeadChip, Sentrix row, batch and sex as random effects and age and five cell lineages as fixed effects; the run time grows with the number of CpGs and arrays.",
+                    "fa_icon": "fas fa-sort-amount-down"
+                },
                 "skip_ancestry": {
                     "type": "boolean",
                     "description": "Skip the genetic ancestry components.",

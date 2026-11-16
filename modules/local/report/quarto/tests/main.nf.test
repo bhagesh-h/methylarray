@@ -36,7 +36,7 @@ nextflow_process {
                 { assert html.contains('minfi') && html.contains('PLANTED') },
                 { assert html.contains('reported, not removed') && html.contains('S3') },
                 { assert ['SNP genotypes', 'Relatedness', 'below the threshold', 'Clock and score CpGs', 'Clocks, scores and cell fractions', 'Clocks and scores against the phenotypes',
-                          'Quartile groups of acceleration', 'Contamination and the ageing measures', 'Genetic ancestry', 'Ancestry and the ageing measures', 'Genomic context enrichment', 'Genetic influence on the clocks', 'Association hits with a cis-meQTL'].every { section -> html.contains(section) } },
+                          'Quartile groups of acceleration', 'Contamination and the ageing measures', 'Genetic ancestry', 'Ancestry and the ageing measures', 'Genomic context enrichment', 'Genetic influence on the clocks', 'Association hits with a cis-meQTL', 'Variance partition'].every { section -> html.contains(section) } },
                 { assert !html.contains('Error in') },
                 { assert snapshot(process.out.versions).match() }
             )
