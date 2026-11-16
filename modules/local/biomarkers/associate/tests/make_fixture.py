@@ -26,6 +26,8 @@ def write(name, header, f):
         for r in rows: out.write("\t".join(str(v) for v in f(r)) + "\n")
 write("samples.tsv", ["sample", "plate", "sentrix_id", "sentrix_position", "reported_sex", "reported_age"],
       lambda r: [r["sample"], r["plate"], r["chip"], r["pos"], "M" if r["men"] else "F", r["age"]])
+write("samples_no_age.tsv", ["sample", "plate", "sentrix_id", "sentrix_position", "reported_sex", "reported_age"],
+      lambda r: [r["sample"], r["plate"], r["chip"], r["pos"], "M" if r["men"] else "F", ""])
 with open("sample_qc.tsv", "w") as out:
     out.write("sample\tstatus\n")
     for i, r in enumerate(rows): out.write("%s\t%s\n" % (r["sample"], "FAIL" if i < 2 else "PASS"))
