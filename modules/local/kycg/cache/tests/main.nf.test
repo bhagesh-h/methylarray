@@ -26,7 +26,7 @@ nextflow_process {
             def resources = path(process.out.resources[0]).readLines()
             assertAll(
                 { assert process.success },
-                { assert resources[0] == 'database\ttitle\teh_id\tfile\tmd5' },
+                { assert resources[0] == 'database\ttitle\teh_id\tmd5' },
                 { assert resources.drop(1).collect { line -> line.split('\t')[0..2] } == [['ChromHMM', 'KYCG.EPICv2.ChromHMM.20220303', 'EH8073']] },
                 { assert snapshot(process.out.resources, process.out.versions).match() }
             )

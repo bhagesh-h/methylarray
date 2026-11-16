@@ -45,13 +45,14 @@ if (length(unknown) > 0) {
 titles <- groups[match(wanted, short)]
 kycgDataCache(data_titles = titles)
 
-# Record what was downloaded: group, ExperimentHub ID, cached file and its MD5
+# Record what was downloaded: group, ExperimentHub ID and the MD5 of the cached
+# file (not its name: ExperimentHub prefixes it with a random ID)
 eh <- ExperimentHub(cache = cache_dir, localHub = TRUE)
 hub <- mcols(eh)
 rows <- lapply(titles, function(title) {
     eh_id <- rownames(hub)[hub[["title"]] == title]
     if (length(eh_id) != 1) stop("Expected one ExperimentHub record for ", title, ", found ", length(eh_id))
     path <- unname(cache(eh[eh_id]))
-    data.frame(database = short[match(title, groups)], title = title, eh_id = eh_id, file = basename(path), md5 = unname(tools::md5sum(path)))
+    data.frame(database = short[match(title, groups)], title = title, eh_id = eh_id, md5 = unname(tools::md5sum(path)))
 })
 write.table(do.call(rbind, rows), "kycg_resources.tsv", sep = "\\t", quote = FALSE, row.names = FALSE)
