@@ -296,6 +296,18 @@
                     "description": "Stop if a smaller share of the reference CpGs is in the filtered data.",
                     "help_text": "Coverage below 98% is reported as a warning in `cell_composition/cell_fractions_reference_coverage.tsv`.",
                     "fa_icon": "fas fa-percent"
+                },
+                "skip_idol": {
+                    "type": "boolean",
+                    "description": "Skip the IDOL cross-check of the cell fractions.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "idol_reference": {
+                    "type": "string",
+                    "default": "https://raw.githubusercontent.com/immunomethylomics/FlowSorted.Blood.EPIC/b837178f81082ba386a13d5669d08dd8d3df6222/data/IDOLOptimizedCpGs.compTable.rda",
+                    "description": "IDOL reference table (FlowSorted.Blood.EPIC IDOLOptimizedCpGs.compTable, URL or local path).",
+                    "help_text": "The 450 IDOL-optimised CpGs with the mean methylation of six sorted blood cell types (Salas et al. 2018), staged from the FlowSorted.Blood.EPIC repository at a fixed commit (GPL-3, not bundled). The fractions are estimated with Houseman's constrained projection and compared with the cent12CT lineages. Download the file once and give the local path for runs without network access.",
+                    "fa_icon": "fas fa-file"
                 }
             }
         },

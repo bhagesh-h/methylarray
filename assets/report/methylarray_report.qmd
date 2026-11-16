@@ -176,6 +176,18 @@ long[, variable := sub("^lineage_", "", variable)]
 print(ggplot(long, aes(variable, value)) + geom_boxplot(fill = "#dd8452", outlier.size = 0.8) +
     labs(x = NULL, y = "Fraction", title = "Blood cell lineages (EpiDISH, cent12CT reference)"))
 if (has("^cell_fractions_reference_coverage\\.tsv$")) print(kable(read(find("^cell_fractions_reference_coverage\\.tsv$"))))
+if (has("^cell_fractions_idol_agreement\\.tsv$") && any(startsWith(names(cells), "idol_"))) {
+    idol_pairs <- c(B = "Bcell", CD4T = "CD4T", CD8T = "CD8T", NK = "NK", Mono = "Mono", Gran = "Neu")
+    both <- rbindlist(lapply(names(idol_pairs), function(l) {
+        if (!all(c(paste0("lineage_", l), paste0("idol_", idol_pairs[[l]])) %in% names(cells))) return(NULL)
+        data.table(lineage = paste(l, "/", idol_pairs[[l]]), cent12 = cells[[paste0("lineage_", l)]], idol = cells[[paste0("idol_", idol_pairs[[l]])]])
+    }))
+    cat("\n\nCross-check with the IDOL reference (FlowSorted.Blood.EPIC, Houseman constrained projection): each cent12CT lineage against the matching IDOL cell type. Granulocytes include eosinophils and basophils, IDOL neutrophils do not.\n\n")
+    print(ggplot(both, aes(idol, cent12)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
+        geom_point(size = 1, alpha = 0.6, colour = "#4c72b0") + facet_wrap(~lineage, scales = "free") +
+        labs(x = "IDOL fraction", y = "EpiDISH cent12CT fraction", title = "Cell fractions: cent12CT against IDOL"))
+    print(kable(read(find("^cell_fractions_idol_agreement\\.tsv$")), caption = "Agreement of the lineages with IDOL (Spearman rho, mean difference)"))
+}
 ```
 
 ```{r clocks, results = "asis", eval = has("^clocks\\.tsv$") || has("^dnam_scores_coverage\\.tsv$")}

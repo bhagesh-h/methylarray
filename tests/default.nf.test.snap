@@ -75,6 +75,7 @@
                 "biomarkers/biomarkers_robust.tsv",
                 "cell_composition",
                 "cell_composition/cell_fractions.tsv",
+                "cell_composition/cell_fractions_idol_agreement.tsv",
                 "cell_composition/cell_fractions_reference_coverage.tsv",
                 "clocks",
                 "clocks/clocks.tsv",
@@ -198,8 +199,9 @@
                 "biomarkers_phenotypes.tsv:md5,f8639e17b0b8d6cfba0d2689a8717e28",
                 "biomarkers_quartiles.tsv:md5,fe324338b369730600fb20b791bf02e5",
                 "biomarkers_robust.tsv:md5,3b34aabf5098dc5fa37f978c8b6c1b65",
-                "cell_fractions.tsv:md5,3deea5971f1558e6da3820d8815cb31e",
-                "cell_fractions_reference_coverage.tsv:md5,2cd8e8a09cc98bc50e4b17c393423844",
+                "cell_fractions.tsv:md5,d0188d19fdbf34de8cdbd27fffca7700",
+                "cell_fractions_idol_agreement.tsv:md5,5950e4dde11d8ad04bdae6a2de86b941",
+                "cell_fractions_reference_coverage.tsv:md5,d5ae040a39b70c8f936d5be847eeafd6",
                 "clocks.tsv:md5,a70c87fd0874e9f8b2cbd1460cbe08ce",
                 "clocks_coverage.tsv:md5,589c3f6d6d7b095348f98f0736ae4927",
                 "clocks_weights.tsv:md5,dffd811d1dd26cd05ac6cc8abb5f58f3",
@@ -245,7 +247,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-16T15:56:56.044125197",
+        "timestamp": "2026-11-16T16:25:51.005724649",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

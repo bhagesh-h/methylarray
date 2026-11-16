@@ -99,10 +99,11 @@ workflow METHYLARRAY {
     //
     def ch_cell_fractions = channel.value([])
     if (params.tissue == 'blood') {
-        CELL_COMPOSITION(PROBE_FILTER.out.se, PROBE_FILTER.out.annotation)
+        CELL_COMPOSITION(PROBE_FILTER.out.se, PROBE_FILTER.out.annotation, params.skip_idol ? null : params.idol_reference)
         ch_cell_fractions = CELL_COMPOSITION.out.fractions.map { _meta, fractions -> fractions }
         ch_multiqc_files = ch_multiqc_files.mix(CELL_COMPOSITION.out.multiqc.map { _meta, table -> table })
-        ch_report_files = ch_report_files.mix(CELL_COMPOSITION.out.fractions.map { _meta, f -> f }, CELL_COMPOSITION.out.coverage.map { _meta, f -> f })
+        ch_report_files = ch_report_files.mix(CELL_COMPOSITION.out.fractions.map { _meta, f -> f }, CELL_COMPOSITION.out.coverage.map { _meta, f -> f },
+            CELL_COMPOSITION.out.idol.map { _meta, f -> f })
     }
 
     //

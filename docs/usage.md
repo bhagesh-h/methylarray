@@ -230,7 +230,7 @@ Illumina lists about 49,000 EPIC v2 probes that did not meet its performance exp
 
 ## Cell composition
 
-With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH (robust partial correlations) from the filtered, CpG-level beta values without masking. The main reference is `cent12CT` (12 cell types, Luo et al. 2023); `centDHSbloodDMC` (7 types) is reported for comparison. Reference CpGs are matched through their EPIC v1 and 450K IDs as well as the CpG ID, because some CpGs have new names on EPIC v2. The run stops if less than `--min_reference_coverage` (default 90%) of a reference's CpGs are present. Use `--tissue other` for tissues without a blood reference.
+With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH (robust partial correlations) from the filtered, CpG-level beta values without masking. The main reference is `cent12CT` (12 cell types, Luo et al. 2023); `centDHSbloodDMC` (7 types) is reported for comparison. As a cross-check with a different reference and method, the six cell types of the IDOL reference of FlowSorted.Blood.EPIC (Salas et al. 2018; 450 IDOL-optimised CpGs, staged from `--idol_reference` at a fixed commit) are estimated with Houseman's constrained projection and compared with the cent12CT lineages (`--skip_idol` turns this off). Reference CpGs are matched through their EPIC v1 and 450K IDs as well as the CpG ID, because some CpGs have new names on EPIC v2. The run stops if less than `--min_reference_coverage` (default 90%) of a reference's CpGs are present. Use `--tissue other` for tissues without a blood reference.
 
 ## Epigenetic clocks
 

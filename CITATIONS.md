@@ -190,6 +190,14 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Luo Q, Dwaraka VB, Chen Q, et al. A meta-analysis of immune-cell fractions at high resolution reveals novel associations with common phenotypes and health outcomes. Genome Med. 2023;15:59.
 
+- [FlowSorted.Blood.EPIC and IDOL](https://doi.org/10.1186/s13059-018-1448-7)
+
+  > Salas LA, Koestler DC, Butler RA, et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biol. 2018;19:64.
+
+- [Houseman constrained projection (IDOL cross-check, EpiDISH method CP)](https://doi.org/10.1186/1471-2105-13-86)
+
+  > Houseman EA, Accomando WP, Koestler DC, et al. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics. 2012;13:86.
+
 ## DNA methylation biomarkers
 
 - [Horvath pan-tissue clock](https://doi.org/10.1186/gb-2013-14-10-r115)
@@ -365,14 +373,6 @@ These informed the design or are candidates for later versions. The pipeline doe
 - [Enhanced blood deconvolution reference](https://doi.org/10.1038/s41467-021-27864-7)
 
   > Salas LA, Zhang Z, Koestler DC, et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nat Commun. 2022;13:761.
-
-- [FlowSorted.Blood.EPIC and IDOL](https://doi.org/10.1186/s13059-018-1448-7)
-
-  > Salas LA, Koestler DC, Butler RA, et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biol. 2018;19:64.
-
-- [Houseman constrained projection](https://doi.org/10.1186/1471-2105-13-86)
-
-  > Houseman EA, Accomando WP, Koestler DC, et al. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics. 2012;13:86.
 
 - [methylCIPHER](https://doi.org/10.1101/2022.07.13.499978)
 

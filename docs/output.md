@@ -112,7 +112,9 @@ Only with `--tissue blood` (default).
   - `cent12_*`: EpiDISH RPC fractions for the 12 types of `cent12CT` (naive and memory B, CD4 T and CD8 T cells, regulatory T cells, NK cells, monocytes, neutrophils, eosinophils, basophils)
   - `dhs7_*`: fractions for the 7 types of `centDHSbloodDMC`, for comparison with earlier studies
   - `sum_cent12`, `sum_dhs7`: sum of the fractions of each reference
-- `cell_composition/cell_fractions_reference_coverage.tsv`: for each reference, the number of reference CpGs, the missing ones by reason (`sex_chromosome`: left out on purpose, because X inactivation can mimic a cell-type signal; `not_on_array`: not measured by EPIC v2; `removed_by_filter`: removed by the probe filter), the CpGs found and how many of them only through their EPIC v1 or 450K ID, the coverage of the autosomal reference CpGs, the missing values set to the CpG median, and the status (`ok`, or `warn` below 98%; the run stops below `--min_reference_coverage`).
+  - `idol_*` (not with `--skip_idol`): fractions of the six IDOL cell types (CD8T, CD4T, NK, Bcell, Mono, Neu), Houseman constrained projection
+- `cell_composition/cell_fractions_reference_coverage.tsv`: for each reference, the number of reference CpGs, the missing ones by reason (`sex_chromosome`: left out on purpose, because X inactivation can mimic a cell-type signal; `not_on_array`: not measured by EPIC v2; `removed_by_filter`: removed by the probe filter), the CpGs found and how many of them only through their EPIC v1 or 450K ID, the coverage of the autosomal reference CpGs, the missing values set to the CpG median, and the status (`ok`, or `warn` below 98%; the run stops below `--min_reference_coverage`, except for IDOL, which is then skipped with the status `fail: skipped`).
+- `cell_composition/cell_fractions_idol_agreement.tsv`: each cent12CT lineage against the matching IDOL cell type: Spearman rho and mean difference (lineage minus IDOL). Granulocytes include eosinophils and basophils, IDOL neutrophils do not.
 
 ### Methylation QTLs
 
