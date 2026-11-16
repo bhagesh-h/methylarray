@@ -38,7 +38,7 @@
                     {
                         "id": "biomarkers"
                     },
-                    "biomarkers_phenotypes.tsv:md5,4726d2adcf223c0ce8d31ffae27371a6"
+                    "biomarkers_phenotypes.tsv:md5,c36cd39d8d16f2e469655312a99bf5d0"
                 ]
             ],
             [
@@ -50,10 +50,18 @@
                 ]
             ],
             [
+                [
+                    {
+                        "id": "biomarkers"
+                    },
+                    "biomarkers_contamination.tsv:md5,a92ddabcf4dccc7b1cb2d630de0b2397"
+                ]
+            ],
+            [
                 "versions.yml:md5,fb3eefae1ceb2b6012eb2dda1c4d160d"
             ]
         ],
-        "timestamp": "2026-11-15T23:11:28.552737624",
+        "timestamp": "2026-11-16T13:43:06.070435409",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
@@ -111,9 +119,17 @@
                     ]
                 ],
                 "6": [
-                    
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_contamination.tsv:md5,bd80f2be4ca00d182a917b4b01789fb6"
+                    ]
                 ],
                 "7": [
+                    
+                ],
+                "8": [
                     "versions.yml:md5,2637a135f7af8c831915758762c98dd1"
                 ],
                 "agreement": [
@@ -148,6 +164,14 @@
                         "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c"
                     ]
                 ],
+                "contamination": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_contamination.tsv:md5,bd80f2be4ca00d182a917b4b01789fb6"
+                    ]
+                ],
                 "multiqc": [
                     
                 ],
@@ -172,7 +196,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T23:11:32.192431795",
+        "timestamp": "2026-11-16T13:43:13.5345893",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

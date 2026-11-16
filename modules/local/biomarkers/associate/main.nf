@@ -16,6 +16,7 @@ process BIOMARKERS_ASSOCIATE {
     tuple val(meta), path("${prefix}_batch.tsv")           , emit: batch
     tuple val(meta), path("${prefix}_phenotypes.tsv")      , emit: phenotypes
     tuple val(meta), path("${prefix}_quartiles.tsv")       , emit: quartiles
+    tuple val(meta), path("${prefix}_contamination.tsv")   , emit: contamination
     tuple val(meta), path("${prefix}_*_mqc.json")          , emit: multiqc, optional: true
     path "versions.yml", emit: versions, topic: versions
 
@@ -32,6 +33,7 @@ process BIOMARKERS_ASSOCIATE {
     printf 'measure\\tbatch\\tadj_r2\\tp\\tlevels\\tn\\n' > ${prefix}_batch.tsv
     printf 'measure\\ttrait\\ttype\\tversion\\testimate\\tp\\tn\\tq\\n' > ${prefix}_phenotypes.tsv
     printf 'measure\\ttrait\\ttype\\tgroup\\tvalue\\tmean_z\\tp_trend\\tq\\n' > ${prefix}_quartiles.tsv
+    printf 'measure\\trho\\tp\\tn\\tq\\tcutoff\\tarrays_above_cutoff\\n' > ${prefix}_contamination.tsv
     printf '"%s":\\n    R: stub\\n    jsonlite: stub\\n' "${task.process}" > versions.yml
     """
 }

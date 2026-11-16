@@ -1,7 +1,8 @@
 # Builds the simulated fixtures in this folder: 80 arrays (two failed sample QC)
 # with clocks, cell lineages, two DNA methylation scores and phenotypes. The
 # Horvath acceleration rises with BMI, metabolic syndrome is more common at high
-# BMI, and plate P3 shifts the Hannum acceleration. Random values.
+# BMI, plate P3 shifts the Hannum acceleration, and the SNP outlier score rises
+# with the Hannum acceleration. Random values.
 #   python3 make_fixture.py
 import random
 random.seed(11)
@@ -28,9 +29,15 @@ write("samples.tsv", ["sample", "plate", "sentrix_id", "sentrix_position", "repo
       lambda r: [r["sample"], r["plate"], r["chip"], r["pos"], "M" if r["men"] else "F", r["age"]])
 write("samples_no_age.tsv", ["sample", "plate", "sentrix_id", "sentrix_position", "reported_sex", "reported_age"],
       lambda r: [r["sample"], r["plate"], r["chip"], r["pos"], "M" if r["men"] else "F", ""])
+# SNP outlier scores from their own random stream (the other fixtures stay as they
+# were): they rise with the Hannum acceleration, and three arrays lie just
+# below the FAIL threshold of -4 (borderline contamination)
+snp_random = random.Random(5)
 with open("sample_qc.tsv", "w") as out:
-    out.write("sample\tstatus\n")
-    for i, r in enumerate(rows): out.write("%s\t%s\n" % (r["sample"], "FAIL" if i < 2 else "PASS"))
+    out.write("sample\tstatus\tsnp_outlier\n")
+    for i, r in enumerate(rows):
+        outlier = -4.2 if i in (10, 20, 30) else -5 + 0.04 * r["eaa_hn"] + snp_random.gauss(0, 0.08)
+        out.write("%s\t%s\t%.3f\n" % (r["sample"], "FAIL" if i < 2 else "PASS", outlier))
 write("clocks.tsv", ["sample", "age", "HorvathS2013", "HannumG2013", "DunedinPACE", "eaa_HorvathS2013", "eaa_HannumG2013"],
       lambda r: [r["sample"], r["age"], round(r["age"] + r["eaa_h"], 4), round(r["age"] + r["eaa_hn"], 4), round(r["pace"], 4), round(r["eaa_h"], 4), round(r["eaa_hn"], 4)])
 write("cell_fractions.tsv", ["sample", "lineage_B", "lineage_CD4T", "lineage_CD8T", "lineage_NK", "lineage_Mono", "lineage_Gran"],

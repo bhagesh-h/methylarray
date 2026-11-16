@@ -16,6 +16,10 @@
 #   - phenotypes: each acceleration and score against every phenotype, plain and
 #     with cells held: difference in SD of acceleration between the two groups of
 #     a binary phenotype (t-test), Spearman correlation for a continuous one
+#   - contamination: Spearman correlation of the ewastools SNP outlier score with
+#     each acceleration and score, and the phenotype associations again without
+#     the arrays above the median plus three MADs of the score (borderline
+#     contamination below the FAIL threshold), as the 'low contamination' version
 #   - quartile groups: bottom quarter (decelerated), middle half (normal) and top
 #     quarter (accelerated) of each acceleration, with the median (or percentage)
 #     of every characteristic per group and a trend test across the ordered
@@ -222,7 +226,30 @@ if (length(batches) > 0 && length(measures) > 0) {
 }
 write_tsv(round_table(batch), paste0(prefix, "_batch.tsv"))
 
-# Ageing measures against the phenotypes, plain and with cells held
+# Contamination: DNA from another person pulls beta values towards the middle
+# and can bias clocks. The SNP outlier score against every measure, and the
+# arrays above a robust cutoff among the analysed arrays
+snp_outlier <- if ("snp_outlier" %in% names(sample_qc)) {
+    suppressWarnings(as.numeric(sample_qc[["snp_outlier"]][match(data[["sample"]], sample_qc[["sample"]])]))
+} else rep(NA_real_, nrow(data))
+contamination <- empty(c("measure", "rho", "p", "n", "q", "cutoff", "arrays_above_cutoff"))
+above_cutoff <- rep(FALSE, nrow(data))
+if (sum(is.finite(snp_outlier)) >= min_n && length(measures) > 0) {
+    spread <- mad(snp_outlier, na.rm = TRUE)
+    cutoff <- median(snp_outlier, na.rm = TRUE) + 3 * spread
+    above_cutoff <- spread > 0 & is.finite(snp_outlier) & snp_outlier > cutoff
+    contamination <- do.call(rbind, lapply(names(measures), function(m) {
+        r <- spearman(snp_outlier, measures[[m]])
+        data.frame(measure = m, rho = r[["rho"]], p = r[["p"]], n = r[["n"]])
+    }))
+    contamination[["q"]] <- bh(contamination[["p"]])
+    contamination[["cutoff"]] <- cutoff
+    contamination[["arrays_above_cutoff"]] <- sum(above_cutoff)
+}
+write_tsv(round_table(contamination), paste0(prefix, "_contamination.tsv"))
+
+# Ageing measures against the phenotypes, plain, with cells held and without
+# the arrays above the contamination cutoff
 association <- function(a, trait) {
     a <- a / sd(a, na.rm = TRUE)
     x <- trait[["values"]]
@@ -237,6 +264,7 @@ association <- function(a, trait) {
     c(estimate = r[["rho"]], p = r[["p"]], n = r[["n"]])
 }
 versions <- list(plain = measures, `cells held` = measures_cells)
+if (any(above_cutoff)) versions[["low contamination"]] <- lapply(measures, function(a) replace(a, above_cutoff, NA))
 measure_traits <- empty(c("measure", "trait", "type", "version", "estimate", "p", "n", "q"))
 rows <- list()
 for (version in names(versions)) for (m in names(versions[[version]])) for (t in names(traits)) {
@@ -324,4 +352,14 @@ if (nrow(plain) > 0) {
     heatmap_json("biomarker_phenotypes", "Ageing measures and phenotypes",
                  "Each acceleration and score against every phenotype: Spearman correlation for continuous phenotypes, difference in SD of acceleration between the groups for binary ones. Tested values with q are in biomarkers_phenotypes.tsv.",
                  "Accelerations and scores against the phenotypes", measure_names, trait_names, values, paste0(prefix, "_phenotypes_mqc.json"))
+}
+if (nrow(contamination) > 0) {
+    write_json(list(id = "biomarker_contamination", section_name = "Contamination and ageing measures",
+                    description = paste0("Spearman correlation of the ewastools SNP outlier score (higher: more likely contaminated) with each acceleration and score, on the arrays that passed QC. ",
+                                         contamination[["arrays_above_cutoff"]][1], " arrays lie above the robust cutoff of ", signif(contamination[["cutoff"]][1], 3),
+                                         " (median plus three MADs); the phenotype associations without them are the 'low contamination' version in biomarkers_phenotypes.tsv."),
+                    plot_type = "table", pconfig = list(id = "biomarker_contamination_table", title = "Contamination against accelerations and scores"),
+                    data = setNames(lapply(seq_len(nrow(contamination)), function(i) list(rho = round(contamination[["rho"]][i], 3), q = signif(contamination[["q"]][i], 3),
+                                                                                         n = contamination[["n"]][i])), contamination[["measure"]])),
+               paste0(prefix, "_contamination_mqc.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA, na = "null")
 }

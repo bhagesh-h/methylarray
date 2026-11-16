@@ -245,8 +245,39 @@ if (nrow(pt) > 0) {
         print(ggplot(pt[trait == t], aes(estimate, measure, colour = version, shape = q < 0.05)) + geom_vline(xintercept = 0, colour = "grey60") +
             geom_point(size = 2.6, position = position_dodge(width = 0.6)) +
             scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), labels = c(`TRUE` = "q < 0.05", `FALSE` = "q >= 0.05")) +
-            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452")) +
+            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `low contamination` = "#55a868")) +
             labs(x = "Difference between the groups (SD)", y = NULL, colour = NULL, shape = NULL, title = paste0(t, ": every acceleration and score")))
+    }
+}
+```
+
+```{r contamination, results = "asis", fig.width = 11, fig.height = 7, eval = has("^biomarkers_contamination\\.tsv$") && !is.null(qc) && "snp_outlier" %in% names(qc)}
+ct <- read(find("^biomarkers_contamination\\.tsv$"))
+if (nrow(ct) > 0) {
+    heading("Contamination and the ageing measures")
+    cutoff <- ct[["cutoff"]][1]
+    threshold <- suppressWarnings(as.numeric(param("snp_outlier_threshold")))
+    cat(sprintf("DNA from another person pulls beta values towards the middle and can bias clocks. Arrays with a SNP outlier score above %s fail QC; among the analysed arrays, %d lie above the robust cutoff of %.2f (median plus three MADs). The phenotype associations without them are the 'low contamination' version in the tables and forest plots above. Correlations of the score with the measures at q < 0.05: %d of %d.\n\n",
+                param("snp_outlier_threshold"), ct[["arrays_above_cutoff"]][1], cutoff, sum(ct[["q"]] < 0.05, na.rm = TRUE), nrow(ct)))
+    print(kable(ct[, .(Measure = measure, `Spearman rho` = rho, q = signif(q, 3), Arrays = n)], caption = "SNP outlier score against the accelerations and scores"))
+    if (has("^clocks\\.tsv$")) {
+        cl <- read(find("^clocks\\.tsv$"))
+        main <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "PCGrimAge", "DunedinPACE"), names(cl))
+        long <- rbindlist(lapply(main, function(k) {
+            column <- if (paste0("eaa_", k) %in% names(cl)) paste0("eaa_", k) else k
+            data.table(sample = cl[["sample"]], panel = if (column == k) k else paste(k, "acceleration"), value = as.numeric(cl[[column]]))
+        }))
+        long <- merge(long, qc[, .(sample, snp_outlier, status)], by = "sample")[is.finite(value) & is.finite(snp_outlier)]
+        if (nrow(long) > 0) {
+            rho <- long[, .(label = sprintf("%s (rho %.2f)", panel[1], suppressWarnings(cor(snp_outlier, value, method = "spearman")))), by = panel]
+            long <- merge(long, rho, by = "panel")
+            print(ggplot(long, aes(snp_outlier, value)) + geom_point(aes(colour = status), size = 1, alpha = 0.6) +
+                geom_vline(xintercept = cutoff, linetype = 2, colour = "#dd8452") +
+                geom_vline(xintercept = threshold, linetype = 2, colour = "#c44e52") +
+                facet_wrap(~label, scales = "free_y") +
+                labs(x = "SNP outlier score (higher = more likely contaminated)", y = NULL, colour = "QC status",
+                     title = "Contamination against the main clocks", subtitle = "Orange line: robust cutoff of the analysed arrays; red line: FAIL threshold"))
+        }
     }
 }
 ```

@@ -1,0 +1,5 @@
+measure	rho	p	n	q	cutoff	arrays_above_cutoff
+HorvathS2013 acceleration	0.01206	0.9165	78	0.9165	-4.513	3
+HannumG2013 acceleration	0.7494	2.983e-15	78	1.193e-14	-4.513	3
+DunedinPACE acceleration	-0.06179	0.591	78	0.788	-4.513	3
+dnam_smoking	-0.1566	0.171	78	0.342	-4.513	3

@@ -10,8 +10,9 @@ nextflow_process {
     tag "biomarkers/associate"
 
     // Simulated data (make_fixture.py): 80 arrays, two failed sample QC; the
-    // Horvath acceleration rises with BMI and plate P3 shifts the Hannum
-    // acceleration
+    // Horvath acceleration rises with BMI, plate P3 shifts the Hannum
+    // acceleration, the SNP outlier score rises with the Hannum acceleration and
+    // three arrays have a borderline SNP outlier score
 
     test("clocks, scores, cells and phenotypes") {
 
@@ -39,6 +40,7 @@ nextflow_process {
             def phenotypes = read(process.out.phenotypes)
             def batch = read(process.out.batch)
             def quartiles = read(process.out.quartiles)
+            def contamination = read(process.out.contamination)
             assertAll(
                 { assert process.success },
                 // the three-level 'group' column is left out, 'mets' is binary
@@ -47,9 +49,13 @@ nextflow_process {
                 { assert batch.find { row -> row.measure == 'HannumG2013 acceleration' && row.batch == 'DNA plate' }.p as double < 0.05 },
                 { assert quartiles.find { row -> row.measure == 'HorvathS2013 acceleration' && row.trait == 'bmi' && row.group == 'accelerated' }.p_trend as double < 0.05 },
                 { assert read(process.out.agreement).size() == 6 },
-                { assert process.out.multiqc[0][1].size() == 3 },
+                // contamination: the planted correlation, three arrays above the cutoff, left out of the 'low contamination' version
+                { assert contamination.find { row -> row.measure == 'HannumG2013 acceleration' }.q as double < 0.05 },
+                { assert contamination.every { row -> row.arrays_above_cutoff == '3' } },
+                { assert phenotypes.findAll { row -> row.version == 'low contamination' && row.trait == 'bmi' }.every { row -> row.n == '75' } },
+                { assert process.out.multiqc[0][1].size() == 4 },
                 { assert snapshot(process.out.agreement, process.out.cells_measures, process.out.cells_phenotypes, process.out.batch,
-                                  process.out.phenotypes, process.out.quartiles, process.out.versions).match() }
+                                  process.out.phenotypes, process.out.quartiles, process.out.contamination, process.out.versions).match() }
             )
         }
     }

@@ -142,7 +142,7 @@ workflow METHYLARRAY {
         ch_multiqc_files = ch_multiqc_files.mix(BIOMARKERS_ASSOCIATE.out.multiqc.map { _meta, files -> files }.flatten())
         def ch_biomarker_tables = BIOMARKERS_ASSOCIATE.out.agreement
             .mix(BIOMARKERS_ASSOCIATE.out.cells_measures, BIOMARKERS_ASSOCIATE.out.cells_phenotypes, BIOMARKERS_ASSOCIATE.out.batch,
-                BIOMARKERS_ASSOCIATE.out.phenotypes, BIOMARKERS_ASSOCIATE.out.quartiles)
+                BIOMARKERS_ASSOCIATE.out.phenotypes, BIOMARKERS_ASSOCIATE.out.quartiles, BIOMARKERS_ASSOCIATE.out.contamination)
             .map { _meta, f -> f }
         ch_report_files = ch_report_files.mix(ch_biomarker_tables)
     }
