@@ -284,6 +284,12 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Suderman M, Staley JR, French R, Arathimos R, Simpkin A, Tilling K. dmrff: identifying differentially methylated regions efficiently with power and control. bioRxiv. 2018.
 
+- [KnowYourCG](https://doi.org/10.1126/sciadv.adw3027)
+
+  > Goldberg DC, Fu H, Atkins D, Moyer E, Lee CN, Deng Y, Zhou W. KnowYourCG: facilitating base-level sparse methylome interpretation. Sci Adv. 2025;11(43).
+
+  The EPIC v2 knowledgebases are ExperimentHub records EH8068 to EH8075 (sesameData).
+
 - [missMethyl](https://doi.org/10.1093/bioinformatics/btv560)
 
   > Phipson B, Maksimovic J, Oshlack A. missMethyl: an R package for analyzing data from Illumina's HumanMethylation450 platform. Bioinformatics. 2016;32(2):286-288.

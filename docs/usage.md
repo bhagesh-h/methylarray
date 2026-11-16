@@ -292,6 +292,8 @@ For every tested model, the CpGs at FDR < 0.05 are tested for enrichment against
 | `--enrichment_min_hits`    | `10`                      | Minimum number of CpGs at FDR < 0.05 for a contrast to be tested         |
 | `--skip_enrichment`        | `false`                   | Skip enrichment for every model (`skip_enrichment: true` for one model)  |
 
+The same significant CpGs are also tested for genomic context with KnowYourCG: all of them, and separately those with higher and those with lower methylation (sign of `delta_beta`), against all tested CpGs, in the knowledgebases of `--kycg_databases` (EPIC v2: chromatin states, transcription factor binding sites, histone marks, CTCF binding, A/B compartments, imprinting DMRs, gene features). CpGs are matched to the probe IDs of the knowledgebases through the probe annotation. Fisher's exact test gives a log2 odds ratio and P, with the FDR within each knowledgebase. The knowledgebases are downloaded from ExperimentHub once per run (about 200 MB with TFBS); keep them with `--save_reference` and pass `--kycg_cache references/kycg_cache` for runs without network access. `--skip_kycg` turns it off.
+
 ## DNA methylation scores
 
 Scores are weighted sums of the beta values of published CpG sets, computed like the clocks on the detection-masked beta values of the arrays that passed QC: smoking, alcohol and BMI (McCartney et al. 2018; 233, 450 and 1,109 CpGs) and IL-6 (Stevenson et al. 2021; 35 CpGs). The weights are stored in `assets/dnam_scores` with their sources and licences. Select scores with `--dnam_scores` or skip them with `--skip_dnam_scores`. The smoking score (`dnam_smoking`) is the `@smoking` model covariate.

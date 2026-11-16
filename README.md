@@ -67,6 +67,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
    - a study-wide threshold across models from the effective number of independent tests (Meff)
    - differentially methylated regions with [DMRcate](https://bioconductor.org/packages/DMRcate/) and [dmrff](https://github.com/perishky/dmrff), and their consensus
    - gene set enrichment with [missMethyl](https://bioconductor.org/packages/missMethyl/): GO, KEGG (downloaded at run time) and MSigDB collections
+   - genomic context enrichment with [KnowYourCG](https://bioconductor.org/packages/knowYourCG/): chromatin states, transcription factor binding sites, histone marks and other features
 10. Optionally write GEO submission files (`--export_geo`).
 11. Build a [MultiQC](https://seqera.io/multiqc/) report and an HTML analysis report with [Quarto](https://quarto.org/), including a methods text with references.
 

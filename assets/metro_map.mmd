@@ -84,12 +84,14 @@ graph LR
         go[GO]
         kegg[KEGG]
         msigdb[MSigDB]
+        kycg[KnowYourCG]
 
-        dmrcate -->|minfi,sesame,enmix,combined| missmethyl
+        dmrcate -->|minfi,sesame,enmix,combined| dmrff
         dmrff -->|minfi,sesame,enmix,combined| missmethyl
         missmethyl -->|minfi,sesame,enmix,combined| go
-        missmethyl -->|minfi,sesame,enmix,combined| kegg
-        missmethyl -->|minfi,sesame,enmix,combined| msigdb
+        go -->|minfi,sesame,enmix,combined| kegg
+        kegg -->|minfi,sesame,enmix,combined| msigdb
+        msigdb -->|minfi,sesame,enmix,combined| kycg
     end
 
     subgraph report [Report]
@@ -110,7 +112,5 @@ graph LR
     masks -->|minfi,sesame,enmix,combined| epidish
     ancestry -->|minfi,sesame,enmix,combined| limma
     bacon -->|minfi,sesame,enmix,combined| dmrcate
-    bacon -->|minfi,sesame,enmix,combined| dmrff
-    go -->|minfi,sesame,enmix,combined| multiqc
-    kegg -->|minfi,sesame,enmix,combined| quarto
-    msigdb -->|minfi,sesame,enmix,combined| quarto
+    kycg -->|minfi,sesame,enmix,combined| multiqc
+    kycg -->|minfi,sesame,enmix,combined| quarto

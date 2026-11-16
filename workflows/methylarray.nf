@@ -201,9 +201,9 @@ workflow METHYLARRAY {
     // SUBWORKFLOW: Gene set enrichment of every model
     //
     if (!params.skip_enrichment) {
-        ENRICHMENT(EWAS.out.stats, EWAS.out.resolved, params.gene_set_gmts)
-        ch_report_files = ch_report_files.mix(ENRICHMENT.out.enrichment.map { _meta, f -> f })
-        ch_multiqc_files = ch_multiqc_files.mix(ENRICHMENT.out.multiqc.map { _meta, f -> f })
+        ENRICHMENT(EWAS.out.stats, EWAS.out.resolved, params.gene_set_gmts, PROBE_FILTER.out.annotation, params.skip_kycg, params.kycg_cache, params.platform)
+        ch_report_files = ch_report_files.mix(ENRICHMENT.out.enrichment.map { _meta, f -> f }, ENRICHMENT.out.kycg.map { _meta, f -> f })
+        ch_multiqc_files = ch_multiqc_files.mix(ENRICHMENT.out.multiqc.map { _meta, f -> f }, ENRICHMENT.out.kycg_mqc.map { _meta, f -> f })
     }
 
     //

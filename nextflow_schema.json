@@ -457,7 +457,7 @@
             "title": "Enrichment options",
             "type": "object",
             "fa_icon": "fas fa-sitemap",
-            "description": "Gene set enrichment of the significant CpGs with missMethyl.",
+            "description": "Gene set enrichment (missMethyl) and genomic context enrichment (KnowYourCG) of the significant CpGs.",
             "properties": {
                 "skip_enrichment": {
                     "type": "boolean",
@@ -478,6 +478,26 @@
                     "description": "missMethyl gometh collections: `GO`, `KEGG`, both, or `none`.",
                     "help_text": "GO uses the org.Hs.eg.db and GO.db packages in the container. KEGG pathways are downloaded from the KEGG REST service at run time; without network access the KEGG test is recorded as not run and the other collections still run.",
                     "fa_icon": "fas fa-list"
+                },
+                "skip_kycg": {
+                    "type": "boolean",
+                    "description": "Skip the KnowYourCG genomic context enrichment.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "kycg_databases": {
+                    "type": "string",
+                    "default": "ChromHMM,TFBS,HM,CTCFbind,ABCompartment,ImprintingDMR,MetagenePC",
+                    "pattern": "^[A-Za-z0-9]+(,[A-Za-z0-9]+)*$",
+                    "description": "Comma-separated KnowYourCG knowledgebases of the platform.",
+                    "help_text": "EPIC v2: ChromHMM (chromatin states), TFBS (transcription factor binding sites, about 170 MB), HM (histone marks), CTCFbind, ABCompartment, ImprintingDMR and MetagenePC (gene features). They are downloaded from ExperimentHub once per run, or staged from `--kycg_cache`.",
+                    "fa_icon": "fas fa-database"
+                },
+                "kycg_cache": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "description": "KnowYourCG cache directory from an earlier run (`references/kycg_cache` with `--save_reference`), for runs without network access.",
+                    "fa_icon": "fas fa-folder-open"
                 },
                 "gene_set_gmts": {
                     "type": "string",

@@ -26,6 +26,10 @@
                     "SummarizedExperiment": "stub",
                     "data.table": "stub"
                 },
+                "ENRICHMENT_KYCG": {
+                    "ExperimentHub": "stub",
+                    "knowYourCG": "stub"
+                },
                 "ENRICHMENT_MISSMETHYL": {
                     "GO.db": "stub",
                     "missMethyl": "stub",
@@ -56,6 +60,10 @@
                 "EXPORT_GEO": {
                     "data.table": "stub",
                     "minfi": "stub"
+                },
+                "KYCG_CACHE": {
+                    "ExperimentHub": "stub",
+                    "knowYourCG": "stub"
                 },
                 "MINFI_PREPROCESS": {
                     "ENmix": "stub",
@@ -123,6 +131,8 @@
                 "enrichment/age",
                 "enrichment/age/enrichment_age.tsv",
                 "enrichment/age/enrichment_age_summary.json",
+                "enrichment/age/kycg_age.tsv",
+                "enrichment/age/kycg_age_summary.json",
                 "ewas",
                 "ewas/age",
                 "ewas/age/ewas_age_design_check.tsv",
@@ -211,6 +221,8 @@
                 "dnam_scores_weights.tsv:md5,fecf0ab9f6eeaa7491a856e65e23c97d",
                 "enrichment_age.tsv:md5,adbf0efb474ed273fc10b48b133a9c58",
                 "enrichment_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
+                "kycg_age.tsv:md5,4fee914ae8a93b3e6ab27a44872a64b0",
+                "kycg_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
                 "ewas_age_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_age_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11",
                 "ewas_age_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -247,7 +259,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-16T14:17:46.514071088",
+        "timestamp": "2026-11-16T14:39:04.93899475",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

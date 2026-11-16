@@ -17,7 +17,7 @@ The directories listed below will be created in the results directory after the 
 - [Exploratory analysis](#exploratory-analysis): control-probe PCs, PCA of the methylation data and its associations with technical and biological variables
 - [Association models](#association-models): epigenome-wide association results per model of `--models`
 - [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
-- [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment of the significant CpGs per model
+- [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment, and KnowYourCG genomic context enrichment, of the significant CpGs per model
 - [DNA methylation scores](#dna-methylation-scores): smoking, alcohol, BMI and IL-6 scores per array
 - [Clocks, scores and cell fractions](#clocks-scores-and-cell-fractions): their agreement, their relation to the cell fractions, the batches and the phenotypes, and quartile groups of acceleration
 - [GEO submission files](#geo-submission-files): processed matrix, signal intensities and a sample table, when `--export_geo` is set
@@ -162,6 +162,8 @@ Only with `--models`, and not with `--skip_dmr`. Every model gets a folder; for 
 Only with `--models`, and not with `--skip_enrichment`. Every model gets a folder; for a model that was not tested or has `skip_enrichment: true` the table is empty and the summary says why.
 
 - `enrichment/<model>/enrichment_<model>.tsv`: one row per collection, contrast and gene set: `collection` (`GO`, `KEGG`, or the GMT file name such as `h.all.v2025.1.Hs`), `set` (GO or KEGG identifier, or gene set name), `term`, `ontology` (GO only: BP, CC, MF), `n` (genes in the set), `de` (genes with a significant CpG, weighted for CpGs in several genes), `p_value` and `fdr`, sorted by P.
+- `enrichment/<model>/kycg_<model>.tsv` (not with `--skip_kycg`): KnowYourCG genomic context enrichment, one row per contrast, query (`all`, `higher`, `lower` methylation), knowledgebase (`database`) and feature (`set`): `log2_or` (log2 odds ratio; `Inf` or `-Inf` when every or no query probe is in the set), `p_value`, `fdr` (within the knowledgebase), `overlap` (query probes in the set), `query_probes`, `set_probes`.
+- `enrichment/<model>/kycg_<model>_summary.json`: significant and tested CpGs per contrast and whether each query ran.
 - `enrichment/<model>/enrichment_<model>_summary.json`: significant and tested CpGs per contrast, whether enrichment ran, and why a collection did not run (for example KEGG without network access).
 
 ### DNA methylation scores
@@ -201,6 +203,7 @@ Columns are named after the samplesheet sample names. Rename them before submiss
   - `probe_annotation.tsv.gz`: one row per probe with the Peters et al. 2024 manifest columns and the Zhou mask flags used by the probe filter. Pass it to `--probe_annotation` to skip building it.
   - `probe_annotation_summary.tsv`, `probe_annotation_resources.tsv`: probes per flag, and the source files with their MD5 checksums.
   - `sesame_cache/` (`sesame` and `combined` routes): ExperimentHub cache with the sesameData resources for the platform. Pass it to `--sesame_cache` to run without network access.
+  - `kycg_cache/` and `kycg_resources.tsv` (with models, not with `--skip_kycg`): the KnowYourCG knowledgebases in an ExperimentHub cache, and their ExperimentHub IDs and MD5 checksums. Pass the folder to `--kycg_cache` for runs without network access.
   - `sesame_resources.tsv` (`sesame` and `combined` routes): title, ExperimentHub ID, cached file and MD5 checksum of each resource.
 
 ### Analysis report

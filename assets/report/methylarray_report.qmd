@@ -454,6 +454,29 @@ for (file in setdiff(find("^enrichment_.*\\.tsv$"), find("_summary"))) {
 }
 ```
 
+```{r kycg, results = "asis", fig.width = 12, fig.height = 8, eval = has("^kycg_.*\\.tsv$")}
+heading("Genomic context enrichment")
+cat("KnowYourCG: are the significant CpGs (all, and those with higher or lower methylation) over-represented in chromatin states, transcription factor binding sites, histone marks and other genomic features, against all tested CpGs? Fisher's exact test; log2 odds ratio; FDR within each knowledgebase.\n\n")
+for (file in setdiff(find("^kycg_.*\\.tsv$"), find("_summary"))) {
+    model <- model_of(file, "kycg_", "\\.tsv")
+    table <- read(file)
+    if (nrow(table) == 0) next
+    top <- table[log2_or > 0][order(p_value), head(.SD, 8), by = .(contrast, query)]
+    if (nrow(top) == 0) next
+    top[, key := factor(paste(contrast, query, database, set, sep = "__"), levels = rev(unique(paste(contrast, query, database, set, sep = "__"))))]
+    top[, shown := pmin(log2_or, 8)]
+    print(ggplot(top, aes(shown, key, size = overlap, colour = -log10(pmax(fdr, 1e-300)))) + geom_point() +
+        scale_y_discrete(labels = function(x) sub("^[^_]*__[^_]*__", "", x)) +
+        scale_colour_gradient(low = "grey60", high = "#c44e52") +
+        facet_wrap(~ paste(contrast, query, sep = ": "), scales = "free_y", ncol = 3) + theme(axis.text.y = element_text(size = 7)) +
+        labs(x = "log2 odds ratio (capped at 8)", y = NULL, size = "Overlap", colour = "-log10 FDR",
+             title = paste0(model, ": the 8 most enriched sets per query")))
+    print(kable(head(table[fdr < 0.05 & log2_or > 0][order(p_value), .(Contrast = contrast, Query = query, Database = database, Set = set,
+                                                                     `Log2 OR` = round(log2_or, 2), Overlap = overlap, FDR = signif(fdr, 3))], 15),
+                caption = paste0(model, ": enriched sets at FDR < 0.05")))
+}
+```
+
 # Methods
 
 ```{r methods, results = "asis", eval = has("^methods_description_mqc\\.yaml$")}

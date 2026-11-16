@@ -1,0 +1,6 @@
+{
+    "model": { "name": "score", "trait": "score", "trait_type": "continuous", "skip_enrichment": false },
+    "covariates": [],
+    "n": 40,
+    "dropped": []
+}
