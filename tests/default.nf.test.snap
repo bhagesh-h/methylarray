@@ -49,7 +49,7 @@
                     "R": "4.5.3"
                 },
                 "Workflow": {
-                    "bhagesh-h/methylarray": "v1.0.0dev"
+                    "bhagesh-h/methylarray": "v1.0.0"
                 }
             },
             [
