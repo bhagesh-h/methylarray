@@ -212,12 +212,12 @@
                 "ancestry_pcs_associations.tsv:md5,26542c75c72d43e960aab98f33cfb9d8",
                 "ancestry_pcs_summary.tsv:md5,8de11af72fdcc2a15984b2f48056324c",
                 "ancestry_pcs_variance.tsv:md5,51b0e4e831c09953be63b0ecc7ba8340",
-                "pca_associations.tsv:md5,17631254004845a2073ff16fdc384fc9",
+                "pca_associations.tsv:md5,f701cf81c08473016c79a5d88ac58002",
                 "pca_ctrl_pca_variance.tsv:md5,07795144a3a8f98882c2f26b672f28c9",
                 "pca_ctrl_pcs.tsv:md5,1c4434415ef7374778930d76ef3ac785",
-                "pca_outliers.tsv:md5,12339f2f8cac80fee19bb11a80e21f5f",
-                "pca_scores.tsv:md5,0c62d7c6e16394c9ababb0cfcc1422bb",
-                "pca_variance.tsv:md5,d8b5f2de743b49d461af9b52b71ea860",
+                "pca_outliers.tsv:md5,3cf99426f79b10737876d7be6610492e",
+                "pca_scores.tsv:md5,7084aab22117aea6f2e4245d85c679c0",
+                "pca_variance.tsv:md5,2c57b123a2de3d52b7e184e46c2a581d",
                 "variance_partition.tsv.gz:md5,57f152c40ee6512f57f0c0a987ed883c",
                 "variance_partition_summary.tsv:md5,2bf85d32bd2d6b86fdb20dd935b5efbe",
                 "multiqc_cell_fractions_plot.txt:md5,0ae9e09b8bb2126f4aafa3a7619cee9f",
@@ -225,9 +225,9 @@
                 "multiqc_clock_coverage.txt:md5,b0e84236a9fb9a73cfc9f0aeb38b26f1",
                 "multiqc_dnam_scores_coverage.txt:md5,89f2bee3f5f4ec6f2029d43f3bc3d067",
                 "multiqc_general_stats.txt:md5,4d2448c93dd797b6dcd62dd199ef2ad6",
-                "multiqc_pca_associations_plot.txt:md5,6d8a528d34c811241e9e87c7ba025c63",
-                "multiqc_pca_scatter_plot.txt:md5,2c1af20088668216a7239a2e6f3c1105",
-                "multiqc_pca_scree_plot.txt:md5,289b37e6e59d1c9bccbe0aef324126e3",
+                "multiqc_pca_associations_plot.txt:md5,bc85ed355822ef131b402f46098ea947",
+                "multiqc_pca_scatter_plot.txt:md5,08a9912e449550784c8fd3f3867a1378",
+                "multiqc_pca_scree_plot.txt:md5,79593d50ad670fd8761846410917a760",
                 "multiqc_probe_attrition_plot.txt:md5,0cafd1689ba4efd85f7715d0448dd4a3",
                 "multiqc_sample_qc_sex_plot.txt:md5,3958dad932ec2f8d973b220a49899fb8",
                 "multiqc_sample_qc_status.txt:md5,87e94e0e4d0f878e26dbc3685ee8e709",
@@ -247,7 +247,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-16T16:25:51.005724649",
+        "timestamp": "2026-11-16T19:31:38.68235067",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

@@ -5,13 +5,20 @@
 #     intensities of the non-negative control probes in both channels; the
 #     number kept is --n_ctrl_pcs, or with 'auto' the smallest number that
 #     explains at least 90% of the variance (at most 20)
-#   - PCA of the --n_variable_cpgs most variable CpGs (M-values; missing values
-#     set to the CpG mean for the PCA only); --n_pcs, or with 'auto' the
-#     random matrix theory estimate of isva::EstDimRMT (at most 20)
+#   - PCA of the --n_variable_cpgs most variable CpGs on the M-value scale
+#     (missing values set to the CpG mean for the PCA only); --n_pcs, or with
+#     'auto' the random matrix theory estimate of isva::EstDimRMT (at most 20).
+#     The CpGs are ranked by the variance of their beta values: ranked by
+#     M-value variance, the selection fills with CpGs near 0 or 1, where small
+#     beta differences become large M-value differences (in a 388-array run,
+#     22% of the selected CpGs had a mean beta below 0.1 or above 0.9 against
+#     0.6% when ranked by beta)
 #   - association of each PC with technical and biological variables (and the
 #     Illumina control metrics of ewastools when the QC table has them): linear
 #     regression for numeric variables, Kruskal-Wallis for categorical ones,
-#     with R-squared from the linear model
+#     with R-squared and adjusted R-squared from the linear model (a variable
+#     with many levels, such as the BeadChip, has a high R-squared by chance;
+#     the adjusted value corrects for the number of levels)
 #   - outlier flags (report only, no array is removed): robust Mahalanobis
 #     distance on PC1 and PC2, each centred on its median and scaled by its MAD
 #     (the PCs are uncorrelated), flagged above the chi-square (2 df) 0.999
@@ -89,7 +96,8 @@ fwrite(ctrl_variance, paste0(prefix, "_ctrl_pca_variance.tsv"), sep = "\\t")
 
 # PCA of the most variable CpGs
 mvalue <- as.matrix(assay(se, "mvalue"))
-variances <- apply(mvalue, 1, var, na.rm = TRUE)
+# beta = 2^M / (1 + 2^M), the inverse of the M-value transform
+variances <- matrixStats::rowVars(2^mvalue / (1 + 2^mvalue), na.rm = TRUE)
 top <- order(variances, decreasing = TRUE)[seq_len(min(n_variable, sum(is.finite(variances))))]
 x <- mvalue[top, , drop = FALSE]
 rm(mvalue)
@@ -171,7 +179,8 @@ associations <- rbindlist(lapply(names(variables), function(name) {
             test <- "Kruskal-Wallis"
         }
         data.table(variable = name, group = variables[[name]][["group"]], pc = paste0("PC", i), test = test,
-                   n = sum(keep), r_squared = round(fit[["r.squared"]], 4), p_value = signif(unname(p), 4))
+                   n = sum(keep), r_squared = round(fit[["r.squared"]], 4),
+                   adj_r_squared = round(fit[["adj.r.squared"]], 4), p_value = signif(unname(p), 4))
     }))
 }))
 fwrite(associations, paste0(prefix, "_associations.tsv"), sep = "\\t")

@@ -415,13 +415,14 @@ if (nrow(associations) > 0) {
     pcs <- unique(associations[["pc"]])
     pcs <- pcs[order(as.integer(sub("^PC", "", pcs)))]
     associations[, pc := factor(pc, levels = pcs)]
-    print(ggplot(associations, aes(pc, variable, fill = pmax(r_squared, 0))) + geom_tile(colour = "white") +
-        geom_text(aes(label = ifelse(p_value < 0.001, sprintf("%.2f", r_squared), "")), size = 2.6) +
+    if (!"adj_r_squared" %in% names(associations)) associations[, adj_r_squared := r_squared]
+    print(ggplot(associations, aes(pc, variable, fill = pmax(adj_r_squared, 0))) + geom_tile(colour = "white") +
+        geom_text(aes(label = ifelse(p_value < 0.001, sprintf("%.2f", adj_r_squared), "")), size = 2.6) +
         scale_fill_gradient(low = "white", high = "#c44e52", limits = c(0, NA)) +
         scale_x_discrete(labels = function(x) sprintf("%s\n%.1f%%", x, 100 * shares[x])) +
         facet_grid(group ~ ., scales = "free_y", space = "free_y") + theme(strip.text.y = element_text(angle = 0), axis.text.y = element_text(size = 7)) +
-        labs(x = NULL, y = NULL, fill = "R-squared", title = "What the main axes of methylation variation follow",
-             subtitle = "R-squared of each variable for each principal component; numbers where P < 0.001\nUnder each PC: its share of the variance"))
+        labs(x = NULL, y = NULL, fill = "Adjusted\nR-squared", title = "What the main axes of methylation variation follow",
+             subtitle = "Adjusted R-squared of each variable for each principal component (corrected for the number of levels); numbers where P < 0.001\nUnder each PC: its share of the variance"))
 }
 if (has("^pca_outliers\\.tsv$")) {
     outliers <- read(find("^pca_outliers\\.tsv$"))
