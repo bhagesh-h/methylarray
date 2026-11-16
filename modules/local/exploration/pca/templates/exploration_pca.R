@@ -8,7 +8,8 @@
 #   - PCA of the --n_variable_cpgs most variable CpGs (M-values; missing values
 #     set to the CpG mean for the PCA only); --n_pcs, or with 'auto' the
 #     random matrix theory estimate of isva::EstDimRMT (at most 20)
-#   - association of each PC with technical and biological variables: linear
+#   - association of each PC with technical and biological variables (and the
+#     Illumina control metrics of ewastools when the QC table has them): linear
 #     regression for numeric variables, Kruskal-Wallis for categorical ones,
 #     with R-squared from the linear model
 #   - outlier flags (report only, no array is removed): robust Mahalanobis
@@ -127,6 +128,9 @@ for (column in c("plate", "batch", "sentrix_id", "sentrix_row")) {
 }
 if ("frac_detected" %in% names(sample_qc)) add("frac_detected", as.numeric(sample_qc[["frac_detected"]]), "technical")
 for (column in setdiff(names(ctrl_scores), "sample")) add(column, ctrl_scores[[column]], "technical")
+# The Illumina BeadArray control metrics of ewastools (as ChAMP's champ.SVD does
+# with the internal controls)
+for (column in grep("^ctrl_", names(sample_qc), value = TRUE)) add(sub("^ctrl_", "control: ", column), suppressWarnings(as.numeric(sample_qc[[column]])), "control metrics")
 sex_column <- grep("^predicted_sex_", names(sample_qc), value = TRUE)[1]
 if (!is.na(sex_column)) add("predicted_sex", as.character(sample_qc[[sex_column]]), "biological")
 if ("reported_age" %in% names(samples)) add("age", suppressWarnings(as.numeric(samples[["reported_age"]])), "biological")

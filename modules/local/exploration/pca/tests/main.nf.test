@@ -42,7 +42,8 @@ nextflow_process {
                 // auto rule: the smallest number of control-probe PCs explaining at least 90% of the variance
                 { assert ctrl[0].split('\t') as List == ['sample', 'ctrl_PC1', 'ctrl_PC2', 'ctrl_PC3'] && ctrl.size() == 7 },
                 // every variable group is tested, including the phenotype columns
-                { assert rows.collect { row -> row.group }.unique().sort() == ['biological', 'phenotype', 'technical'] },
+                { assert rows.collect { row -> row.group }.unique().sort() == ['biological', 'control metrics', 'phenotype', 'technical'] },
+                { assert rows.collect { row -> row.variable }.contains('control: bisulfite_conversion_ii') },
                 { assert rows.collect { row -> row.variable }.containsAll(['batch', 'frac_detected', 'ctrl_PC1', 'predicted_sex', 'age', 'Gran', 'score', 'group']) },
                 // PC1 separates the two GEO studies (batch) in this test set
                 { assert rows.find { row -> row.variable == 'batch' && row.pc == 'PC1' }.r_squared as double > 0.9 },
@@ -77,7 +78,7 @@ nextflow_process {
             assertAll(
                 { assert process.success },
                 { assert path(process.out.ctrl_pcs[0][1]).readLines()[0] == 'sample' },
-                { assert assoc.drop(1).every { row -> row[1] in ['technical', 'biological'] } }
+                { assert assoc.drop(1).every { row -> row[1] in ['technical', 'biological', 'control metrics'] } }
             )
         }
     }

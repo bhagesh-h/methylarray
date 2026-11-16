@@ -74,6 +74,7 @@ Rows are probes (EPIC v2 probe IDs such as `cg00000029_TC21`; `rowData(se)$cpg_i
   - `relatives`: arrays called identical or first-degree relatives from the SNP genotypes (see `ewastools_relatedness.tsv.gz`); reported only, the status is set by the identity conflicts
   - `inferred_donor`: donor number from the SNP genotypes; technical replicates share a number
   - `replicate_group`, `failed_controls`
+  - `ctrl_*` (with ewastools): the 21 Illumina BeadArray Controls Reporter metrics, also tested against the principal components
 - `qc/sample_qc_retained.txt`: the arrays with status `PASS` or `FLAG`, one per line. Later steps use these arrays.
 - `qc/ewastools/` (not with `--skip_ewastools`)
   - `ewastools_qc.tsv`: per array, the 21 Illumina BeadArray Controls Reporter metrics (`ctrl_*`), the metrics below Illumina's thresholds (`failed_controls`), X and Y intensities, the ewastools sex prediction, the SNP outlier score, the number of SNP probes, the inferred donor, whether the array is part of an identity conflict, and its related arrays (`relatives`, for example `B (identical); C (first-degree)`).
@@ -140,7 +141,7 @@ Not with `--skip_clocks`.
 - `exploration/pca_outliers.tsv`: per array the robust Mahalanobis distance on PC1 and PC2 (each centred on its median and scaled by its MAD) and `pca_outlier` (`TRUE` above the chi-square 0.999 quantile with 2 degrees of freedom). Report only: flagged arrays stay in the analysis. Needs at least 5 arrays.
 - `exploration/variance_partition.tsv.gz` (not with `--skip_variance_partition`): for each of the `--variance_partition_cpgs` most variable CpGs, the percentage of its variance explained by each variable and the residual.
 - `exploration/variance_partition_summary.tsv`: per variable, its effect type (random or fixed), the median, mean and 90th percentile of the percentage over the CpGs, the CpGs above 10%, the arrays and CpGs used, and the model formula; a `note` says why it did not run (fewer than 10 arrays with complete variables).
-- `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
+- `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `control metrics`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Control metrics: the Illumina BeadArray Controls Reporter metrics of ewastools (`control: <metric>`), as ChAMP's `champ.SVD` does with the internal controls. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
 
 The MultiQC report shows the associations as a heatmap of -log10 P, the variance per component, and PC1 against PC2 coloured by predicted sex.
 
