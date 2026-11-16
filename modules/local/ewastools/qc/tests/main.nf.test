@@ -10,7 +10,8 @@ nextflow_process {
     tag "ewastools/qc"
 
     // Two public EPIC v2 whole-blood arrays (GEO GSE286313) from different donors:
-    // one female, one male
+    // one female, one male. The female array is listed twice, as a repeat in the
+    // same replicate group, so the relatedness check sees an identical pair
 
     test("control metrics, sex and SNP genotypes") {
 
@@ -35,24 +36,36 @@ nextflow_process {
         then {
             def qc = path(process.out.qc[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
             def rows = qc.drop(1).collect { values -> [qc[0], values].transpose().collectEntries() }
+            def rel = path(process.out.relatedness[0][1]).linesGzip.collect { line -> line.split('\t', -1) as List }
+            def pairs = rel.drop(1).collect { values -> [rel[0], values].transpose().collectEntries() }
+            def summary = path(process.out.relatedness_summary[0][1]).readLines().drop(1).collectEntries { line -> line.split('\t') as List }
             assertAll(
                 { assert process.success },
-                { assert rows.collect { row -> row.sample } == ['BeCOME_1', 'CALERIE_1'] },
+                { assert rows.collect { row -> row.sample } == ['BeCOME_1', 'BeCOME_1_repeat', 'CALERIE_1'] },
                 { assert rows.every { row -> row.platform == 'EPICv2' } },
                 // the non-polymorphic controls pass once the dark EPIC v2 'NP (G) n' probes are left out
                 { assert rows.every { row -> (row.ctrl_non_polymorphic_green as double) > 5 } },
                 // BeCOME_1 misses one background ratio (0.88 against Illumina's threshold of 1)
-                { assert rows.collect { row -> row.failed_controls } == ['Bisulfite Conversion II (Bkg)', ''] },
-                { assert rows.collect { row -> row.predicted_sex } == ['female', 'male'] },
+                { assert rows.collect { row -> row.failed_controls } == ['Bisulfite Conversion II (Bkg)', 'Bisulfite Conversion II (Bkg)', ''] },
+                { assert rows.collect { row -> row.predicted_sex } == ['female', 'female', 'male'] },
                 // clean arrays score well below the contamination threshold of -4
                 { assert rows.every { row -> (row.snp_outlier as double) < -4 } },
-                // different donors: two inferred donors and no identity conflict
+                // two donors: two inferred donors, and no identity conflict since the repeat is expected
                 { assert rows.collect { row -> row.inferred_donor }.unique().size() == 2 },
                 { assert rows.every { row -> row.identity_conflict == 'FALSE' } },
                 { assert path(process.out.conflicts[0][1]).readLines().size() == 1 },
+                // relatedness: the repeat pair is identical, the pairs across donors unrelated
+                { assert pairs.collect { row -> [row.sample1, row.sample2, row.relation, row.expected_same_donor] } == [
+                    ['BeCOME_1', 'BeCOME_1_repeat', 'identical', 'TRUE'],
+                    ['BeCOME_1', 'CALERIE_1', 'unrelated', 'FALSE'],
+                    ['BeCOME_1_repeat', 'CALERIE_1', 'unrelated', 'FALSE'] ] },
+                { assert (pairs[0].ibs_mean as double) == 2 && (pairs[0].lod_identical as double) > 10 },
+                { assert rows.collect { row -> row.relatives } == ['BeCOME_1_repeat (identical)', 'BeCOME_1 (identical)', ''] },
+                { assert summary.identical_pairs == '1' && summary.identical_pairs_unexpected == '0' && summary.pairs == '3' },
+                { assert process.out.multiqc[0][1].size() == 2 },
                 // the 635 EPIC v2 control probes in both channels, plus the header
                 { assert path(process.out.controls[0][1]).linesGzip.size() == 1271 },
-                { assert snapshot(process.out.qc, process.out.conflicts, process.out.versions).match() }
+                { assert snapshot(process.out.qc, process.out.conflicts, process.out.relatedness_summary, process.out.versions).match() }
             )
         }
     }

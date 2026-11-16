@@ -17,7 +17,9 @@ process EWASTOOLS_QC {
     tuple val(meta), path("${prefix}_controls.tsv.gz")  , emit: controls
     tuple val(meta), path("${prefix}_snp_summary.tsv")  , emit: snp_summary
     tuple val(meta), path("${prefix}_snp_histograms.tsv"), emit: snp_histograms
-    tuple val(meta), path("${prefix}_snp_mqc.tsv")      , emit: multiqc
+    tuple val(meta), path("${prefix}_relatedness.tsv.gz"), emit: relatedness
+    tuple val(meta), path("${prefix}_relatedness_summary.tsv"), emit: relatedness_summary
+    tuple val(meta), path("${prefix}_*mqc.tsv")         , emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
     script:
@@ -33,6 +35,8 @@ process EWASTOOLS_QC {
     printf 'sample\\tsex_used\\tsnp_outlier\\thet_share_autosomal\\thet_share_x\\tmax_agreement\\tsnps_autosomal\\tsnps_x_like\\n' > ${prefix}_snp_summary.tsv
     printf 'histogram\\tbin_start\\tbin_end\\tcount\\n' > ${prefix}_snp_histograms.tsv
     printf 'Sample\\n' > ${prefix}_snp_mqc.tsv
+    printf 'sample1\\tsample2\\tsnps\\tibs_mean\\tibs_var\\tlod_identical\\tlod_first_degree\\trelation\\texpected_same_donor\\n' | gzip -n > ${prefix}_relatedness.tsv.gz
+    printf 'metric\\tvalue\\n' > ${prefix}_relatedness_summary.tsv
     printf '"%s":\\n    ewastools: stub\\n    illuminaio: stub\\n' "${task.process}" > versions.yml
     """
 }

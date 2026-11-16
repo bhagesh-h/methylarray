@@ -132,6 +132,14 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Heiss JA, Just AC. Identifying mislabeled and contaminated DNA methylation microarray data: an extended quality control toolset with examples from GEO. Clin Epigenetics. 2018;10:73.
 
+- [omicsPrint (identity-by-state plot of array pairs)](https://doi.org/10.1093/bioinformatics/bty062)
+
+  > van Iterson M, Cats D, Hop P, BIOS Consortium, Heijmans BT. omicsPrint: detection of data linkage errors in multiple omics studies. Bioinformatics. 2018;34(12):2142-2143.
+
+- [Pairwise relationship likelihoods](https://doi.org/10.1111/j.1469-1809.1975.tb00120.x)
+
+  > Thompson EA. The estimation of pairwise relationships. Ann Hum Genet. 1975;39(2):173-188.
+
 - [illuminaio](https://doi.org/10.12688/f1000research.2-264.v1)
 
   > Smith ML, Baggerly KA, Bengtsson H, Ritchie ME, Hansen KD. illuminaio: An open source IDAT parsing tool for Illumina microarrays. F1000Research. 2013;2:264.

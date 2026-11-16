@@ -44,7 +44,7 @@ output:
           description: Groovy Map with an id for the run
       - "${prefix}_qc.tsv":
           type: file
-          description: One row per array - control metrics and failures, X/Y intensities, predicted sex, SNP outlier score, inferred donor, identity conflict flag
+          description: One row per array - control metrics and failures, X/Y intensities, predicted sex, SNP outlier score, inferred donor, identity conflict flag, related arrays
           pattern: "*_qc.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475
@@ -66,6 +66,56 @@ output:
           type: file
           description: Control-probe intensities, one row per control probe and channel (channel, group, name), one column per array
           pattern: "*_controls.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  snp_summary:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_snp_summary.tsv":
+          type: file
+          description: Per array SNP aggregates - sex used, SNP outlier score, heterozygosity at autosomal and X-like SNPs, highest genotype agreement with another array
+          pattern: "*_snp_summary.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  snp_histograms:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_snp_histograms.tsv":
+          type: file
+          description: Binned counts of the SNP probe betas and of the pairwise genotype agreement
+          pattern: "*_snp_histograms.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  relatedness:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_relatedness.tsv.gz":
+          type: file
+          description: Every pair of arrays below the SNP outlier threshold - identity-by-state mean and variance, log10 likelihood ratios for identical and first-degree pairs, relation and whether the same donor is expected
+          pattern: "*_relatedness.tsv.gz"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  relatedness_summary:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_relatedness_summary.tsv":
+          type: file
+          description: Arrays and SNPs used, the log10 likelihood ratio threshold, the expected ratio of a true first-degree pair and the counts of related pairs
+          pattern: "*_relatedness_summary.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with an id for the run
+      - "${prefix}_*mqc.tsv":
+          type: file
+          description: MultiQC custom content - SNP genotype table and, when there are related or replicate pairs, the relatedness table
+          pattern: "*mqc.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475
   versions:
