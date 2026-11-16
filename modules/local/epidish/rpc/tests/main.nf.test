@@ -12,14 +12,15 @@ nextflow_process {
     // The reference CpGs of a filtered SummarizedExperiment from the six public
     // whole-blood test arrays, and their rows of the probe annotation (make_fixture.R)
 
-    test("whole blood - cent12CT and centDHSbloodDMC") {
+    test("whole blood - cent12CT, centDHSbloodDMC and IDOL") {
 
         tag "fast"
 
         when {
             process {
                 """
-                input[0] = [ [ id: 'minfi' ], file("$moduleTestDir/test_se", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true) ]
+                input[0] = [ [ id: 'minfi' ], file("$moduleTestDir/test_se", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                             file(params.idol_reference, checkIfExists: true) ]
                 """
             }
         }
@@ -30,6 +31,8 @@ nextflow_process {
             def cov = path(process.out.coverage[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
             def coverage = cov.drop(1).collect { values -> [cov[0], values].transpose().collectEntries() }.collectEntries { row -> [row.reference, row] }
             def byName = rows.collectEntries { row -> [row.sample, row] }
+            def ag = path(process.out.idol_agreement[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def agreement = ag.drop(1).collect { values -> [ag[0], values].transpose().collectEntries() }
             def lineages = ['lineage_B', 'lineage_CD4T', 'lineage_CD8T', 'lineage_NK', 'lineage_Mono', 'lineage_Gran']
             assertAll(
                 { assert process.success },
@@ -42,6 +45,12 @@ nextflow_process {
                 { assert rows.every { row -> lineages.every { l -> (row.lineage_Gran as double) >= (row[l] as double) } } },
                 // the technical replicate pair agrees within 0.02 for every lineage
                 { assert lineages.every { l -> Math.abs((byName.CALERIE_1[l] as double) - (byName.CALERIE_1_rep[l] as double)) < 0.02 } },
+                // IDOL cross-check: 417 of its 449 autosomal CpGs, and the six types follow the lineages;
+                // granulocytes exceed IDOL neutrophils by the eosinophils and basophils
+                { assert coverage.IDOL.found == '417' && (coverage.IDOL.coverage as double) >= 0.9 },
+                { assert agreement.size() == 6 && agreement.every { row -> (row.rho as double) > 0.8 } },
+                { assert agreement.find { row -> row.lineage == 'Gran' }.mean_difference as double > 0 },
+                { assert rows[0].keySet().containsAll(['idol_CD8T', 'idol_Neu']) },
                 { assert snapshot(process.out).match() }
             )
         }
@@ -55,7 +64,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = [ [ id: 'minfi' ], file("$moduleTestDir/test_se", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true) ]
+                input[0] = [ [ id: 'minfi' ], file("$moduleTestDir/test_se", checkIfExists: true), file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true), [] ]
                 """
             }
         }

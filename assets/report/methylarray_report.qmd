@@ -120,6 +120,41 @@ if (nrow(pairs) > 0) {
 }
 ```
 
+```{r ancestry, results = "asis", fig.width = 9, fig.height = 5, eval = has("^ancestry_pcs_summary\\.tsv$")}
+heading("Genetic ancestry")
+as_summary <- read(find("^ancestry_pcs_summary\\.tsv$"))
+av <- setNames(as.character(as_summary[["value"]]), as_summary[["metric"]])
+if ("note" %in% names(av)) {
+    cat(av[["note"]], "\n\n")
+} else {
+    cat(sprintf("Ancestry components from %s CpG probes with a common SNP and %s rs probes on %s arrays (EpiAnceR+ approach), with the CpG beta values residualised for: %s. The components marked as covariates are added to models with `@ancestry`.\n\n",
+                av[["snp_cpgs"]], av[["rs_snps"]], av[["arrays"]], av[["residualised_for"]]))
+    pcs <- read(find("^ancestry_pcs\\.tsv$"))
+    if (all(c("ancestry_pc1", "ancestry_pc2") %in% names(pcs))) {
+        print(ggplot(pcs, aes(ancestry_pc1, ancestry_pc2)) + geom_point(size = 1.5, alpha = 0.7, colour = "#4c72b0") +
+            labs(x = "Ancestry PC1", y = "Ancestry PC2", title = "Genetic ancestry components"))
+    }
+    if (has("^ancestry_pcs_variance\\.tsv$")) {
+        av_var <- read(find("^ancestry_pcs_variance\\.tsv$"))
+        av_var[, pc := factor(sub("ancestry_", "", pc), levels = sub("ancestry_", "", pc))]
+        print(ggplot(av_var, aes(pc, 100 * variance_explained, fill = covariate)) + geom_col() +
+            scale_fill_manual(values = c(`TRUE` = "#4c72b0", `FALSE` = "#bbbbbb"), labels = c(`TRUE` = "@ancestry covariate", `FALSE` = "not used")) +
+            labs(x = NULL, y = "Variance explained (%)", fill = NULL, title = "Variance of each ancestry component"))
+    }
+    if (has("^ancestry_pcs_associations\\.tsv$")) {
+        aa <- read(find("^ancestry_pcs_associations\\.tsv$"))
+        if (nrow(aa) > 0) {
+            aa[, pc := factor(sub("ancestry_", "", pc), levels = unique(sub("ancestry_", "", pc)))]
+            print(ggplot(aa, aes(pc, variable, fill = r_squared)) + geom_tile(colour = "white") +
+                geom_text(aes(label = sprintf("%.2f", r_squared)), size = 2.6) +
+                scale_fill_gradient(low = "white", high = "#c44e52", limits = c(0, 1)) +
+                labs(x = NULL, y = NULL, fill = "R-squared", title = "What the ancestry components capture",
+                     subtitle = "Technical variables (plate, BeadChip, row) should explain little after the residualisation"))
+        }
+    }
+}
+```
+
 # Probe filtering
 
 ```{r attrition, eval = has("_filtered_attrition\\.tsv$")}
@@ -141,6 +176,18 @@ long[, variable := sub("^lineage_", "", variable)]
 print(ggplot(long, aes(variable, value)) + geom_boxplot(fill = "#dd8452", outlier.size = 0.8) +
     labs(x = NULL, y = "Fraction", title = "Blood cell lineages (EpiDISH, cent12CT reference)"))
 if (has("^cell_fractions_reference_coverage\\.tsv$")) print(kable(read(find("^cell_fractions_reference_coverage\\.tsv$"))))
+if (has("^cell_fractions_idol_agreement\\.tsv$") && any(startsWith(names(cells), "idol_"))) {
+    idol_pairs <- c(B = "Bcell", CD4T = "CD4T", CD8T = "CD8T", NK = "NK", Mono = "Mono", Gran = "Neu")
+    both <- rbindlist(lapply(names(idol_pairs), function(l) {
+        if (!all(c(paste0("lineage_", l), paste0("idol_", idol_pairs[[l]])) %in% names(cells))) return(NULL)
+        data.table(lineage = paste(l, "/", idol_pairs[[l]]), cent12 = cells[[paste0("lineage_", l)]], idol = cells[[paste0("idol_", idol_pairs[[l]])]])
+    }))
+    cat("\n\nCross-check with the IDOL reference (FlowSorted.Blood.EPIC, Houseman constrained projection): each cent12CT lineage against the matching IDOL cell type. Granulocytes include eosinophils and basophils, IDOL neutrophils do not.\n\n")
+    print(ggplot(both, aes(idol, cent12)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
+        geom_point(size = 1, alpha = 0.6, colour = "#4c72b0") + facet_wrap(~lineage, scales = "free") +
+        labs(x = "IDOL fraction", y = "EpiDISH cent12CT fraction", title = "Cell fractions: cent12CT against IDOL"))
+    print(kable(read(find("^cell_fractions_idol_agreement\\.tsv$")), caption = "Agreement of the lineages with IDOL (Spearman rho, mean difference)"))
+}
 ```
 
 ```{r clocks, results = "asis", eval = has("^clocks\\.tsv$") || has("^dnam_scores_coverage\\.tsv$")}
@@ -196,6 +243,51 @@ if (has("^clocks_coverage\\.tsv$")) {
 }
 ```
 
+```{r meqtl, results = "asis", fig.width = 11, fig.height = 8, eval = has("^meqtl_cpgs_summary\\.tsv$")}
+heading("Genetic influence on the clocks")
+ms <- read(find("^meqtl_cpgs_summary\\.tsv$"))
+mv <- setNames(as.character(ms[["value"]]), ms[["metric"]])
+cat(sprintf("The meQTL table (`--meqtl`) gives %s CpGs with a cis-meQTL (%s associations kept of %s); %s of them are on this array. Clock CpGs whose methylation depends on a nearby genotype carry inherited variation into the clock, and their allele frequencies differ between ancestries (Meeks et al. 2025).\n\n",
+            mv[["cpgs_in_table"]], mv[["rows_kept"]], mv[["rows_read"]], mv[["cpgs_on_array"]]))
+if (has("^clocks_weights\\.tsv$")) {
+    w <- read(find("^clocks_weights\\.tsv$"))
+    if ("meqtl" %in% names(w) && any(!is.na(w[["meqtl"]]))) {
+        w <- w[is.finite(standardised)]
+        w[, class := ifelse(meqtl %in% TRUE, "cis-meQTL", ifelse(snp %in% TRUE, "SNP in the probe", "neither"))]
+        shares <- w[, .(share = sum(abs(standardised))), by = .(clock, class)][, share := 100 * share / sum(share), by = clock]
+        shares[, class := factor(class, levels = c("cis-meQTL", "SNP in the probe", "neither"))]
+        print(ggplot(shares, aes(share, clock, fill = class)) + geom_col() +
+            scale_fill_manual(values = c(`cis-meQTL` = "#c44e52", `SNP in the probe` = "#dd8452", neither = "#bbbbbb")) +
+            labs(x = "% of the clock's absolute standardised weight", y = NULL, fill = NULL, title = "Clock weight on CpGs under genetic influence"))
+    }
+}
+if (has("^clocks_robust\\.tsv$") && has("^clocks\\.tsv$")) {
+    full <- read(find("^clocks\\.tsv$"))
+    rob <- read(find("^clocks_robust\\.tsv$"))
+    shown <- intersect(grep("^eaa_", names(full), value = TRUE), names(rob))
+    value_of <- function(table, columns) melt(table[, c("sample", columns), with = FALSE], id.vars = "sample", variable.name = "clock")
+    if (length(shown) == 0) shown <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "DunedinPACE"), intersect(names(full), names(rob)))
+    if (length(shown) > 0) {
+        both <- merge(value_of(full, shown), value_of(rob, shown), by = c("sample", "clock"), suffixes = c("_full", "_robust"))
+        both <- both[is.finite(value_full) & is.finite(value_robust)]
+        rho <- both[, .(rho = suppressWarnings(cor(value_full, value_robust, method = "spearman"))), by = clock]
+        both <- merge(both, rho, by = "clock")
+        both[, panel := sprintf("%s (rho %.2f)", sub("^eaa_", "", clock), rho)]
+        print(ggplot(both, aes(value_full, value_robust)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
+            geom_point(size = 0.8, alpha = 0.6, colour = "#4c72b0") + facet_wrap(~panel, scales = "free") +
+            labs(x = if (startsWith(shown[1], "eaa_")) "Acceleration, full clock" else "Clock value, full clock",
+                 y = "Without SNP and cis-meQTL CpGs", title = "Genotype-robust clocks",
+                 subtitle = "CpGs with a common SNP or a cis-meQTL held at their mean; the phenotype tests of both versions are in the forest plots"))
+    }
+}
+if (has("^ewas_summary_meqtl\\.tsv$")) {
+    em <- read(find("^ewas_summary_meqtl\\.tsv$"))
+    if (nrow(em) > 0) print(kable(em[, .(Model = model, Contrast = contrast, `Hits (FDR < 0.05)` = hits_fdr, `Hits with a cis-meQTL` = hits_meqtl,
+                                         `Share of hits` = share_hits, `Share of tested CpGs` = share_tested, `Odds ratio` = odds_ratio, P = p_value)],
+                               caption = "Association hits with a cis-meQTL: candidates for genetic confounding, especially without ancestry covariates"))
+}
+```
+
 ```{r biomarkers, results = "asis", fig.width = 11, fig.height = 8, eval = has("^biomarkers_agreement\\.tsv$")}
 heading("Clocks, scores and cell fractions")
 stars <- function(q) ifelse(is.na(q), "", ifelse(q < 0.001, "***", ifelse(q < 0.01, "**", ifelse(q < 0.05, "*", ""))))
@@ -245,8 +337,52 @@ if (nrow(pt) > 0) {
         print(ggplot(pt[trait == t], aes(estimate, measure, colour = version, shape = q < 0.05)) + geom_vline(xintercept = 0, colour = "grey60") +
             geom_point(size = 2.6, position = position_dodge(width = 0.6)) +
             scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), labels = c(`TRUE` = "q < 0.05", `FALSE` = "q >= 0.05")) +
-            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452")) +
+            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `ancestry held` = "#8172b3", `genotype-robust` = "#937860", `low contamination` = "#55a868")) +
             labs(x = "Difference between the groups (SD)", y = NULL, colour = NULL, shape = NULL, title = paste0(t, ": every acceleration and score")))
+    }
+}
+```
+
+```{r biomarker-ancestry, results = "asis", fig.width = 8, fig.height = 6, eval = has("^biomarkers_ancestry\\.tsv$")}
+ba <- read(find("^biomarkers_ancestry\\.tsv$"))
+if (nrow(ba) > 0) {
+    heading("Ancestry and the ageing measures")
+    cat("Spearman correlation of each acceleration and score with the genetic ancestry components. Clocks predict age less accurately in admixed individuals and in some ancestries (Cruz-Gonzalez et al. 2026), so a difference in acceleration between ancestry groups can be calibration error rather than biology. The phenotype associations with the ancestry components held are the 'ancestry held' version in the forest plots above and in `biomarkers_phenotypes.tsv`.\n\n")
+    ba[, pc := factor(sub("ancestry_", "", pc), levels = unique(sub("ancestry_", "", pc)))]
+    print(ggplot(ba, aes(pc, measure, fill = rho)) + geom_tile(colour = "white") +
+        geom_text(aes(label = paste0(sprintf("%.2f", rho), stars(q))), size = 2.6) +
+        scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.6, 0.6), oob = scales::squish) +
+        labs(x = NULL, y = NULL, fill = "rho", title = "Accelerations and scores against the ancestry components"))
+}
+```
+
+```{r contamination, results = "asis", fig.width = 11, fig.height = 7, eval = has("^biomarkers_contamination\\.tsv$") && !is.null(qc) && "snp_outlier" %in% names(qc)}
+ct <- read(find("^biomarkers_contamination\\.tsv$"))
+if (nrow(ct) > 0) {
+    heading("Contamination and the ageing measures")
+    cutoff <- ct[["cutoff"]][1]
+    threshold <- suppressWarnings(as.numeric(param("snp_outlier_threshold")))
+    cat(sprintf("DNA from another person pulls beta values towards the middle and can bias clocks. Arrays with a SNP outlier score above %s fail QC; among the analysed arrays, %d lie above the robust cutoff of %.2f (median plus three MADs). The phenotype associations without them are the 'low contamination' version in the tables and forest plots above. Correlations of the score with the measures at q < 0.05: %d of %d.\n\n",
+                param("snp_outlier_threshold"), ct[["arrays_above_cutoff"]][1], cutoff, sum(ct[["q"]] < 0.05, na.rm = TRUE), nrow(ct)))
+    print(kable(ct[, .(Measure = measure, `Spearman rho` = rho, q = signif(q, 3), Arrays = n)], caption = "SNP outlier score against the accelerations and scores"))
+    if (has("^clocks\\.tsv$")) {
+        cl <- read(find("^clocks\\.tsv$"))
+        main <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "PCGrimAge", "DunedinPACE"), names(cl))
+        long <- rbindlist(lapply(main, function(k) {
+            column <- if (paste0("eaa_", k) %in% names(cl)) paste0("eaa_", k) else k
+            data.table(sample = cl[["sample"]], panel = if (column == k) k else paste(k, "acceleration"), value = as.numeric(cl[[column]]))
+        }))
+        long <- merge(long, qc[, .(sample, snp_outlier, status)], by = "sample")[is.finite(value) & is.finite(snp_outlier)]
+        if (nrow(long) > 0) {
+            rho <- long[, .(label = sprintf("%s (rho %.2f)", panel[1], suppressWarnings(cor(snp_outlier, value, method = "spearman")))), by = panel]
+            long <- merge(long, rho, by = "panel")
+            print(ggplot(long, aes(snp_outlier, value)) + geom_point(aes(colour = status), size = 1, alpha = 0.6) +
+                geom_vline(xintercept = cutoff, linetype = 2, colour = "#dd8452") +
+                geom_vline(xintercept = threshold, linetype = 2, colour = "#c44e52") +
+                facet_wrap(~label, scales = "free_y") +
+                labs(x = "SNP outlier score (higher = more likely contaminated)", y = NULL, colour = "QC status",
+                     title = "Contamination against the main clocks", subtitle = "Orange line: robust cutoff of the analysed arrays; red line: FAIL threshold"))
+        }
     }
 }
 ```
@@ -267,7 +403,7 @@ if (nrow(qt) > 0) {
 }
 ```
 
-```{r pca, results = "asis", fig.width = 11, fig.height = 6.5, eval = has("^pca_variance\\.tsv$")}
+```{r pca, results = "asis", fig.width = 11, fig.height = 10, eval = has("^pca_variance\\.tsv$")}
 heading("Exploratory analysis")
 variance <- read(find("^pca_variance\\.tsv$"))
 print(ggplot(variance, aes(factor(pc, levels = pc), variance_explained, fill = tested)) + geom_col() +
@@ -279,18 +415,41 @@ if (nrow(associations) > 0) {
     pcs <- unique(associations[["pc"]])
     pcs <- pcs[order(as.integer(sub("^PC", "", pcs)))]
     associations[, pc := factor(pc, levels = pcs)]
-    print(ggplot(associations, aes(pc, variable, fill = pmax(r_squared, 0))) + geom_tile(colour = "white") +
-        geom_text(aes(label = ifelse(p_value < 0.001, sprintf("%.2f", r_squared), "")), size = 2.6) +
+    if (!"adj_r_squared" %in% names(associations)) associations[, adj_r_squared := r_squared]
+    print(ggplot(associations, aes(pc, variable, fill = pmax(adj_r_squared, 0))) + geom_tile(colour = "white") +
+        geom_text(aes(label = ifelse(p_value < 0.001, sprintf("%.2f", adj_r_squared), "")), size = 2.6) +
         scale_fill_gradient(low = "white", high = "#c44e52", limits = c(0, NA)) +
         scale_x_discrete(labels = function(x) sprintf("%s\n%.1f%%", x, 100 * shares[x])) +
-        labs(x = NULL, y = NULL, fill = "R-squared", title = "What the main axes of methylation variation follow",
-             subtitle = "R-squared of each variable for each principal component; numbers where P < 0.001\nUnder each PC: its share of the variance"))
+        facet_grid(group ~ ., scales = "free_y", space = "free_y") + theme(strip.text.y = element_text(angle = 0), axis.text.y = element_text(size = 7)) +
+        labs(x = NULL, y = NULL, fill = "Adjusted\nR-squared", title = "What the main axes of methylation variation follow",
+             subtitle = "Adjusted R-squared of each variable for each principal component (corrected for the number of levels); numbers where P < 0.001\nUnder each PC: its share of the variance"))
 }
 if (has("^pca_outliers\\.tsv$")) {
     outliers <- read(find("^pca_outliers\\.tsv$"))
     flagged <- outliers[pca_outlier %in% TRUE]
     cat("\n\nOutliers on PC1 and PC2 (robust Mahalanobis distance above the chi-square 0.999 quantile; reported, not removed): ",
         if (nrow(flagged) > 0) paste(flagged[["sample"]], collapse = ", ") else "none", ".\n\n", sep = "")
+}
+```
+
+```{r variance-partition, results = "asis", fig.width = 10, fig.height = 5.5, eval = has("^variance_partition_summary\\.tsv$")}
+vs <- read(find("^variance_partition_summary\\.tsv$"))
+heading("Variance partition")
+if ("note" %in% names(vs) && any(!is.na(vs[["note"]]) & vs[["note"]] != "")) {
+    cat(vs[["note"]][1], "\n\n")
+} else {
+    cat(sprintf("Share of the variance of the %s most variable CpGs explained by each variable, from one linear mixed model per CpG (variancePartition) on %s arrays: %s. Technical variables with large shares belong in the association models as covariates.\n\n",
+                format(vs[["cpgs"]][1], big.mark = ","), vs[["arrays"]][1], vs[["formula"]][1]))
+    if (has("^variance_partition\\.tsv\\.gz$")) {
+        vp <- read(find("^variance_partition\\.tsv\\.gz$"))
+        long <- melt(vp, id.vars = "cpg_id", variable.name = "variable", value.name = "share")
+        long[, variable := factor(variable, levels = vs[order(-mean), variable])]
+        print(ggplot(long, aes(variable, share)) + geom_violin(fill = "#4c72b0", colour = NA, alpha = 0.6, scale = "width") +
+            geom_boxplot(width = 0.08, outlier.shape = NA, fill = "white") +
+            labs(x = NULL, y = "% of variance explained", title = "Variance partition of the most variable CpGs") +
+            theme(axis.text.x = element_text(angle = 30, hjust = 1)))
+    }
+    print(kable(vs[, .(Variable = variable, Effect = type, `Median %` = median, `Mean %` = mean, `90th percentile %` = q90, `CpGs above 10%` = cpgs_over_10)]))
 }
 ```
 
@@ -372,6 +531,29 @@ for (file in setdiff(find("^enrichment_.*\\.tsv$"), find("_summary"))) {
         print(kable(top[, .(Contrast = contrast, Set = set, Term = term, Genes = n, Hits = round(de, 1), P = signif(p_value, 3), FDR = signif(fdr, 3))],
                     caption = paste0(model, ": ", coll, ", top 10")))
     }
+}
+```
+
+```{r kycg, results = "asis", fig.width = 12, fig.height = 8, eval = has("^kycg_.*\\.tsv$")}
+heading("Genomic context enrichment")
+cat("KnowYourCG: are the significant CpGs (all, and those with higher or lower methylation) over-represented in chromatin states, transcription factor binding sites, histone marks and other genomic features, against all tested CpGs? Fisher's exact test; log2 odds ratio; FDR within each knowledgebase.\n\n")
+for (file in setdiff(find("^kycg_.*\\.tsv$"), find("_summary"))) {
+    model <- model_of(file, "kycg_", "\\.tsv")
+    table <- read(file)
+    if (nrow(table) == 0) next
+    top <- table[log2_or > 0][order(p_value), head(.SD, 8), by = .(contrast, query)]
+    if (nrow(top) == 0) next
+    top[, key := factor(paste(contrast, query, database, set, sep = "__"), levels = rev(unique(paste(contrast, query, database, set, sep = "__"))))]
+    top[, shown := pmin(log2_or, 8)]
+    print(ggplot(top, aes(shown, key, size = overlap, colour = -log10(pmax(fdr, 1e-300)))) + geom_point() +
+        scale_y_discrete(labels = function(x) sub("^[^_]*__[^_]*__", "", x)) +
+        scale_colour_gradient(low = "grey60", high = "#c44e52") +
+        facet_wrap(~ paste(contrast, query, sep = ": "), scales = "free_y", ncol = 3) + theme(axis.text.y = element_text(size = 7)) +
+        labs(x = "log2 odds ratio (capped at 8)", y = NULL, size = "Overlap", colour = "-log10 FDR",
+             title = paste0(model, ": the 8 most enriched sets per query")))
+    print(kable(head(table[fdr < 0.05 & log2_or > 0][order(p_value), .(Contrast = contrast, Query = query, Database = database, Set = set,
+                                                                     `Log2 OR` = round(log2_or, 2), Overlap = overlap, FDR = signif(fdr, 3))], 15),
+                caption = paste0(model, ": enriched sets at FDR < 0.05")))
 }
 ```
 

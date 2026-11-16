@@ -1,0 +1,5 @@
+metric	value
+arrays	58
+snp_cpgs	299
+rs_snps	40
+residualised_for	2 control-probe PCs; 5 PCs of the cell lineage fractions; sex; age

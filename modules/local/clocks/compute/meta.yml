@@ -53,6 +53,12 @@ input:
         pattern: "*.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475
+    - meqtl_cpgs:
+        type: file
+        description: CpGs with a cis-meQTL from MEQTL_PREPARE (cpg_id column), or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
   - dnamethyage_source:
       type: file
       description: dnaMethyAge source package (tar.gz of a pinned GitHub commit), installed into the task directory
@@ -82,6 +88,16 @@ output:
           type: file
           description: Per clock the CpGs, those present (and present only through an EPIC v1 or 450K ID), the share present, the filled values and notes
           pattern: "*_coverage.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  robust:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_robust.tsv":
+          type: file
+          description: Genotype-robust clocks (CpGs with a common SNP or cis-meQTL held at their mean); only with a meQTL list
+          pattern: "*_robust.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475
   multiqc:

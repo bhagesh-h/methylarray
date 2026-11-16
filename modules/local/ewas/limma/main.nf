@@ -8,7 +8,7 @@ process EWAS_LIMMA {
     container 'docker.io/bhagesh/methylarray-ewas@sha256:e208cdcd0107e83b7aaa316d5d67146f1e780e5e74cd0048a1d1ff277cee4fa2'
 
     input:
-    tuple val(meta), path(model), path(se), path(samples), path(sample_qc), path(phenotypes), path(cell_fractions), path(ctrl_pcs), path(dnam_scores)
+    tuple val(meta), path(model), path(se), path(samples), path(sample_qc), path(phenotypes), path(cell_fractions), path(ctrl_pcs), path(ancestry_pcs), path(dnam_scores)
 
     output:
     tuple val(meta), path("${prefix}_stats.tsv.gz")    , emit: stats

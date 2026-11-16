@@ -17,7 +17,9 @@ workflow EWAS {
     ch_phenotypes     // channel: phenotype table, or []
     ch_cell_fractions // channel: cell fraction table, or []
     ch_ctrl_pcs       // channel: control-probe PCs table
+    ch_ancestry_pcs   // channel: ancestry PCs table, or []
     ch_dnam_scores    // channel: DNA methylation scores table, or []
+    ch_meqtl_cpgs     // channel: CpGs with a cis-meQTL, or []
 
     main:
     def ch_model_files = ch_models
@@ -32,15 +34,17 @@ workflow EWAS {
             .combine(ch_phenotypes.map { phenotypes -> [ phenotypes ] })
             .combine(ch_cell_fractions.map { fractions -> [ fractions ] })
             .combine(ch_ctrl_pcs)
+            .combine(ch_ancestry_pcs.map { pcs -> [ pcs ] })
             .combine(ch_dnam_scores.map { scores -> [ scores ] })
-            .map { meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs, scores ->
-                [ meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs, scores ]
+            .map { meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs, ancestry_pcs, scores ->
+                [ meta, model, se, samples, sample_qc, phenotypes, fractions, ctrl_pcs, ancestry_pcs, scores ]
             }
     )
 
     EWAS_SUMMARY(
         EWAS_LIMMA.out.summary.map { _meta, summary -> summary }.collect(),
-        EWAS_LIMMA.out.stats.map { _meta, stats -> stats }.collect()
+        EWAS_LIMMA.out.stats.map { _meta, stats -> stats }.collect(),
+        ch_meqtl_cpgs
     )
 
     emit:
@@ -49,4 +53,5 @@ workflow EWAS {
     top     = EWAS_LIMMA.out.top      // channel: [ meta, top CpGs per model ]
     summary = EWAS_SUMMARY.out.summary // channel: summary table across models
     multiqc = EWAS_SUMMARY.out.multiqc // channel: MultiQC table
+    meqtl   = EWAS_SUMMARY.out.meqtl   // channel: hits with a cis-meQTL per model (header only without --meqtl)
 }

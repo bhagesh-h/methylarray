@@ -1,0 +1,80 @@
+nextflow_process {
+
+    name "Test Process VARIANCE_PARTITION"
+    script "../main.nf"
+    process "VARIANCE_PARTITION"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "variance"
+    tag "variance/partition"
+
+    // Simulated data (make_fixture.R): 48 arrays, 600 CpGs with a plate effect
+    // (CpGs 1-200), a sex effect (201-400) and an age effect (401-600)
+
+    test("variance of each CpG by variable") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def t = path(process.out.variance[0][1]).linesGzip.collect { line -> line.split('\t', -1) as List }
+            def rows = t.drop(1).collect { values -> [t[0], values].transpose().collectEntries() }
+            def s = path(process.out.summary[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def summary = s.drop(1).collect { values -> [s[0], values].transpose().collectEntries() }.collectEntries { row -> [row.variable, row] }
+            def mean = { variable, range -> range.collect { i -> rows.find { row -> row.cpg_id == String.format('cg%08d', i) }[variable] as double }.sum() / range.size() }
+            assertAll(
+                { assert process.success },
+                { assert rows.size() == 600 },
+                // plate, BeadChip, row and sex as random effects; age and five lineages as fixed effects
+                { assert summary.keySet().containsAll(['plate', 'beadchip', 'sentrix_row', 'sex', 'age', 'cells_B', 'residual']) },
+                { assert summary.plate.type == 'random' && summary.age.type == 'fixed' && summary.plate.arrays == '48' },
+                // each planted effect explains about half of the variance of its CpGs
+                { assert mean('plate', 1..200) > 30 && mean('sex', 201..400) > 30 && mean('age', 401..600) > 30 },
+                { assert mean('plate', 401..600) < 10 },
+                { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+
+    test("variance partition - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

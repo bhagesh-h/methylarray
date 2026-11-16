@@ -27,12 +27,18 @@ report_section_order:
     order: 946
   biomarker_phenotypes:
     order: 945
+  biomarker_ancestry:
+    order: 944
+  biomarker_contamination:
+    order: 943
   pca_scree:
     order: 940
   pca_scatter:
     order: 930
   pca_associations:
     order: 920
+  variance_partition:
+    order: 915
   ewas_summary:
     order: 910
   "bhagesh-h-methylarray-methods-description":

@@ -1,0 +1,9 @@
+measure	pc	rho	p	n	q
+HorvathS2013 acceleration	ancestry_pc1	0.594	9.895e-09	78	7.916e-08
+HorvathS2013 acceleration	ancestry_pc2	-0.2256	0.04703	78	0.1496
+HannumG2013 acceleration	ancestry_pc1	-0.04177	0.7165	78	0.8189
+HannumG2013 acceleration	ancestry_pc2	0.1181	0.303	78	0.4039
+DunedinPACE acceleration	ancestry_pc1	0.00454	0.9685	78	0.9685
+DunedinPACE acceleration	ancestry_pc2	-0.1775	0.1201	78	0.1921
+dnam_smoking	ancestry_pc1	0.2028	0.07492	78	0.1498
+dnam_smoking	ancestry_pc2	-0.2172	0.05611	78	0.1496

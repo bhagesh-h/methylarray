@@ -27,7 +27,8 @@ nextflow_process {
                     file("$moduleTestDir/retained.txt", checkIfExists: true),
                     file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
-                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true)
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
+                    file("$moduleTestDir/meqtl_cpgs.tsv", checkIfExists: true)
                 ]
                 input[1] = file(params.dnamethyage_source, checkIfExists: true)
                 input[2] = file(params.dunedinpace_source, checkIfExists: true)
@@ -39,6 +40,8 @@ nextflow_process {
             def table = path(process.out.clocks[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
             def rows = table.drop(1).collect { values -> [table[0], values].transpose().collectEntries() }.collectEntries { row -> [row.sample, row] }
             def cov = path(process.out.coverage[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def rob = path(process.out.robust[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def robust = rob.drop(1).collect { values -> [rob[0], values].transpose().collectEntries() }.collectEntries { row -> [row.sample, row] }
             def coverage = cov.drop(1).collect { values -> [cov[0], values].transpose().collectEntries() }.collectEntries { row -> [row.clock, row] }
             assertAll(
                 { assert process.success },
@@ -52,6 +55,11 @@ nextflow_process {
                 { assert Math.abs((rows.CALERIE_1.HorvathS2013 as double) - (rows.CALERIE_1_rep.HorvathS2013 as double)) < 3 },
                 // age acceleration with six ages; intrinsic age acceleration needs more arrays
                 { assert table[0].contains('eaa_HorvathS2013') && !table[0].contains('ieaa_HorvathS2013') },
+                // genotype-robust clocks without the 40 Horvath CpGs of the meQTL list (and the CpGs with a common SNP)
+                { assert (coverage.HorvathS2013.robust_removed as int) >= 40 },
+                { assert path(process.out.weights[0][1]).readLines().count { line -> line.startsWith('HorvathS2013\t') && line.endsWith('\tTRUE') } == 40 },
+                { assert robust.size() == 6 && robust.values().every { row -> row.HorvathS2013 && row.eaa_HorvathS2013 } },
+                { assert robust.values().any { row -> Math.abs((row.HorvathS2013 as double) - (rows[row.sample].HorvathS2013 as double)) > 0.01 } },
                 { assert snapshot(process.out.coverage, process.out.versions).match() }
             )
         }
@@ -71,7 +79,7 @@ nextflow_process {
                     file("$moduleTestDir/retained.txt", checkIfExists: true),
                     file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
-                    []
+                    [], []
                 ]
                 input[1] = []
                 input[2] = []

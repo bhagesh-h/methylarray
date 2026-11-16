@@ -49,8 +49,8 @@
                 "uniqueItems": true,
                 "items": {
                     "type": "string",
-                    "pattern": "^(@(cells|ctrlpcs|technical|sex|smoking)|[A-Za-z][A-Za-z0-9._]*)$",
-                    "errorMessage": "Each covariate must be a column name or one of the tokens @cells, @ctrlpcs, @technical, @sex, @smoking"
+                    "pattern": "^(@(cells|ctrlpcs|ancestry|technical|sex|smoking)|[A-Za-z][A-Za-z0-9._]*)$",
+                    "errorMessage": "Each covariate must be a column name or one of the tokens @cells, @ctrlpcs, @ancestry, @technical, @sex, @smoking"
                 }
             },
             "block": {

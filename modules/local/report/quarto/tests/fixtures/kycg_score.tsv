@@ -1,0 +1,58 @@
+contrast	query	database	set	log2_or	p_value	fdr	overlap	query_probes	set_probes
+score	all	ChromHMM	TssA	5.607	2.981e-65	5.663e-64	80	100	300
+score	all	ChromHMM	EnhBiv	1.058	0.3993	1	1	100	15
+score	all	ChromHMM	ZNF/Rpts	-0.4695	0.7533	1	1	100	41
+score	all	ChromHMM	TssBiv	-1.497	0.9741	1	2	100	160
+score	all	ChromHMM	ReprPC	-1.6	0.9815	1	2	100	171
+score	all	ChromHMM	TxWk	-3.498	1	1	1	100	298
+score	all	ChromHMM	Quies	-2.846	1	1	13	100	1515
+score	all	ChromHMM	EnhA1	-Inf	1	1	0	100	93
+score	all	ChromHMM	EnhA2	-Inf	1	1	0	100	22
+score	all	ChromHMM	EnhG1	-Inf	1	1	0	100	4
+score	all	ChromHMM	EnhG2	-Inf	1	1	0	100	4
+score	all	ChromHMM	EnhWk	-Inf	1	1	0	100	39
+score	all	ChromHMM	Het	-Inf	1	1	0	100	12
+score	all	ChromHMM	NA	-Inf	1	1	0	100	13
+score	all	ChromHMM	ReprPCWk	-Inf	1	1	0	100	122
+score	all	ChromHMM	Tx	-Inf	1	1	0	100	191
+score	all	ChromHMM	TssFlnk		1	1	0	100	0
+score	all	ChromHMM	TssFlnkD		1	1	0	100	0
+score	all	ChromHMM	TssFlnkU		1	1	0	100	0
+score	higher	ChromHMM	EnhBiv	3.479	0.09568	1	1	20	15
+score	higher	ChromHMM	Quies	0.8698	0.1406	1	13	20	1515
+score	higher	ChromHMM	ZNF/Rpts	1.952	0.2413	1	1	20	41
+score	higher	ChromHMM	TssBiv	0.9888	0.2894	1	2	20	160
+score	higher	ChromHMM	ReprPC	0.8861	0.3171	1	2	20	171
+score	higher	ChromHMM	TxWk	-1.073	0.8775	1	1	20	298
+score	higher	ChromHMM	EnhA1	-Inf	1	1	0	20	93
+score	higher	ChromHMM	EnhA2	-Inf	1	1	0	20	22
+score	higher	ChromHMM	EnhG1	-Inf	1	1	0	20	4
+score	higher	ChromHMM	EnhG2	-Inf	1	1	0	20	4
+score	higher	ChromHMM	EnhWk	-Inf	1	1	0	20	39
+score	higher	ChromHMM	Het	-Inf	1	1	0	20	12
+score	higher	ChromHMM	NA	-Inf	1	1	0	20	13
+score	higher	ChromHMM	ReprPCWk	-Inf	1	1	0	20	122
+score	higher	ChromHMM	TssA	-Inf	1	1	0	20	300
+score	higher	ChromHMM	Tx	-Inf	1	1	0	20	191
+score	higher	ChromHMM	TssFlnk		1	1	0	20	0
+score	higher	ChromHMM	TssFlnkD		1	1	0	20	0
+score	higher	ChromHMM	TssFlnkU		1	1	0	20	0
+score	lower	ChromHMM	TssA	Inf	2.624e-85	4.986e-84	80	80	300
+score	lower	ChromHMM	EnhA1	-Inf	1	1	0	80	93
+score	lower	ChromHMM	EnhA2	-Inf	1	1	0	80	22
+score	lower	ChromHMM	EnhBiv	-Inf	1	1	0	80	15
+score	lower	ChromHMM	EnhG1	-Inf	1	1	0	80	4
+score	lower	ChromHMM	EnhG2	-Inf	1	1	0	80	4
+score	lower	ChromHMM	EnhWk	-Inf	1	1	0	80	39
+score	lower	ChromHMM	Het	-Inf	1	1	0	80	12
+score	lower	ChromHMM	NA	-Inf	1	1	0	80	13
+score	lower	ChromHMM	Quies	-Inf	1	1	0	80	1515
+score	lower	ChromHMM	ReprPC	-Inf	1	1	0	80	171
+score	lower	ChromHMM	ReprPCWk	-Inf	1	1	0	80	122
+score	lower	ChromHMM	TssBiv	-Inf	1	1	0	80	160
+score	lower	ChromHMM	Tx	-Inf	1	1	0	80	191
+score	lower	ChromHMM	TxWk	-Inf	1	1	0	80	298
+score	lower	ChromHMM	ZNF/Rpts	-Inf	1	1	0	80	41
+score	lower	ChromHMM	TssFlnk		1	1	0	80	0
+score	lower	ChromHMM	TssFlnkD		1	1	0	80	0
+score	lower	ChromHMM	TssFlnkU		1	1	0	80	0

@@ -1,0 +1,7 @@
+metric	value
+rows_read	6
+rows_cis	5
+rows_kept	4
+p_threshold	1e-08
+cpgs_in_table	3
+cpgs_on_array	2

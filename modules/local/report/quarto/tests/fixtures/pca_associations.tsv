@@ -14,3 +14,7 @@ CD8T	biological	PC1	linear regression	6	0.412	0.1694
 NK	biological	PC1	linear regression	6	0.0234	0.7722
 Mono	biological	PC1	linear regression	6	0.4063	0.1734
 Gran	biological	PC1	linear regression	6	0.0906	0.5621
+control: bisulfite_conversion_ii	control metrics	PC1	linear regression	6	0.0441	0.6896
+control: bisulfite_conversion_ii	control metrics	PC2	linear regression	6	0.273	0.2876
+control: staining_green	control metrics	PC1	linear regression	6	0.0405	0.7024
+control: staining_green	control metrics	PC2	linear regression	6	0.0051	0.8932

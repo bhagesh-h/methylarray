@@ -144,6 +144,26 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Smith ML, Baggerly KA, Bengtsson H, Ritchie ME, Hansen KD. illuminaio: An open source IDAT parsing tool for Illumina microarrays. F1000Research. 2013;2:264.
 
+- [EpiAnceR+ (genetic ancestry components from methylation arrays)](https://doi.org/10.1186/s13072-025-00627-0)
+
+  > Höffler KD, Katrinli S, Halvorsen MW, et al. Optimizing genetic ancestry adjustment in DNA methylation studies: a comparative analysis of approaches. Epigenetics Chromatin. 2025;18(1):69.
+
+  The pipeline implements the published method; it does not use the EpiAnceR scripts.
+
+- [GoDMC methylation QTLs](https://doi.org/10.1038/s41588-021-00923-x)
+
+  > Min JL, Hemani G, Hannon E, et al. Genomic and phenotypic insights from an atlas of genetic effects on DNA methylation. Nat Genet. 2021;53(9):1311-1321.
+
+  Source of the meQTL table described in the usage documentation (`--meqtl`); the pipeline does not ship it.
+
+- [Genotype-robust clocks](https://doi.org/10.1038/s42003-025-08893-0)
+
+  > Meeks GL, Scelza B, Asnake HM, et al. Common DNA sequence variation influences epigenetic aging in African populations. Commun Biol. 2025;8(1).
+
+- [variancePartition](https://doi.org/10.1186/s12859-016-1323-z)
+
+  > Hoffman GE, Schadt EE. variancePartition: interpreting drivers of variation in complex gene expression studies. BMC Bioinformatics. 2016;17:483.
+
 - [Control-probe principal components](https://doi.org/10.1186/s13059-015-0600-x)
 
   > Lehne B, Drong AW, Loh M, et al. A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies. Genome Biol. 2015;16:37.
@@ -169,6 +189,14 @@ This file is the single reference list for the pipeline. The README, the documen
 - [12-cell-type blood reference (cent12CT)](https://doi.org/10.1186/s13073-023-01211-5)
 
   > Luo Q, Dwaraka VB, Chen Q, et al. A meta-analysis of immune-cell fractions at high resolution reveals novel associations with common phenotypes and health outcomes. Genome Med. 2023;15:59.
+
+- [FlowSorted.Blood.EPIC and IDOL](https://doi.org/10.1186/s13059-018-1448-7)
+
+  > Salas LA, Koestler DC, Butler RA, et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biol. 2018;19:64.
+
+- [Houseman constrained projection (IDOL cross-check, EpiDISH method CP)](https://doi.org/10.1186/1471-2105-13-86)
+
+  > Houseman EA, Accomando WP, Koestler DC, et al. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics. 2012;13:86.
 
 ## DNA methylation biomarkers
 
@@ -240,6 +268,12 @@ This file is the single reference list for the pipeline. The README, the documen
 
   The smoking, alcohol, BMI and IL-6 weights in `assets/dnam_scores` are taken from the supplementary tables of McCartney et al. (2018) and Stevenson et al. (2021), both published under CC BY 4.0; `assets/dnam_scores/sources.tsv` names each table.
 
+- [Clocks in genetically admixed individuals](https://doi.org/10.7554/eLife.105343)
+
+  > Cruz-Gonzalez S, Okpala O, Gu E, et al. Methylation clocks fail to generalize across genetically admixed individuals. eLife. 2026;14.
+
+  Cited by the report when it relates the accelerations to the genetic ancestry components.
+
 ## Statistical analysis
 
 - [limma](https://doi.org/10.1093/nar/gkv007)
@@ -271,6 +305,12 @@ This file is the single reference list for the pipeline. The README, the documen
 - [dmrff](https://doi.org/10.1101/508556)
 
   > Suderman M, Staley JR, French R, Arathimos R, Simpkin A, Tilling K. dmrff: identifying differentially methylated regions efficiently with power and control. bioRxiv. 2018.
+
+- [KnowYourCG](https://doi.org/10.1126/sciadv.adw3027)
+
+  > Goldberg DC, Fu H, Atkins D, Moyer E, Lee CN, Deng Y, Zhou W. KnowYourCG: facilitating base-level sparse methylome interpretation. Sci Adv. 2025;11(43).
+
+  The EPIC v2 knowledgebases are ExperimentHub records EH8068 to EH8075 (sesameData).
 
 - [missMethyl](https://doi.org/10.1093/bioinformatics/btv560)
 
@@ -333,14 +373,6 @@ These informed the design or are candidates for later versions. The pipeline doe
 - [Enhanced blood deconvolution reference](https://doi.org/10.1038/s41467-021-27864-7)
 
   > Salas LA, Zhang Z, Koestler DC, et al. Enhanced cell deconvolution of peripheral blood using DNA methylation for high-resolution immune profiling. Nat Commun. 2022;13:761.
-
-- [FlowSorted.Blood.EPIC and IDOL](https://doi.org/10.1186/s13059-018-1448-7)
-
-  > Salas LA, Koestler DC, Butler RA, et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biol. 2018;19:64.
-
-- [Houseman constrained projection](https://doi.org/10.1186/1471-2105-13-86)
-
-  > Houseman EA, Accomando WP, Koestler DC, et al. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics. 2012;13:86.
 
 - [methylCIPHER](https://doi.org/10.1101/2022.07.13.499978)
 

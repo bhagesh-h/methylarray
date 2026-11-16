@@ -10,6 +10,10 @@
 #   - Zhou lab InfiniumAnnotation EPIC v2 mask (staged file): general mask,
 #     mapping and non-unique probes, SNP masks by population and allele
 #     frequency, poor titration
+#   - optional Illumina lists (--illumina_flagged_probes,
+#     --illumina_mapping_inaccuracy): the probes Illumina flagged for poor
+#     performance and the probes with mapping inaccuracies, from the files on
+#     Illumina's EPIC v2 support page (not redistributable, so users supply them)
 # The array's rs, nv and control probes are in neither source; the probe
 # filter gives them their type from the ID prefix.
 #
@@ -17,6 +21,8 @@
 prefix <- "${prefix}"
 manifest_file <- "${manifest}"
 mask_file <- "${probe_mask}"
+flagged_file <- "${illumina_flagged}"
+mapping_file <- "${illumina_mapping}"
 
 defaults <- list(platform = "EPICv2")
 parse_args <- function(x, defaults) {
@@ -107,6 +113,29 @@ flag_columns <- setdiff(names(flags), "probe_id")
 for (column in flag_columns) set(anno, which(is.na(anno[[column]])), column, FALSE)
 anno[is.na(replicate_group_size), replicate_group_size := 1L]
 for (column in c("ch_blat", "ch_wgbs", "mismatch_pos")) set(anno, which(is.na(anno[[column]])), column, FALSE)
+
+# Illumina probe lists: Illumina's CSV files (IlmnID or Name column) or one ID
+# per line; an entry without a probe suffix marks every probe of that CpG
+read_probe_list <- function(file) {
+    if (!nzchar(file)) return(NULL)
+    lines <- gsub('"', "", readLines(if (grepl("[.]gz\$", file)) gzfile(file) else file, warn = FALSE))
+    lines <- lines[nzchar(trimws(lines))]
+    sep <- if (any(grepl("\\t", head(lines, 5), fixed = TRUE))) "\\t" else ","
+    fields <- strsplit(lines, sep, fixed = TRUE)
+    header <- tolower(trimws(fields[[1]]))
+    column <- match(c("ilmnid", "probe_id", "name"), header)
+    column <- if (all(is.na(column))) 1L else column[!is.na(column)][1]
+    ids <- trimws(vapply(fields, function(f) if (length(f) >= column) f[[column]] else NA_character_, character(1)))
+    unique(ids[!is.na(ids) & grepl("^(cg|ch|rs|nv)", ids)])
+}
+flag_from_list <- function(ids) {
+    if (is.null(ids)) return(rep(FALSE, nrow(anno)))
+    anno[["probe_id"]] %in% ids | anno[["cpg_id"]] %in% ids[!grepl("_", ids)]
+}
+flagged_ids <- read_probe_list(flagged_file)
+mapping_ids <- read_probe_list(mapping_file)
+anno[, illumina_flagged := flag_from_list(flagged_ids)]
+anno[, illumina_mapping_inaccuracy := flag_from_list(mapping_ids)]
 setorder(anno, probe_id)
 
 fwrite(anno, paste0(prefix, ".tsv.gz"), sep = "\\t", na = "")
@@ -129,6 +158,12 @@ resources <- data.table(
     file = c(basename(manifest_file), basename(mask_file)),
     md5 = unname(tools::md5sum(c(manifest_file, mask_file)))
 )
+for (item in list(list("Illumina flagged probes", flagged_file, flagged_ids), list("Illumina mapping inaccuracies", mapping_file, mapping_ids))) {
+    if (nzchar(item[[2]])) {
+        resources <- rbind(resources, data.table(resource = sprintf("%s (%d IDs)", item[[1]], length(item[[3]])),
+                                                 file = basename(item[[2]]), md5 = unname(tools::md5sum(item[[2]]))))
+    }
+}
 fwrite(resources, paste0(prefix, "_resources.tsv"), sep = "\\t")
 
 # Software versions

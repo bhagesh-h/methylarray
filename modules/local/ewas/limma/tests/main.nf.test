@@ -28,6 +28,7 @@ nextflow_process {
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
                     file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
                     file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ancestry_pcs.tsv", checkIfExists: true),
                     []
                 ]
                 """
@@ -40,9 +41,9 @@ nextflow_process {
             def stats = summary.contrasts.score
             assertAll(
                 { assert process.success },
-                // two arrays have no score; the tokens expand to sex, five cell lineages and two control PCs
+                // two arrays have no score; the tokens expand to sex, five cell lineages, two control PCs and two ancestry PCs
                 { assert summary.n == 38 && summary.status == 'tested' },
-                { assert summary.covariates == ['age', 'predicted_sex', 'cc_CD4T', 'cc_CD8T', 'cc_B', 'cc_NK', 'cc_Mono', 'ctrlpc1', 'ctrlpc2', 'plate'] },
+                { assert summary.covariates == ['age', 'predicted_sex', 'cc_CD4T', 'cc_CD8T', 'cc_B', 'cc_NK', 'cc_Mono', 'ctrlpc1', 'ctrlpc2', 'ancestry_pc1', 'ancestry_pc2', 'plate'] },
                 // the 20 planted CpGs are the top 20 and pass FDR < 0.05, with at most two false positives
                 { assert top.sort() == (1..20).collect { i -> String.format('cg%08d', i) } },
                 { assert stats.hits_fdr >= 20 && stats.hits_fdr <= 22 },
@@ -69,6 +70,7 @@ nextflow_process {
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
                     [],
                     file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    [],
                     []
                 ]
                 """
@@ -105,6 +107,7 @@ nextflow_process {
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
                     [],
                     [],
+                    [],
                     file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true)
                 ]
                 """
@@ -134,6 +137,7 @@ nextflow_process {
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
                     file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
+                    [],
                     [],
                     [],
                     []
@@ -168,6 +172,7 @@ nextflow_process {
                     file("$moduleTestDir/test_se", checkIfExists: true),
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    [],
                     [],
                     [],
                     [],

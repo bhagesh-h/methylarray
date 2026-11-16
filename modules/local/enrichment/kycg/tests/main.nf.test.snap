@@ -1,0 +1,77 @@
+{
+    "genomic context - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "kycg_score.tsv:md5,4fee914ae8a93b3e6ab27a44872a64b0"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "kycg_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "2": [
+                    
+                ],
+                "3": [
+                    "versions.yml:md5,e55ce47046703ed6d6cfbdcacd87427d"
+                ],
+                "enrichment": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "kycg_score.tsv:md5,4fee914ae8a93b3e6ab27a44872a64b0"
+                    ]
+                ],
+                "multiqc": [
+                    
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "kycg_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,e55ce47046703ed6d6cfbdcacd87427d"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T14:30:25.099808258",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "genomic context of the significant CpGs": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "score"
+                    },
+                    "kycg_score.tsv:md5,a64227abb63c6965196ab9438aa52fa6"
+                ]
+            ],
+            [
+                "versions.yml:md5,d90f024abc31c3cd2a003b11aa202bb9"
+            ]
+        ],
+        "timestamp": "2026-11-16T14:33:07.521822388",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

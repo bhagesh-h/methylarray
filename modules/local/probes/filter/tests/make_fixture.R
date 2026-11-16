@@ -37,7 +37,9 @@ anno <- data.frame(
     zhou_general = probes == "cg00000010_TC11",
     zhou_uncorr_titration = FALSE,
     snp_common_1pt = probes == "cg00000009_TC11",
-    snp_eur = probes %in% c("cg00000009_TC11", "cg00000014_TC11")
+    snp_eur = probes %in% c("cg00000009_TC11", "cg00000014_TC11"),
+    illumina_flagged = probes %in% c("cg00000013_TC11", "cg00000010_TC11"),
+    illumina_mapping_inaccuracy = FALSE
 )
 con <- gzfile(file.path(out, "annotation.tsv.gz"), "w")
 write.table(anno, con, sep = "\t", quote = FALSE, row.names = FALSE, na = "")

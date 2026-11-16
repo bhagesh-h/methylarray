@@ -13,11 +13,12 @@ The directories listed below will be created in the results directory after the 
 - [Sample QC](#sample-qc): control metrics, sex check, SNP genotypes and one status per array
 - [Probe filtering](#probe-filtering): filtered data for analysis, one row per CpG and one row per probe, with the probe attrition
 - [Cell composition](#cell-composition): blood cell-type fractions per array
-- [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration and clock coverage per array
+- [Methylation QTLs](#methylation-qtls): CpGs with a cis-meQTL from a supplied meQTL table, with `--meqtl`
+- [Epigenetic clocks](#epigenetic-clocks): clock estimates, age acceleration clock coverage and genotype-robust clocks per array
 - [Exploratory analysis](#exploratory-analysis): control-probe PCs, PCA of the methylation data and its associations with technical and biological variables
 - [Association models](#association-models): epigenome-wide association results per model of `--models`
 - [Differentially methylated regions](#differentially-methylated-regions): DMRcate, dmrff and consensus regions per model
-- [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment of the significant CpGs per model
+- [Gene set enrichment](#gene-set-enrichment): GO, KEGG and MSigDB enrichment, and KnowYourCG genomic context enrichment, of the significant CpGs per model
 - [DNA methylation scores](#dna-methylation-scores): smoking, alcohol, BMI and IL-6 scores per array
 - [Clocks, scores and cell fractions](#clocks-scores-and-cell-fractions): their agreement, their relation to the cell fractions, the batches and the phenotypes, and quartile groups of acceleration
 - [GEO submission files](#geo-submission-files): processed matrix, signal intensities and a sample table, when `--export_geo` is set
@@ -73,6 +74,7 @@ Rows are probes (EPIC v2 probe IDs such as `cg00000029_TC21`; `rowData(se)$cpg_i
   - `relatives`: arrays called identical or first-degree relatives from the SNP genotypes (see `ewastools_relatedness.tsv.gz`); reported only, the status is set by the identity conflicts
   - `inferred_donor`: donor number from the SNP genotypes; technical replicates share a number
   - `replicate_group`, `failed_controls`
+  - `ctrl_*` (with ewastools): the 21 Illumina BeadArray Controls Reporter metrics, also tested against the principal components
 - `qc/sample_qc_retained.txt`: the arrays with status `PASS` or `FLAG`, one per line. Later steps use these arrays.
 - `qc/ewastools/` (not with `--skip_ewastools`)
   - `ewastools_qc.tsv`: per array, the 21 Illumina BeadArray Controls Reporter metrics (`ctrl_*`), the metrics below Illumina's thresholds (`failed_controls`), X and Y intensities, the ewastools sex prediction, the SNP outlier score, the number of SNP probes, the inferred donor, whether the array is part of an identity conflict, and its related arrays (`relatives`, for example `B (identical); C (first-degree)`).
@@ -99,7 +101,7 @@ How the status is set:
   - `<method>_filtered_attrition.tsv`: probes removed at each step (`removed`), probes left (`remaining`), and probes carrying each reason in any order (`n_with_reason`). The `report_only_*` rows count flagged probes that were kept.
   - `<method>_filtered_exclusions.tsv.gz`: every removed probe with the step that removed it (`first_reason`), all reasons that apply, and its undetected and masked fractions.
 
-The filters, in order: rs, nv and control probes; non-CG probes; probes without an hg38 position; chrX and chrY (kept with `--keep_sex_chr`); detection failure in more than `--probe_fail_fraction` of arrays; other masked values (bead count, quality mask) in more than `--bead_fail_fraction` of arrays; the SNP mask of `--snp_mask`; the Zhou general mask; cross-hybridisation (`--crosshyb_filter`). Manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poor titration (Zhou) are report-only: counted in the `report_only_*` rows of the attrition table, never removed.
+The filters, in order: rs, nv and control probes; non-CG probes; probes without an hg38 position; chrX and chrY (kept with `--keep_sex_chr`); detection failure in more than `--probe_fail_fraction` of arrays; other masked values (bead count, quality mask) in more than `--bead_fail_fraction` of arrays; the SNP mask of `--snp_mask`; the Zhou general mask; cross-hybridisation (`--crosshyb_filter`). Manifest position mismatches (Peters et al. 2024 `MismatchPos`), poor titration (Zhou) and, when their lists are given, Illumina's flagged and mapping-inaccuracy probes are report-only: counted in the `report_only_*` rows of the attrition table, never removed.
 
 ### Cell composition
 
@@ -110,7 +112,14 @@ Only with `--tissue blood` (default).
   - `cent12_*`: EpiDISH RPC fractions for the 12 types of `cent12CT` (naive and memory B, CD4 T and CD8 T cells, regulatory T cells, NK cells, monocytes, neutrophils, eosinophils, basophils)
   - `dhs7_*`: fractions for the 7 types of `centDHSbloodDMC`, for comparison with earlier studies
   - `sum_cent12`, `sum_dhs7`: sum of the fractions of each reference
-- `cell_composition/cell_fractions_reference_coverage.tsv`: for each reference, the number of reference CpGs, the missing ones by reason (`sex_chromosome`: left out on purpose, because X inactivation can mimic a cell-type signal; `not_on_array`: not measured by EPIC v2; `removed_by_filter`: removed by the probe filter), the CpGs found and how many of them only through their EPIC v1 or 450K ID, the coverage of the autosomal reference CpGs, the missing values set to the CpG median, and the status (`ok`, or `warn` below 98%; the run stops below `--min_reference_coverage`).
+  - `idol_*` (not with `--skip_idol`): fractions of the six IDOL cell types (CD8T, CD4T, NK, Bcell, Mono, Neu), Houseman constrained projection
+- `cell_composition/cell_fractions_reference_coverage.tsv`: for each reference, the number of reference CpGs, the missing ones by reason (`sex_chromosome`: left out on purpose, because X inactivation can mimic a cell-type signal; `not_on_array`: not measured by EPIC v2; `removed_by_filter`: removed by the probe filter), the CpGs found and how many of them only through their EPIC v1 or 450K ID, the coverage of the autosomal reference CpGs, the missing values set to the CpG median, and the status (`ok`, or `warn` below 98%; the run stops below `--min_reference_coverage`, except for IDOL, which is then skipped with the status `fail: skipped`).
+- `cell_composition/cell_fractions_idol_agreement.tsv`: each cent12CT lineage against the matching IDOL cell type: Spearman rho and mean difference (lineage minus IDOL). Granulocytes include eosinophils and basophils, IDOL neutrophils do not.
+
+### Methylation QTLs
+
+- `meqtl/meqtl_cpgs.tsv` (with `--meqtl`): the EPIC v2 CpGs with a cis-meQTL in the supplied table: the name in the table, the number of SNPs, and the strongest SNP with its P and effect.
+- `meqtl/meqtl_cpgs_summary.tsv`: rows read, cis rows, rows below `--meqtl_p`, CpGs in the table and CpGs matched on the array.
 
 ### Epigenetic clocks
 
@@ -118,16 +127,23 @@ Not with `--skip_clocks`.
 
 - `clocks/clocks.tsv`: one row per array that passed QC, with the reported age (`age`) and one column per clock of `--clocks`. With at least six reported ages, `eaa_<clock>` holds the age acceleration (residual of the clock on age) of the clocks that estimate age, and, with at least 14 such arrays, `ieaa_<clock>` the intrinsic age acceleration (also adjusted for six of the seven `centDHSbloodDMC` cell fractions).
 - `clocks/clocks_coverage.tsv`: for each clock, its CpGs, how many are in the data (`present`), how many have a common SNP (minor allele frequency 1% or more) at the CpG or extension base (`snp_cpgs`), how many are present only under their EPIC v1 or 450K ID (`present_by_legacy_id`), the share present, the values that failed detection and were set to the CpG mean (`filled_values`), and notes.
-- `clocks/clocks_weights.tsv`: for each clock that is a weighted sum of CpGs (not the principal-component clocks or epiTOC2), every CpG with its gene, published weight, SD of its beta value in these arrays, standardised weight (weight times SD, in the clock's units per SD of methylation; sorted by its size) and whether it has a common SNP.
+- `clocks/clocks_robust.tsv` (with `--meqtl`): the same columns as `clocks.tsv`, from the clocks computed with the CpGs that have a common SNP or a cis-meQTL held at their mean over the arrays (genotype-robust clocks). Compare their accelerations with those of `clocks.tsv`, not their ages. `clocks_coverage.tsv` then also gives the clock CpGs held per clock (`robust_removed`).
+- `clocks/clocks_weights.tsv`: for each clock that is a weighted sum of CpGs (not the principal-component clocks or epiTOC2), every CpG with its gene, published weight, SD of its beta value in these arrays, standardised weight (weight times SD, in the clock's units per SD of methylation; sorted by its size) whether it has a common SNP, and, with `--meqtl`, whether it has a cis-meQTL (`meqtl`).
 
 ### Exploratory analysis
 
 - `exploration/pca_ctrl_pcs.tsv`: the control-probe principal components kept (`--n_ctrl_pcs`) per array, used as covariates by models with `@ctrlpcs`. Only the `sample` column without ewastools.
+- `exploration/ancestry_pcs.tsv` (not with `--skip_ancestry`): the genetic ancestry components kept (`--n_ancestry_pcs`) per array, used as covariates by models with `@ancestry`. Only the `sample` column when fewer than 10 arrays passed QC.
+- `exploration/ancestry_pcs_variance.tsv`: share of variance per ancestry component (up to 10), the cumulative share, and whether the component is a covariate.
+- `exploration/ancestry_pcs_summary.tsv`: the arrays, SNP CpGs and rs probes used, and the covariates the SNP CpGs were residualised for.
+- `exploration/ancestry_pcs_associations.tsv`: each ancestry component against the DNA plate, BeadChip, Sentrix row, sex, age, the cell lineages and, when the phenotype table has one, an `ancestry`, `ethnicity` or `race` column (linear regression: R-squared and P). Technical variables should explain little.
 - `exploration/pca_ctrl_pca_variance.tsv`: share of the control-probe variance per component, and the cumulative share.
 - `exploration/pca_scores.tsv`: the tested principal components (`--n_pcs`) of the most variable CpGs per array.
 - `exploration/pca_variance.tsv`: share of variance per component, the cumulative share, and whether the component was tested.
 - `exploration/pca_outliers.tsv`: per array the robust Mahalanobis distance on PC1 and PC2 (each centred on its median and scaled by its MAD) and `pca_outlier` (`TRUE` above the chi-square 0.999 quantile with 2 degrees of freedom). Report only: flagged arrays stay in the analysis. Needs at least 5 arrays.
-- `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
+- `exploration/variance_partition.tsv.gz` (not with `--skip_variance_partition`): for each of the `--variance_partition_cpgs` most variable CpGs, the percentage of its variance explained by each variable and the residual.
+- `exploration/variance_partition_summary.tsv`: per variable, its effect type (random or fixed), the median, mean and 90th percentile of the percentage over the CpGs, the CpGs above 10%, the arrays and CpGs used, and the model formula; a `note` says why it did not run (fewer than 10 arrays with complete variables).
+- `exploration/pca_associations.tsv`: one row per variable and component: the variable group (`technical`, `control metrics`, `biological`, `phenotype`), the test (linear regression for numeric variables, Kruskal-Wallis for categorical ones), the number of arrays, R-squared, adjusted R-squared (corrected for the number of levels of a categorical variable) and the p-value. Technical variables: plate, batch, Sentrix ID and row, detected fraction, control-probe PCs. Control metrics: the Illumina BeadArray Controls Reporter metrics of ewastools (`control: <metric>`), as ChAMP's `champ.SVD` does with the internal controls. Biological variables: predicted sex, reported age and the cell lineages; every phenotype column is tested too.
 
 The MultiQC report shows the associations as a heatmap of -log10 P, the variance per component, and PC1 against PC2 coloured by predicted sex.
 
@@ -135,6 +151,7 @@ The MultiQC report shows the associations as a heatmap of -log10 P, the variance
 
 Only with `--models`.
 
+- `ewas/ewas_summary_meqtl.tsv` (with `--meqtl`): per model and contrast, the tested CpGs and the CpGs at FDR < 0.05 with a cis-meQTL, their shares, the odds ratio and Fisher's exact P. Hits with a cis-meQTL are candidates for genetic confounding.
 - `ewas/ewas_summary.tsv`: one row per model and contrast: status (`tested`, or why not), complete cases, CpGs tested, genomic lambda before and after bacon, bacon inflation and bias, CpGs at FDR < 0.05, at `--p_epigenome_wide` and at `--p_suggestive` (raw, and after bacon), and the top CpG. With more than one tested model or contrast: `meff`, the effective number of independent tests across them (Galwey 2009, from the correlation of their t statistics over the CpGs), `p_study_wide` (`--p_epigenome_wide` / Meff) and `hits_study_wide`, the CpGs below it.
 - `ewas/<model>/`
   - `ewas_<model>_stats.tsv.gz`: every CpG: `cpg_id`, position and gene context, `contrast`, `logfc_m` and `se_m` (coefficient and standard error on the M-value scale, per unit of the transformed trait or for the level against the reference), `delta_beta` (the same coefficient on beta values), moderated `t`, `p_value`, `fdr` (Benjamini-Hochberg), `p_bacon` and `fdr_bacon` (after bacon correction of bias and inflation), `mean_beta` and `n`.
@@ -158,6 +175,8 @@ Only with `--models`, and not with `--skip_dmr`. Every model gets a folder; for 
 Only with `--models`, and not with `--skip_enrichment`. Every model gets a folder; for a model that was not tested or has `skip_enrichment: true` the table is empty and the summary says why.
 
 - `enrichment/<model>/enrichment_<model>.tsv`: one row per collection, contrast and gene set: `collection` (`GO`, `KEGG`, or the GMT file name such as `h.all.v2025.1.Hs`), `set` (GO or KEGG identifier, or gene set name), `term`, `ontology` (GO only: BP, CC, MF), `n` (genes in the set), `de` (genes with a significant CpG, weighted for CpGs in several genes), `p_value` and `fdr`, sorted by P.
+- `enrichment/<model>/kycg_<model>.tsv` (not with `--skip_kycg`): KnowYourCG genomic context enrichment, one row per contrast, query (`all`, `higher`, `lower` methylation), knowledgebase (`database`) and feature (`set`): `log2_or` (log2 odds ratio; `Inf` or `-Inf` when every or no query probe is in the set), `p_value`, `fdr` (within the knowledgebase), `overlap` (query probes in the set), `query_probes`, `set_probes`.
+- `enrichment/<model>/kycg_<model>_summary.json`: significant and tested CpGs per contrast and whether each query ran.
 - `enrichment/<model>/enrichment_<model>_summary.json`: significant and tested CpGs per contrast, whether enrichment ran, and why a collection did not run (for example KEGG without network access).
 
 ### DNA methylation scores
@@ -176,7 +195,10 @@ Not with both `--skip_clocks` and `--skip_dnam_scores`. Only aggregates are writ
 - `biomarkers/biomarkers_cells_measures.tsv`: Spearman correlation of each EpiDISH cell lineage with each acceleration and score.
 - `biomarkers/biomarkers_cells_phenotypes.tsv`: each cell lineage against age, sex and every phenotype, with age and sex held: the estimate in SD of the fraction per SD of a continuous trait, or with a binary one.
 - `biomarkers/biomarkers_batch.tsv`: each acceleration and score against the DNA plate, the BeadChip and the Sentrix row (adjusted R-squared and F-test).
-- `biomarkers/biomarkers_phenotypes.tsv`: each acceleration and score against every phenotype, plain and with cells held: Spearman correlation for a continuous phenotype, difference in SD between the groups of a binary one (t-test).
+- `biomarkers/biomarkers_phenotypes.tsv`: each acceleration and score against every phenotype, plain, with cells held, with the ancestry components held (`ancestry held`) and, when some analysed arrays have a borderline SNP outlier score, without them (`low contamination`): Spearman correlation for a continuous phenotype, difference in SD between the groups of a binary one (t-test).
+- `biomarkers/biomarkers_ancestry.tsv` (with the ancestry components): Spearman correlation of each acceleration and score with each genetic ancestry component; the phenotype associations with the components held are the `ancestry held` version of `biomarkers_phenotypes.tsv`.
+- `biomarkers/biomarkers_robust.tsv` (with `--meqtl`): Spearman correlation of each clock acceleration with the one of the genotype-robust clock; the phenotype associations with the robust accelerations are the `genotype-robust` version of `biomarkers_phenotypes.tsv`.
+- `biomarkers/biomarkers_contamination.tsv` (with ewastools): Spearman correlation of the ewastools SNP outlier score with each acceleration and score on the analysed arrays, with the robust cutoff (median plus three MADs of the score) and the number of arrays above it. Contamination with another person's DNA pulls beta values towards the middle and can bias clocks; these arrays pass QC (their score is below `--snp_outlier_threshold`), so the `low contamination` version of the phenotype table shows whether they change the results.
 - `biomarkers/biomarkers_quartiles.tsv`: for each acceleration, the bottom quarter (decelerated), middle half (normal) and top quarter (accelerated): the median of every characteristic (percentage for binary ones), its mean z per group, and a trend test across the ordered groups (Kendall's tau, equivalent to the Jonckheere-Terpstra test).
 
 ### GEO submission files
@@ -195,13 +217,14 @@ Columns are named after the samplesheet sample names. Rename them before submiss
   - `probe_annotation.tsv.gz`: one row per probe with the Peters et al. 2024 manifest columns and the Zhou mask flags used by the probe filter. Pass it to `--probe_annotation` to skip building it.
   - `probe_annotation_summary.tsv`, `probe_annotation_resources.tsv`: probes per flag, and the source files with their MD5 checksums.
   - `sesame_cache/` (`sesame` and `combined` routes): ExperimentHub cache with the sesameData resources for the platform. Pass it to `--sesame_cache` to run without network access.
+  - `kycg_cache/` and `kycg_resources.tsv` (with models, not with `--skip_kycg`): the KnowYourCG knowledgebases in an ExperimentHub cache, and their ExperimentHub IDs and MD5 checksums. Pass the folder to `--kycg_cache` for runs without network access.
   - `sesame_resources.tsv` (`sesame` and `combined` routes): title, ExperimentHub ID, cached file and MD5 checksum of each resource.
 
 ### Analysis report
 
 Not with `--skip_report`.
 
-- `report/methylarray_report.html`: a self-contained HTML report (Quarto) of the run: run summary, sample QC with the flagged and failed arrays, probe attrition, cell composition, SNP genotypes (genotype groups, pairwise agreement, X-chromosome heterozygosity by sex, contamination, the identity-by-state plot and table of related and replicate pairs), clock and score coverage with the agreement of the clocks with age, the largest standardised weights of each clock and score and the share of clock CpGs with a SNP, the agreement of the accelerations and scores, their relation to the cell fractions, the batches and the phenotypes, the quartile groups of acceleration, the PCA variance and the R-squared of each variable for each component, the association models (summary, QQ and Manhattan plots, top CpGs), consensus DMRs, dot plots and tables of the top gene sets per collection (GO, KEGG, MSigDB), the methods text with references and software versions, and limitations. It prints aggregates and plots, not individual phenotype values; sections of steps that did not run are left out.
+- `report/methylarray_report.html`: a self-contained HTML report (Quarto) of the run: run summary, sample QC with the flagged and failed arrays, probe attrition, cell composition, SNP genotypes (genotype groups, pairwise agreement, X-chromosome heterozygosity by sex, contamination, the identity-by-state plot and table of related and replicate pairs), clock and score coverage with the agreement of the clocks with age, the largest standardised weights of each clock and score and the share of clock CpGs with a SNP, the agreement of the accelerations and scores, their relation to the cell fractions, the batches and the phenotypes, the quartile groups of acceleration, the SNP outlier score and the ancestry components against the ageing measures, the genetic ancestry components (PC1 against PC2, variance and what they capture), the PCA variance and the R-squared of each variable for each component, the variance partition of the most variable CpGs, the association models (summary, QQ and Manhattan plots, top CpGs), consensus DMRs, dot plots and tables of the top gene sets per collection (GO, KEGG, MSigDB), the methods text with references and software versions, and limitations. It prints aggregates and plots, not individual phenotype values; sections of steps that did not run are left out.
 
 ### MultiQC
 

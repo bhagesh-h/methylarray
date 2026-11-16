@@ -1,0 +1,7 @@
+lineage	idol_type	rho	mean_difference	n
+B	Bcell	0.9429	-0.0191	6
+CD4T	CD4T	0.9429	-0.0256	6
+CD8T	CD8T	1	-0.0368	6
+NK	NK	0.8857	-0.0125	6
+Mono	Mono	0.8857	-0.0183	6
+Gran	Neu	0.8286	0.1123	6

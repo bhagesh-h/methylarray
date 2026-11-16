@@ -148,6 +148,8 @@ qc <- data.frame(
     check.names = FALSE
 )
 names(qc)[names(qc) == "predicted_sex"] <- paste0("predicted_sex_", method)
+# The Illumina control metrics of ewastools, for the PCA associations
+if (!is.null(ew)) for (column in grep("^ctrl_", names(ew), value = TRUE)) qc[[column]] <- ew[[column]]
 write.table(qc, paste0(prefix, ".tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, na = "")
 writeLines(qc[["sample"]][qc[["status"]] %in% c("PASS", "FLAG")], paste0(prefix, "_retained.txt"))
 

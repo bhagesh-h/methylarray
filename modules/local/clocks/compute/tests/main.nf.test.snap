@@ -6,14 +6,14 @@
                     {
                         "id": "minfi"
                     },
-                    "clocks_coverage.tsv:md5,8a83604a1ad314e8801df840bd359c21"
+                    "clocks_coverage.tsv:md5,143a33a8b43bd906dc8dd5102244fe05"
                 ]
             ],
             [
                 "versions.yml:md5,dbe9560e8f254721babcaaa8e056d060"
             ]
         ],
-        "timestamp": "2026-11-15T23:19:38.298642372",
+        "timestamp": "2026-11-16T14:52:44.406412092",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
@@ -43,10 +43,13 @@
                         {
                             "id": "minfi"
                         },
-                        "clocks_weights.tsv:md5,90fa629f87c29b41affaf8deac4c9682"
+                        "clocks_weights.tsv:md5,a72e4be8684b7a73ae063d5c6f8f70d4"
                     ]
                 ],
                 "3": [
+                    
+                ],
+                "4": [
                     [
                         {
                             "id": "minfi"
@@ -54,7 +57,7 @@
                         "clocks_coverage_mqc.tsv:md5,850c7cd81ab8dd56c92e604b6c123803"
                     ]
                 ],
-                "4": [
+                "5": [
                     "versions.yml:md5,2dcc286dba502038ce80291be330c55b"
                 ],
                 "clocks": [
@@ -81,6 +84,9 @@
                         "clocks_coverage_mqc.tsv:md5,850c7cd81ab8dd56c92e604b6c123803"
                     ]
                 ],
+                "robust": [
+                    
+                ],
                 "versions": [
                     "versions.yml:md5,2dcc286dba502038ce80291be330c55b"
                 ],
@@ -89,12 +95,12 @@
                         {
                             "id": "minfi"
                         },
-                        "clocks_weights.tsv:md5,90fa629f87c29b41affaf8deac4c9682"
+                        "clocks_weights.tsv:md5,a72e4be8684b7a73ae063d5c6f8f70d4"
                     ]
                 ]
             }
         ],
-        "timestamp": "2026-11-15T23:15:12.691087192",
+        "timestamp": "2026-11-16T14:52:48.159521591",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

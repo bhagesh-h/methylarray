@@ -1,0 +1,115 @@
+nextflow_process {
+
+    name "Test Process ANCESTRY_PCS"
+    script "../main.nf"
+    process "ANCESTRY_PCS"
+    config "./nextflow.config"
+
+    tag "modules"
+    tag "modules_local"
+    tag "ancestry"
+    tag "ancestry/pcs"
+
+    // Simulated data (make_fixture.R): 60 arrays from two populations on three
+    // plates; the SNP CpGs carry the genotypes and a strong plate effect that the
+    // control-probe PC tracks. Two arrays failed sample QC.
+
+    test("ancestry PCs from SNP CpGs and rs probes") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def read = { channel -> def t = path(channel[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+                t.drop(1).collect { values -> [t[0], values].transpose().collectEntries() } }
+            def pcs = path(process.out.pcs[0][1]).readLines()
+            def assoc = read(process.out.associations)
+            def summary = read(process.out.summary).collectEntries { row -> [row.metric, row.value] }
+            assertAll(
+                { assert process.success },
+                // the arrays that passed QC, and the number of components set by ext.args (3)
+                { assert pcs[0].split('\t') as List == ['sample', 'ancestry_pc1', 'ancestry_pc2', 'ancestry_pc3'] && pcs.size() == 59 },
+                // the autosomal SNP CpGs but the one with a low call rate, and the 40 rs probes
+                { assert summary.arrays == '58' && summary.snp_cpgs == '299' && summary.rs_snps == '40' },
+                { assert summary.residualised_for.contains('2 control-probe PCs') && summary.residualised_for.contains('sex') && summary.residualised_for.contains('age') },
+                // PC1 separates the populations; the plate effect was removed
+                { assert assoc.find { row -> row.variable == 'ancestry' && row.pc == 'ancestry_pc1' }.r_squared as double > 0.8 },
+                { assert assoc.find { row -> row.variable == 'DNA plate' && row.pc == 'ancestry_pc1' }.r_squared as double < 0.1 },
+                { assert process.out.multiqc[0][1].collect { f -> file(f).name }.sort() == ['ancestry_pcs_scatter_mqc.json', 'ancestry_pcs_scree_mqc.tsv'] },
+                { assert snapshot(process.out.pcs, process.out.variance, process.out.summary, process.out.associations, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("without control PCs, cells and phenotypes") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    [], [], []
+                ]
+                """
+            }
+        }
+
+        then {
+            def summary = path(process.out.summary[0][1]).readLines().drop(1).collectEntries { line -> line.split('\t') as List }
+            assertAll(
+                { assert process.success },
+                { assert summary.residualised_for == 'sex; age' }
+            )
+        }
+    }
+
+    test("ancestry PCs - stub") {
+
+        tag "fast"
+        options "-stub"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    [], [], []
+                ]
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}

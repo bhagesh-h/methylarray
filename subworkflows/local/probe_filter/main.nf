@@ -15,13 +15,21 @@ workflow PROBE_FILTER {
     manifest_source   // string: Peters et al. 2024 EPIC v2 manifest .Rda (URL or path)
     probe_mask_source // string: Zhou lab EPIC v2 mask (URL or path)
     platform          // string: array platform
+    illumina_flagged  // string: Illumina flagged-probe list (path), or null
+    illumina_mapping  // string: Illumina mapping-inaccuracy list (path), or null
 
     main:
     def ch_annotation = channel.empty()
     if (probe_annotation) {
         ch_annotation = channel.value(file(probe_annotation, checkIfExists: true))
     } else {
-        PROBES_ANNOTATE(channel.value([ [ id: platform ], file(manifest_source, checkIfExists: true), file(probe_mask_source, checkIfExists: true) ]))
+        PROBES_ANNOTATE(channel.value([
+            [ id: platform ],
+            file(manifest_source, checkIfExists: true),
+            file(probe_mask_source, checkIfExists: true),
+            illumina_flagged ? file(illumina_flagged, checkIfExists: true) : [],
+            illumina_mapping ? file(illumina_mapping, checkIfExists: true) : []
+        ]))
         ch_annotation = PROBES_ANNOTATE.out.annotation.map { _meta, annotation -> annotation }
     }
 

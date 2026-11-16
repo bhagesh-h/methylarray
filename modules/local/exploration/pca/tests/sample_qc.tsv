@@ -1,7 +1,7 @@
-sample	status	reasons	frac_detected	reported_sex	predicted_sex_minfi	predicted_sex_ewastools	sex_check	sex_x	sex_y	snp_outlier	inferred_donor	replicate_group	failed_controls
-BeCOME_1	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion II (Bkg)	0.996	female	female	female	match	1.0631	0.204	-4.506	1		Bisulfite Conversion II (Bkg)
-BeCOME_2	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion II (Bkg)	0.9983	female	female	female	match	1.06	0.1982	-4.932	2		Bisulfite Conversion II (Bkg)
-BeCOME_5	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion I Green (Bkg), Bisulfite Conversion II (Bkg)	0.9979	male	male	male	match	0.7403	0.7357	-4.601	3		Bisulfite Conversion I Green (Bkg);Bisulfite Conversion II (Bkg)
-BeCOME_6	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion II (Bkg)	0.9977	male	male	male	match	0.7331	0.7297	-4.454	4		Bisulfite Conversion II (Bkg)
-CALERIE_1	PASS		0.9998	male	male	male	match	0.7851	0.8118	-4.765	5	CALERIE_1	
-CALERIE_1_rep	PASS		0.9998	male	male	male	match	0.7858	0.8119	-4.679	5	CALERIE_1	
+sample	status	reasons	frac_detected	reported_sex	predicted_sex_minfi	predicted_sex_ewastools	sex_check	sex_x	sex_y	snp_outlier	inferred_donor	replicate_group	failed_controls	ctrl_bisulfite_conversion_ii	ctrl_staining_green
+BeCOME_1	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion II (Bkg)	0.996	female	female	female	match	1.0631	0.204	-4.506	1		Bisulfite Conversion II (Bkg)	3.12	45.1
+BeCOME_2	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion II (Bkg)	0.9983	female	female	female	match	1.06	0.1982	-4.932	2		Bisulfite Conversion II (Bkg)	2.85	52.3
+BeCOME_5	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion I Green (Bkg), Bisulfite Conversion II (Bkg)	0.9979	male	male	male	match	0.7403	0.7357	-4.601	3		Bisulfite Conversion I Green (Bkg);Bisulfite Conversion II (Bkg)	4.01	38.9
+BeCOME_6	FLAG	control metrics below Illumina thresholds: Bisulfite Conversion II (Bkg)	0.9977	male	male	male	match	0.7331	0.7297	-4.454	4		Bisulfite Conversion II (Bkg)	3.55	61.0
+CALERIE_1	PASS		0.9998	male	male	male	match	0.7851	0.8118	-4.765	5	CALERIE_1		2.21	47.6
+CALERIE_1_rep	PASS		0.9998	male	male	male	match	0.7858	0.8119	-4.679	5	CALERIE_1		3.90	55.2
