@@ -3,7 +3,10 @@ message: "If you use methylarray, please cite it as below, and cite the tools an
 type: software
 title: "methylarray: quality control, preprocessing and association analysis of Illumina Infinium DNA methylation arrays (EPIC v2)"
 authors:
-  - alias: bhagesh-h
+  - given-names: Bhagesh
+    family-names: Hunakunti
+    orcid: "https://orcid.org/0000-0002-5957-8005"
+    alias: bhagesh-h
     website: "https://github.com/bhagesh-h"
 version: 1.0.0
 date-released: "2026-11-16"
