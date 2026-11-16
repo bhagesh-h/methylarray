@@ -109,7 +109,10 @@ mvalue <- mvalue[, keep, drop = FALSE]
 used <- c(continuous, categorical)
 if (length(used) == 0 || nrow(info) < 10 || nrow(info) <= length(used) + 5) {
     # Too few arrays for the mixed models: empty tables with a note
-    fwrite(data.table(cpg_id = character(), residual = numeric()), paste0(prefix, ".tsv.gz"), sep = "\\t")
+    # fwrite writes an incomplete gzip stream for a table without rows
+    gz <- gzfile(paste0(prefix, ".tsv.gz"), "w")
+    writeLines("cpg_id\\tresidual", gz)
+    close(gz)
     fwrite(data.table(variable = NA_character_, type = NA_character_, median = NA_real_, mean = NA_real_, q90 = NA_real_,
                       cpgs_over_10 = NA_integer_, arrays = nrow(info), cpgs = 0L, formula = NA_character_,
                       note = sprintf("not run: %d arrays with complete variables (%s); at least 10, and 6 more than the variables, are needed",
