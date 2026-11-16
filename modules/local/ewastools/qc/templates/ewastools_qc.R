@@ -277,7 +277,14 @@ relatedness <- if (length(keep) >= 2) relatedness_tables(G, expected_donor[keep]
          threshold = NA_real_, expected_first_degree = NA_real_, snps = sum(autosomal))
 pairs <- relatedness[["pairs"]]
 related <- pairs[pairs[["relation"]] %in% c("identical", "first-degree"), , drop = FALSE]
-fwrite(pairs, paste0(prefix, "_relatedness.tsv.gz"), sep = "\\t")
+if (nrow(pairs) > 0) {
+    fwrite(pairs, paste0(prefix, "_relatedness.tsv.gz"), sep = "\\t")
+} else {
+    # fwrite writes an incomplete gzip stream for a table without rows
+    gz <- gzfile(paste0(prefix, "_relatedness.tsv.gz"), "w")
+    writeLines(paste(names(pairs), collapse = "\\t"), gz)
+    close(gz)
+}
 write.table(data.frame(
     metric = c("arrays", "snps", "pairs", "lod_threshold", "expected_lod_first_degree", "identical_pairs",
                "identical_pairs_unexpected", "first_degree_pairs", "replicate_pairs_not_identical"),
