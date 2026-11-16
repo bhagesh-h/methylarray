@@ -213,7 +213,7 @@ The pipeline processes data where it runs and does not upload samples, phenotype
 
 ## Credits
 
-methylarray is developed and maintained by [bhagesh-h](https://github.com/bhagesh-h).
+methylarray is developed and maintained by Bhagesh Hunakunti ([bhagesh-h](https://github.com/bhagesh-h), ORCID [0000-0002-5957-8005](https://orcid.org/0000-0002-5957-8005)).
 
 The workflow diagram is drawn with [nf-metro](https://github.com/seqeralabs/nf-metro) from [assets/metro_map.mmd](assets/metro_map.mmd).
 
@@ -223,7 +223,7 @@ Bug reports and feature requests are welcome through GitHub issues. Development 
 
 ## Citations
 
-All tools, methods, reference data and frameworks used by the pipeline are listed in [CITATIONS.md](CITATIONS.md). A Zenodo DOI for the pipeline will be added at the first release.
+To cite methylarray, use the citation in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
 
 ## License
 
