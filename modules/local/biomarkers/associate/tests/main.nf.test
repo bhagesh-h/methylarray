@@ -54,6 +54,38 @@ nextflow_process {
         }
     }
 
+    test("no phenotype table or ages - sex is the only phenotype") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'biomarkers' ],
+                    file("$moduleTestDir/samples_no_age.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/clocks.tsv", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
+                    file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true),
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            // MultiQC needs the heatmap categories as lists, also with a single column
+            def heatmap = new groovy.json.JsonSlurper().parse(file(process.out.multiqc[0][1].find { f -> f.toString().endsWith('_phenotypes_mqc.json') }))
+            assertAll(
+                { assert process.success },
+                { assert heatmap.xcats == ['Men'] },
+                { assert heatmap.ycats instanceof List },
+                { assert heatmap.data.every { row -> row instanceof List && row.size() == 1 } }
+            )
+        }
+    }
+
     test("clocks only - stub") {
 
         tag "fast"

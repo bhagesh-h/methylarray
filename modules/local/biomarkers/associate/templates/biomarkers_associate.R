@@ -288,7 +288,7 @@ write_tsv(round_table(quartiles), paste0(prefix, "_quartiles.tsv"))
 heatmap_json <- function(id, section, description, title, rows, columns, values, file, min = -1, max = 1) {
     write_json(list(id = id, section_name = section, description = description, plot_type = "heatmap",
                     pconfig = list(id = paste0(id, "_plot"), title = title, min = min, max = max, square = FALSE, decimalPlaces = 2),
-                    xcats = columns, ycats = rows, data = values),
+                    xcats = I(columns), ycats = I(rows), data = values),
                file, auto_unbox = TRUE, pretty = TRUE, digits = NA, na = "null")
 }
 if (nrow(agreement) > 0) {

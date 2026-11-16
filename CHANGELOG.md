@@ -44,6 +44,7 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 
 - Numeric Sentrix IDs, plates and batches in the samplesheet are accepted (#3).
 - The test profiles stage the GEO test IDATs four at a time to avoid HTTP 503 responses (#7).
+- MultiQC heatmaps with a single row or column (for example sex as the only phenotype, without a phenotype table or ages) are written with list categories, so MultiQC accepts them.
 - The pipeline download test uses Apptainer 1.4.5, which converts task images whose OCI manifest holds a Docker-typed layer (Apptainer 1.3 refuses them).
 
 ### `Dependencies`

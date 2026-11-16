@@ -188,8 +188,8 @@ if (length(heatmap) > 0) {
         plot_type = "heatmap",
         pconfig = list(id = "pca_associations_plot", title = "PCA: association with variables (-log10 P)",
                        xlab = "Principal component", ylab = "Variable", min = 0),
-        xcats = pcs,
-        ycats = names(heatmap),
+        xcats = I(pcs),
+        ycats = I(names(heatmap)),
         data = heatmap
     ), paste0(prefix, "_associations_mqc.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA, na = "null")
 }
