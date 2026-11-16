@@ -12,7 +12,8 @@ nextflow_process {
     // Simulated data (make_fixture.py): 80 arrays, two failed sample QC; the
     // Horvath acceleration rises with BMI, plate P3 shifts the Hannum
     // acceleration, the SNP outlier score rises with the Hannum acceleration and
-    // three arrays have a borderline SNP outlier score
+    // three arrays have a borderline SNP outlier score; ancestry PC1 rises with
+    // the Horvath acceleration
 
     test("clocks, scores, cells and phenotypes") {
 
@@ -28,7 +29,8 @@ nextflow_process {
                     file("$moduleTestDir/clocks.tsv", checkIfExists: true),
                     file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
                     file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true),
-                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true)
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ancestry_pcs.tsv", checkIfExists: true)
                 ]
                 """
             }
@@ -41,6 +43,7 @@ nextflow_process {
             def batch = read(process.out.batch)
             def quartiles = read(process.out.quartiles)
             def contamination = read(process.out.contamination)
+            def ancestry = read(process.out.ancestry)
             assertAll(
                 { assert process.success },
                 // the three-level 'group' column is left out, 'mets' is binary
@@ -53,9 +56,12 @@ nextflow_process {
                 { assert contamination.find { row -> row.measure == 'HannumG2013 acceleration' }.q as double < 0.05 },
                 { assert contamination.every { row -> row.arrays_above_cutoff == '3' } },
                 { assert phenotypes.findAll { row -> row.version == 'low contamination' && row.trait == 'bmi' }.every { row -> row.n == '75' } },
-                { assert process.out.multiqc[0][1].size() == 4 },
+                // ancestry: the planted correlation, and the 'ancestry held' version of the phenotype tests
+                { assert ancestry.find { row -> row.measure == 'HorvathS2013 acceleration' && row.pc == 'ancestry_pc1' }.q as double < 0.05 },
+                { assert phenotypes.collect { row -> row.version }.unique().sort() == ['ancestry held', 'cells held', 'low contamination', 'plain'] },
+                { assert process.out.multiqc[0][1].size() == 5 },
                 { assert snapshot(process.out.agreement, process.out.cells_measures, process.out.cells_phenotypes, process.out.batch,
-                                  process.out.phenotypes, process.out.quartiles, process.out.contamination, process.out.versions).match() }
+                                  process.out.phenotypes, process.out.quartiles, process.out.contamination, process.out.ancestry, process.out.versions).match() }
             )
         }
     }
@@ -74,7 +80,7 @@ nextflow_process {
                     file("$moduleTestDir/clocks.tsv", checkIfExists: true),
                     file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
                     file("$moduleTestDir/dnam_scores.tsv", checkIfExists: true),
-                    []
+                    [], []
                 ]
                 """
             }
@@ -105,7 +111,7 @@ nextflow_process {
                     file("$moduleTestDir/samples.tsv", checkIfExists: true),
                     file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
                     file("$moduleTestDir/clocks.tsv", checkIfExists: true),
-                    [], [], []
+                    [], [], [], []
                 ]
                 """
             }

@@ -1,0 +1,143 @@
+{
+    "ancestry PCs - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs.tsv:md5,13fc07b37bb76fe42f7aa037e8c9fcfb"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_variance.tsv:md5,51b0e4e831c09953be63b0ecc7ba8340"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_associations.tsv:md5,26542c75c72d43e960aab98f33cfb9d8"
+                    ]
+                ],
+                "4": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_scree_mqc.tsv:md5,4f163feda654be49b0bf1127a3e1af40"
+                    ]
+                ],
+                "5": [
+                    "versions.yml:md5,10b49652ef8f77632e69bc6a69492d16"
+                ],
+                "associations": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_associations.tsv:md5,26542c75c72d43e960aab98f33cfb9d8"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_scree_mqc.tsv:md5,4f163feda654be49b0bf1127a3e1af40"
+                    ]
+                ],
+                "pcs": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs.tsv:md5,13fc07b37bb76fe42f7aa037e8c9fcfb"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1"
+                    ]
+                ],
+                "variance": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "ancestry_pcs_variance.tsv:md5,51b0e4e831c09953be63b0ecc7ba8340"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,10b49652ef8f77632e69bc6a69492d16"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T14:13:23.816765127",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "ancestry PCs from SNP CpGs and rs probes": {
+        "content": [
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "ancestry_pcs.tsv:md5,4c8fda02ddc9dafcc064cc33612cd42c"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "ancestry_pcs_variance.tsv:md5,840ab64b293cb52a2c76ab392e429b79"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "ancestry_pcs_summary.tsv:md5,454a34062e4b39f2b2e9f9bae3201231"
+                ]
+            ],
+            [
+                [
+                    {
+                        "id": "minfi"
+                    },
+                    "ancestry_pcs_associations.tsv:md5,dad3a0bed805f8e345eaf777fce46b86"
+                ]
+            ],
+            [
+                "versions.yml:md5,5a53eee1a322bd3f3eb705c5ab29aeac"
+            ]
+        ],
+        "timestamp": "2026-11-16T14:13:13.399499948",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

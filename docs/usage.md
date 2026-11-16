@@ -107,17 +107,19 @@ A YAML list with one entry per association model. Each model tests one trait aga
 
 Columns can come from the samplesheet, the phenotype table or the covariates the pipeline derives from the methylation data:
 
-| Name or token   | Meaning                                                                                               |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| `predicted_sex` | Sex predicted by the preprocessing route                                                              |
-| `dnam_smoking`  | DNA methylation smoking score (McCartney et al. 2018)                                                 |
-| `cc_<lineage>`  | Estimated fraction of one cell lineage: `cc_B`, `cc_CD4T`, `cc_CD8T`, `cc_NK`, `cc_Mono` or `cc_Gran` |
-| `ctrlpc<k>`     | Principal component `k` of the control-probe intensities                                              |
-| `@cells`        | `cc_CD4T`, `cc_CD8T`, `cc_B`, `cc_NK` and `cc_Mono` (granulocytes are the reference)                  |
-| `@ctrlpcs`      | The kept control-probe principal components (`--n_ctrl_pcs`)                                          |
-| `@technical`    | `plate` and `sentrix_row`                                                                             |
-| `@sex`          | `predicted_sex`                                                                                       |
-| `@smoking`      | `dnam_smoking`                                                                                        |
+| Name or token    | Meaning                                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `predicted_sex`  | Sex predicted by the preprocessing route                                                              |
+| `dnam_smoking`   | DNA methylation smoking score (McCartney et al. 2018)                                                 |
+| `cc_<lineage>`   | Estimated fraction of one cell lineage: `cc_B`, `cc_CD4T`, `cc_CD8T`, `cc_NK`, `cc_Mono` or `cc_Gran` |
+| `ctrlpc<k>`      | Principal component `k` of the control-probe intensities                                              |
+| `ancestry_pc<k>` | Genetic ancestry component `k` from the SNP probes                                                    |
+| `@cells`         | `cc_CD4T`, `cc_CD8T`, `cc_B`, `cc_NK` and `cc_Mono` (granulocytes are the reference)                  |
+| `@ctrlpcs`       | The kept control-probe principal components (`--n_ctrl_pcs`)                                          |
+| `@ancestry`      | The genetic ancestry components (`--n_ancestry_pcs`)                                                  |
+| `@technical`     | `plate` and `sentrix_row`                                                                             |
+| `@sex`           | `predicted_sex`                                                                                       |
+| `@smoking`       | `dnam_smoking`                                                                                        |
 
 A model stops the run before any task starts when it names a column found in none of these sources, lists its trait among its covariates (directly or through a token), or uses its `block` column as a covariate as well. Without `--models` the pipeline runs preprocessing, QC, probe filtering, cell composition, clocks, DNA methylation scores and the exploratory analysis, and no association models.
 
@@ -251,6 +253,7 @@ After the clocks, scores and cell composition, the pipeline relates them to each
 The arrays that passed QC are summarised with two principal component analyses:
 
 - Control-probe PCs (Lehne et al. 2015): the non-negative control probes of both channels, read by ewastools, describe technical variation such as bisulfite conversion, staining and hybridisation. `--n_ctrl_pcs` (default `auto`: the smallest number explaining at least 90% of their variance, at most 20) are kept as covariates.
+- Genetic ancestry components (`--n_ancestry_pcs`, default 4; `--skip_ancestry`): without genotype data, the CpG probes with a common SNP (minor allele frequency 5% or more within 5 bp of the 3' end, Zhou lab mask) and the rs probes carry the genotypes. Following the EpiAnceR+ approach (Höffler et al. 2025), the CpG beta values are first residualised for the control-probe PCs, the PCs of the cell fractions, sex and age, so that technical and biological variation does not drive the components; the rs genotypes are added and a PCA gives the components. `ancestry_pcs_associations.tsv` and the report show what each component captures. Use them as covariates with `@ancestry` when the arrays come from people of different ancestries. They need at least 10 arrays; they are no replacement for genotype data, and clock accelerations can differ between ancestries through calibration error (see the report).
 - PCA of the `--n_variable_cpgs` (default 50,000) most variable CpGs of the filtered data (M-values). `--n_pcs` (default `auto`: the random matrix theory estimate of `isva::EstDimRMT`, at most 20) components are tested for association with plate, batch, Sentrix ID and row, detected fraction, control-probe PCs, predicted sex, age, cell lineages and every phenotype column. A strong association of a top component with plate or Sentrix row points to a batch effect that the models should include.
 
 Arrays far from the others on PC1 and PC2 are flagged in `pca_outliers.tsv` and the report (robust Mahalanobis distance above the chi-square 0.999 quantile). They are not removed: check them against the sample QC and exclude them in the samplesheet (`exclude`) if needed.
@@ -259,7 +262,7 @@ Arrays far from the others on PC1 and PC2 are flagged in `pca_outliers.tsv` and 
 
 Each model of `--models` is tested at every CpG of the filtered data with limma: a linear model on M-values with the trait and the covariates, moderated with `eBayes(trend = TRUE, robust = TRUE)`, and `duplicateCorrelation` when `block` is set (its consensus correlation is one value per model, estimated on a fixed random set of 50,000 CpGs). The same model on beta values gives the effect as a difference in beta (`delta_beta`). Test statistics are corrected for bias and inflation with bacon, and the genomic lambda is reported before and after.
 
-- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference), `@ctrlpcs` the kept control-probe PCs, `@technical` plate and Sentrix row, `@sex` the predicted sex, `@smoking` the DNA methylation smoking score (`dnam_smoking`).
+- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference), `@ctrlpcs` the kept control-probe PCs, `@ancestry` the genetic ancestry components, `@technical` plate and Sentrix row, `@sex` the predicted sex, `@smoking` the DNA methylation smoking score (`dnam_smoking`).
 - Arrays with a missing trait or covariate are left out of that model and listed with their reason. A model with fewer complete cases than its `min_n` is reported as not tested.
 - Before testing, the trait is checked for association with plate and Sentrix row, and every covariate for collinearity (VIF). Confounding is flagged in `ewas_<model>_design_check.tsv`.
 - Thresholds: FDR < 0.05, `--p_epigenome_wide` (default 9e-8, the EPIC threshold of Mansell et al. 2019) and `--p_suggestive` (default 1e-5).

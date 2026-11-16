@@ -39,7 +39,7 @@
                     "schema": "assets/schema_models.json",
                     "pattern": "^\\S+\\.(yaml|yml)$",
                     "description": "Path to a YAML file with the association models to run.",
-                    "help_text": "Optional. Each model gives a `name`, the `trait`, its `trait_type` (`continuous`, `binary` or `categorical`) and optionally a `transform`, `reference` level, `contrasts`, `covariates`, a random-effect `block`, a `subset`, `min_n`, `skip_dmr` and `skip_enrichment`. Covariates are column names or the tokens `@cells`, `@ctrlpcs`, `@technical`, `@sex` and `@smoking`. See the usage documentation.",
+                    "help_text": "Optional. Each model gives a `name`, the `trait`, its `trait_type` (`continuous`, `binary` or `categorical`) and optionally a `transform`, `reference` level, `contrasts`, `covariates`, a random-effect `block`, a `subset`, `min_n`, `skip_dmr` and `skip_enrichment`. Covariates are column names or the tokens `@cells`, `@ctrlpcs`, `@ancestry`, `@technical`, `@sex` and `@smoking`. See the usage documentation.",
                     "fa_icon": "fas fa-project-diagram"
                 },
                 "outdir": {
@@ -367,6 +367,21 @@
                     "pattern": "^(auto|[1-9][0-9]?)$",
                     "description": "Control-probe principal components kept as covariates: a number, or `auto`.",
                     "help_text": "The control-probe PCs (Lehne et al. 2015) come from the log2, standardised intensities of the non-negative control probes in both channels, read by ewastools. `auto` keeps the smallest number that explains at least 90% of their variance, at most 20. Without ewastools (`--skip_ewastools`) there are no control-probe PCs.",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "skip_ancestry": {
+                    "type": "boolean",
+                    "description": "Skip the genetic ancestry components.",
+                    "help_text": "Without them, models cannot use `@ancestry` and the biomarker tables have no ancestry columns or 'ancestry held' version.",
+                    "fa_icon": "fas fa-forward"
+                },
+                "n_ancestry_pcs": {
+                    "type": "integer",
+                    "default": 4,
+                    "minimum": 1,
+                    "maximum": 10,
+                    "description": "Genetic ancestry components kept as covariates (`@ancestry`).",
+                    "help_text": "The components come from the CpG probes with a common SNP and the rs probes, after the EpiAnceR+ approach (Höffler et al. 2025): the CpG beta values are residualised for the control-probe PCs, cell fractions, sex and age before the PCA, so that the components reflect genotypes. Computed when at least 10 arrays pass QC.",
                     "fa_icon": "fas fa-layer-group"
                 }
             }

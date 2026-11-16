@@ -12,7 +12,8 @@
 #   5. Thresholds: FDR < 0.05, P < 9e-8 (EPIC) and P < 1e-5
 # Token expansion: @cells = cc_CD4T, cc_CD8T, cc_B, cc_NK, cc_Mono (granulocytes
 # as reference); @ctrlpcs = the kept control-probe PCs (ctrlpc1..k); @technical =
-# plate, sentrix_row; @sex = predicted_sex; @smoking = dnam_smoking (McCartney et al. 2018).
+# plate, sentrix_row; @sex = predicted_sex; @smoking = dnam_smoking (McCartney et al. 2018);
+# @ancestry = the genetic ancestry PCs (ancestry_pc1..k, --n_ancestry_pcs).
 #
 
 prefix <- "${prefix}"
@@ -23,6 +24,7 @@ sample_qc_file <- "${sample_qc}"
 phenotypes_file <- "${phenotypes}"
 cells_file <- "${cell_fractions}"
 ctrl_file <- "${ctrl_pcs}"
+ancestry_file <- "${ancestry_pcs}"
 scores_file <- "${dnam_scores}"
 
 defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000")
@@ -87,6 +89,10 @@ if (nzchar(ctrl_file)) {
     pcs <- grep("^ctrl_PC", names(ctrl), value = TRUE)
     if (length(pcs) > 0) join(setnames(ctrl[, c("sample", pcs), with = FALSE], pcs, sub("^ctrl_PC", "ctrlpc", pcs)))
 }
+if (nzchar(ancestry_file)) {
+    ancestry <- read_table(ancestry_file)
+    join(ancestry[, c("sample", grep("^ancestry_pc[0-9]+\$", names(ancestry), value = TRUE)), with = FALSE])
+}
 if (nzchar(scores_file)) join(read_table(scores_file))
 if (nzchar(phenotypes_file)) join(read_table(phenotypes_file))
 
@@ -101,6 +107,11 @@ expand <- function(covariate) {
         "@ctrlpcs" = {
             cols <- grep("^ctrlpc[0-9]+\$", names(covariates), value = TRUE)
             if (length(cols) == 0) stop("Model '", model[["name"]], "' uses @ctrlpcs, but no control-probe PCs are available (--skip_ewastools)")
+            cols
+        },
+        "@ancestry" = {
+            cols <- grep("^ancestry_pc[0-9]+\$", names(covariates), value = TRUE)
+            if (length(cols) == 0) stop("Model '", model[["name"]], "' uses @ancestry, but no ancestry PCs are available (--skip_ancestry)")
             cols
         },
         "@technical" = c("plate", "sentrix_row"),

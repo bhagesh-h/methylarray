@@ -27,8 +27,10 @@ report_section_order:
     order: 946
   biomarker_phenotypes:
     order: 945
-  biomarker_contamination:
+  biomarker_ancestry:
     order: 944
+  biomarker_contamination:
+    order: 943
   pca_scree:
     order: 940
   pca_scatter:

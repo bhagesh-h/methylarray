@@ -120,6 +120,41 @@ if (nrow(pairs) > 0) {
 }
 ```
 
+```{r ancestry, results = "asis", fig.width = 9, fig.height = 5, eval = has("^ancestry_pcs_summary\\.tsv$")}
+heading("Genetic ancestry")
+as_summary <- read(find("^ancestry_pcs_summary\\.tsv$"))
+av <- setNames(as.character(as_summary[["value"]]), as_summary[["metric"]])
+if ("note" %in% names(av)) {
+    cat(av[["note"]], "\n\n")
+} else {
+    cat(sprintf("Ancestry components from %s CpG probes with a common SNP and %s rs probes on %s arrays (EpiAnceR+ approach), with the CpG beta values residualised for: %s. The components marked as covariates are added to models with `@ancestry`.\n\n",
+                av[["snp_cpgs"]], av[["rs_snps"]], av[["arrays"]], av[["residualised_for"]]))
+    pcs <- read(find("^ancestry_pcs\\.tsv$"))
+    if (all(c("ancestry_pc1", "ancestry_pc2") %in% names(pcs))) {
+        print(ggplot(pcs, aes(ancestry_pc1, ancestry_pc2)) + geom_point(size = 1.5, alpha = 0.7, colour = "#4c72b0") +
+            labs(x = "Ancestry PC1", y = "Ancestry PC2", title = "Genetic ancestry components"))
+    }
+    if (has("^ancestry_pcs_variance\\.tsv$")) {
+        av_var <- read(find("^ancestry_pcs_variance\\.tsv$"))
+        av_var[, pc := factor(sub("ancestry_", "", pc), levels = sub("ancestry_", "", pc))]
+        print(ggplot(av_var, aes(pc, 100 * variance_explained, fill = covariate)) + geom_col() +
+            scale_fill_manual(values = c(`TRUE` = "#4c72b0", `FALSE` = "#bbbbbb"), labels = c(`TRUE` = "@ancestry covariate", `FALSE` = "not used")) +
+            labs(x = NULL, y = "Variance explained (%)", fill = NULL, title = "Variance of each ancestry component"))
+    }
+    if (has("^ancestry_pcs_associations\\.tsv$")) {
+        aa <- read(find("^ancestry_pcs_associations\\.tsv$"))
+        if (nrow(aa) > 0) {
+            aa[, pc := factor(sub("ancestry_", "", pc), levels = unique(sub("ancestry_", "", pc)))]
+            print(ggplot(aa, aes(pc, variable, fill = r_squared)) + geom_tile(colour = "white") +
+                geom_text(aes(label = sprintf("%.2f", r_squared)), size = 2.6) +
+                scale_fill_gradient(low = "white", high = "#c44e52", limits = c(0, 1)) +
+                labs(x = NULL, y = NULL, fill = "R-squared", title = "What the ancestry components capture",
+                     subtitle = "Technical variables (plate, BeadChip, row) should explain little after the residualisation"))
+        }
+    }
+}
+```
+
 # Probe filtering
 
 ```{r attrition, eval = has("_filtered_attrition\\.tsv$")}
@@ -245,9 +280,22 @@ if (nrow(pt) > 0) {
         print(ggplot(pt[trait == t], aes(estimate, measure, colour = version, shape = q < 0.05)) + geom_vline(xintercept = 0, colour = "grey60") +
             geom_point(size = 2.6, position = position_dodge(width = 0.6)) +
             scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), labels = c(`TRUE` = "q < 0.05", `FALSE` = "q >= 0.05")) +
-            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `low contamination` = "#55a868")) +
+            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `ancestry held` = "#8172b3", `low contamination` = "#55a868")) +
             labs(x = "Difference between the groups (SD)", y = NULL, colour = NULL, shape = NULL, title = paste0(t, ": every acceleration and score")))
     }
+}
+```
+
+```{r biomarker-ancestry, results = "asis", fig.width = 8, fig.height = 6, eval = has("^biomarkers_ancestry\\.tsv$")}
+ba <- read(find("^biomarkers_ancestry\\.tsv$"))
+if (nrow(ba) > 0) {
+    heading("Ancestry and the ageing measures")
+    cat("Spearman correlation of each acceleration and score with the genetic ancestry components. Clocks predict age less accurately in admixed individuals and in some ancestries (Cruz-Gonzalez et al. 2026), so a difference in acceleration between ancestry groups can be calibration error rather than biology. The phenotype associations with the ancestry components held are the 'ancestry held' version in the forest plots above and in `biomarkers_phenotypes.tsv`.\n\n")
+    ba[, pc := factor(sub("ancestry_", "", pc), levels = unique(sub("ancestry_", "", pc)))]
+    print(ggplot(ba, aes(pc, measure, fill = rho)) + geom_tile(colour = "white") +
+        geom_text(aes(label = paste0(sprintf("%.2f", rho), stars(q))), size = 2.6) +
+        scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.6, 0.6), oob = scales::squish) +
+        labs(x = NULL, y = NULL, fill = "rho", title = "Accelerations and scores against the ancestry components"))
 }
 ```
 

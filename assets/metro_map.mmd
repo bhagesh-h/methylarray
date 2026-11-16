@@ -56,10 +56,12 @@ graph LR
         clocks[dnaMethyAge]
         pace[DunedinPACE]
         isva[isva]
+        ancestry[Ancestry]
 
         epidish -->|minfi,sesame,enmix,combined| clocks
         clocks -->|minfi,sesame,enmix,combined| pace
         pace -->|minfi,sesame,enmix,combined| isva
+        isva -->|minfi,sesame,enmix,combined| ancestry
     end
 
     subgraph association [Association]
@@ -106,7 +108,7 @@ graph LR
     sesame -->|sesame| ewastools
     enmix -->|enmix,combined| ewastools
     masks -->|minfi,sesame,enmix,combined| epidish
-    isva -->|minfi,sesame,enmix,combined| limma
+    ancestry -->|minfi,sesame,enmix,combined| limma
     bacon -->|minfi,sesame,enmix,combined| dmrcate
     bacon -->|minfi,sesame,enmix,combined| dmrff
     go -->|minfi,sesame,enmix,combined| multiqc

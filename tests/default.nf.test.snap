@@ -2,6 +2,11 @@
     "-profile test": {
         "content": [
             {
+                "ANCESTRY_PCS": {
+                    "HDF5Array": "1.38.0",
+                    "R": "4.5.3",
+                    "SummarizedExperiment": "1.40.0"
+                },
                 "BIOMARKERS_ASSOCIATE": {
                     "R": "4.5.3",
                     "jsonlite": "2.0.0"
@@ -55,6 +60,7 @@
             [
                 "biomarkers",
                 "biomarkers/biomarkers_agreement.tsv",
+                "biomarkers/biomarkers_ancestry.tsv",
                 "biomarkers/biomarkers_batch.tsv",
                 "biomarkers/biomarkers_cells_measures.tsv",
                 "biomarkers/biomarkers_cells_phenotypes.tsv",
@@ -73,6 +79,10 @@
                 "dnam_scores/dnam_scores_coverage.tsv",
                 "dnam_scores/dnam_scores_weights.tsv",
                 "exploration",
+                "exploration/ancestry_pcs.tsv",
+                "exploration/ancestry_pcs_associations.tsv",
+                "exploration/ancestry_pcs_summary.tsv",
+                "exploration/ancestry_pcs_variance.tsv",
                 "exploration/pca_associations.tsv",
                 "exploration/pca_ctrl_pca_variance.tsv",
                 "exploration/pca_ctrl_pcs.tsv",
@@ -172,6 +182,7 @@
             ],
             [
                 "biomarkers_agreement.tsv:md5,94570ddacf5cddfaafb1250eb2684f36",
+                "biomarkers_ancestry.tsv:md5,6e5bdb1df784352e6268011f8b4faf59",
                 "biomarkers_batch.tsv:md5,378cadd9d9ba1bb2cae0d27663993a3e",
                 "biomarkers_cells_measures.tsv:md5,5171816fe4fa28ee0f5b42234ecb96ab",
                 "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c",
@@ -186,6 +197,10 @@
                 "dnam_scores.tsv:md5,ef022be2e40df8c4fb2ba7b5bdf288ca",
                 "dnam_scores_coverage.tsv:md5,689f98a395ada5a353a679a4bcfe5da2",
                 "dnam_scores_weights.tsv:md5,696c95995fb5add9a8fdefc85914d266",
+                "ancestry_pcs.tsv:md5,c767f5d769aacae528f79b8a2815e3cd",
+                "ancestry_pcs_associations.tsv:md5,26542c75c72d43e960aab98f33cfb9d8",
+                "ancestry_pcs_summary.tsv:md5,8de11af72fdcc2a15984b2f48056324c",
+                "ancestry_pcs_variance.tsv:md5,51b0e4e831c09953be63b0ecc7ba8340",
                 "pca_associations.tsv:md5,5c40823a855d2833f7bef2a5e7edb7a9",
                 "pca_ctrl_pca_variance.tsv:md5,07795144a3a8f98882c2f26b672f28c9",
                 "pca_ctrl_pcs.tsv:md5,1c4434415ef7374778930d76ef3ac785",
@@ -219,7 +234,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-16T14:12:27.402493522",
+        "timestamp": "2026-11-16T14:23:08.704319386",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

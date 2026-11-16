@@ -58,6 +58,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 7. Compute DNA methylation scores for smoking, alcohol and BMI (McCartney et al. 2018) and IL-6 (Stevenson et al. 2021), with their probe coverage.
 8. Exploratory analysis:
    - control-probe principal components, used as model covariates
+   - genetic ancestry components from the SNP probes (EpiAnceR+ approach), used as model covariates with `@ancestry`
    - principal components of the most variable CpGs (number estimated with [isva](https://cran.r-project.org/package=isva)) and their associations with technical, biological and phenotype variables
    - PCA outlier flags (report only, no array is removed)
 9. When a models file is given, for every model:
@@ -148,7 +149,7 @@ An optional CSV or TSV file with a `sample` column and any number of analysis va
 
 ### Models
 
-An optional YAML file listing the association models to run. Each model names a trait, its type, an optional transformation and the covariates. Shortcut tokens expand to derived covariates: `@cells` (five cell lineages, granulocytes as reference), `@technical` (plate and Sentrix row), `@ctrlpcs` (control-probe components), `@sex` (predicted sex) and `@smoking` (DNA methylation smoking score).
+An optional YAML file listing the association models to run. Each model names a trait, its type, an optional transformation and the covariates. Shortcut tokens expand to derived covariates: `@cells` (five cell lineages, granulocytes as reference), `@technical` (plate and Sentrix row), `@ctrlpcs` (control-probe components), `@ancestry` (genetic ancestry components from the SNP probes), `@sex` (predicted sex) and `@smoking` (DNA methylation smoking score).
 
 ```yaml
 - name: bmi

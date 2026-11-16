@@ -20,6 +20,11 @@
 #     each acceleration and score, and the phenotype associations again without
 #     the arrays above the median plus three MADs of the score (borderline
 #     contamination below the FAIL threshold), as the 'low contamination' version
+#   - ancestry: Spearman correlation of each acceleration and score with each
+#     genetic ancestry PC, and the phenotype associations again with the
+#     measures residualised on the ancestry PCs ('ancestry held'). Clocks are
+#     less accurate in admixed individuals (Cruz-Gonzalez et al. 2026), so a
+#     difference in acceleration between ancestries can be calibration error
 #   - quartile groups: bottom quarter (decelerated), middle half (normal) and top
 #     quarter (accelerated) of each acceleration, with the median (or percentage)
 #     of every characteristic per group and a trend test across the ordered
@@ -38,6 +43,7 @@ clocks_file <- "${clocks}"
 cells_file <- "${cell_fractions}"
 scores_file <- "${dnam_scores}"
 phenotypes_file <- "${phenotypes}"
+ancestry_file <- "${ancestry_pcs}"
 
 defaults <- list(min_n = "20")
 parse_args <- function(x, defaults) {
@@ -248,8 +254,24 @@ if (sum(is.finite(snp_outlier)) >= min_n && length(measures) > 0) {
 }
 write_tsv(round_table(contamination), paste0(prefix, "_contamination.tsv"))
 
-# Ageing measures against the phenotypes, plain, with cells held and without
-# the arrays above the contamination cutoff
+# Ancestry: the genetic ancestry PCs against every measure
+ancestry <- read_table(ancestry_file)
+ancestry_pcs <- if (is.null(ancestry)) character() else grep("^ancestry_pc[0-9]+\$", names(ancestry), value = TRUE)
+ancestry_table <- empty(c("measure", "pc", "rho", "p", "n", "q"))
+measures_ancestry <- list()
+if (length(ancestry_pcs) > 0 && length(measures) > 0) {
+    pcs <- as.data.frame(ancestry[match(data[["sample"]], ancestry[["sample"]]), ancestry_pcs, drop = FALSE])
+    ancestry_table <- do.call(rbind, lapply(names(measures), function(m) do.call(rbind, lapply(ancestry_pcs, function(pc) {
+        r <- spearman(measures[[m]], pcs[[pc]])
+        data.frame(measure = m, pc = pc, rho = r[["rho"]], p = r[["p"]], n = r[["n"]])
+    }))))
+    ancestry_table[["q"]] <- bh(ancestry_table[["p"]])
+    measures_ancestry <- lapply(measures, function(a) residual(a, pcs))
+}
+write_tsv(round_table(ancestry_table), paste0(prefix, "_ancestry.tsv"))
+
+# Ageing measures against the phenotypes, plain, with cells held, with the
+# ancestry PCs held and without the arrays above the contamination cutoff
 association <- function(a, trait) {
     a <- a / sd(a, na.rm = TRUE)
     x <- trait[["values"]]
@@ -264,6 +286,7 @@ association <- function(a, trait) {
     c(estimate = r[["rho"]], p = r[["p"]], n = r[["n"]])
 }
 versions <- list(plain = measures, `cells held` = measures_cells)
+if (length(measures_ancestry) > 0) versions[["ancestry held"]] <- measures_ancestry
 if (any(above_cutoff)) versions[["low contamination"]] <- lapply(measures, function(a) replace(a, above_cutoff, NA))
 measure_traits <- empty(c("measure", "trait", "type", "version", "estimate", "p", "n", "q"))
 rows <- list()
@@ -362,4 +385,14 @@ if (nrow(contamination) > 0) {
                     data = setNames(lapply(seq_len(nrow(contamination)), function(i) list(rho = round(contamination[["rho"]][i], 3), q = signif(contamination[["q"]][i], 3),
                                                                                          n = contamination[["n"]][i])), contamination[["measure"]])),
                paste0(prefix, "_contamination_mqc.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA, na = "null")
+}
+if (nrow(ancestry_table) > 0) {
+    measure_names <- unique(ancestry_table[["measure"]])
+    values <- lapply(measure_names, function(m) lapply(ancestry_pcs, function(pc) {
+        v <- ancestry_table[["rho"]][ancestry_table[["measure"]] == m & ancestry_table[["pc"]] == pc]
+        if (length(v) == 0 || is.na(v)) NA else round(v, 2)
+    }))
+    heatmap_json("biomarker_ancestry", "Ancestry and ageing measures",
+                 "Spearman correlation of each acceleration and score with the genetic ancestry PCs. Clocks are less accurate in admixed individuals, so differences between ancestries can be calibration error rather than biology. The phenotype associations with the ancestry PCs held are the 'ancestry held' version in biomarkers_phenotypes.tsv.",
+                 "Accelerations and scores against the ancestry PCs (Spearman)", measure_names, ancestry_pcs, values, paste0(prefix, "_ancestry_mqc.json"))
 }

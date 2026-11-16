@@ -144,6 +144,12 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Smith ML, Baggerly KA, Bengtsson H, Ritchie ME, Hansen KD. illuminaio: An open source IDAT parsing tool for Illumina microarrays. F1000Research. 2013;2:264.
 
+- [EpiAnceR+ (genetic ancestry components from methylation arrays)](https://doi.org/10.1186/s13072-025-00627-0)
+
+  > Höffler KD, Katrinli S, Halvorsen MW, et al. Optimizing genetic ancestry adjustment in DNA methylation studies: a comparative analysis of approaches. Epigenetics Chromatin. 2025;18(1):69.
+
+  The pipeline implements the published method; it does not use the EpiAnceR scripts.
+
 - [Control-probe principal components](https://doi.org/10.1186/s13059-015-0600-x)
 
   > Lehne B, Drong AW, Loh M, et al. A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies. Genome Biol. 2015;16:37.
@@ -239,6 +245,12 @@ This file is the single reference list for the pipeline. The README, the documen
   > Stevenson AJ, Gadd DA, Hillary RF, et al. Creating and validating a DNA methylation-based proxy for interleukin-6. J Gerontol A Biol Sci Med Sci. 2021;76(12):2284-2292.
 
   The smoking, alcohol, BMI and IL-6 weights in `assets/dnam_scores` are taken from the supplementary tables of McCartney et al. (2018) and Stevenson et al. (2021), both published under CC BY 4.0; `assets/dnam_scores/sources.tsv` names each table.
+
+- [Clocks in genetically admixed individuals](https://doi.org/10.7554/eLife.105343)
+
+  > Cruz-Gonzalez S, Okpala O, Gu E, et al. Methylation clocks fail to generalize across genetically admixed individuals. eLife. 2026;14.
+
+  Cited by the report when it relates the accelerations to the genetic ancestry components.
 
 ## Statistical analysis
 

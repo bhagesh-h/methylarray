@@ -16,6 +16,7 @@ include { EWAS                   } from '../subworkflows/local/ewas'
 include { DMR                    } from '../subworkflows/local/dmr'
 include { ENRICHMENT             } from '../subworkflows/local/enrichment'
 include { EXPORT_GEO             } from '../modules/local/export/geo'
+include { ANCESTRY_PCS           } from '../modules/local/ancestry/pcs'
 include { BIOMARKERS_ASSOCIATE   } from '../modules/local/biomarkers/associate'
 include { REPORT_QUARTO          } from '../modules/local/report/quarto'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
@@ -127,6 +128,35 @@ workflow METHYLARRAY {
     }
 
     //
+    // SUBWORKFLOW: Exploratory analysis (control-probe PCs, PCA associations)
+    //
+    EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
+    ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
+    ch_report_files = ch_report_files.mix(EXPLORATION.out.variance.map { _meta, f -> f }, EXPLORATION.out.associations.map { _meta, f -> f },
+        EXPLORATION.out.outliers.map { _meta, f -> f })
+
+    //
+    // MODULE: Genetic ancestry PCs from the SNP CpGs and rs probes (EpiAnceR+ approach)
+    //
+    def ch_ancestry_pcs = channel.value([])
+    if (!params.skip_ancestry) {
+        ANCESTRY_PCS(
+            ch_route_se
+                .combine(PROBE_FILTER.out.annotation)
+                .combine(sampleTable(ch_arrays, false))
+                .combine(SAMPLE_QC.out.qc.map { _meta, qc -> qc })
+                .combine(EXPLORATION.out.ctrl_pcs.map { _meta, pcs -> pcs })
+                .combine(ch_cell_fractions.map { f -> [ f ] })
+                .combine(ch_phenotypes.map { f -> [ f ] })
+                .map { meta, se, annotation, samples, qc, ctrl_pcs, cells, phenotypes -> [ meta, se, annotation, samples, qc, ctrl_pcs, cells, phenotypes ] }
+        )
+        ch_ancestry_pcs = ANCESTRY_PCS.out.pcs.map { _meta, f -> f }
+        ch_multiqc_files = ch_multiqc_files.mix(ANCESTRY_PCS.out.multiqc.map { _meta, files -> files }.flatten())
+        ch_report_files = ch_report_files.mix(ANCESTRY_PCS.out.pcs.map { _meta, f -> f }, ANCESTRY_PCS.out.variance.map { _meta, f -> f },
+            ANCESTRY_PCS.out.summary.map { _meta, f -> f }, ANCESTRY_PCS.out.associations.map { _meta, f -> f })
+    }
+
+    //
     // MODULE: clocks, scores and cell fractions against each other, the batches and the phenotypes
     //
     if (!params.skip_clocks || !params.skip_dnam_scores) {
@@ -137,29 +167,25 @@ workflow METHYLARRAY {
                 .combine(ch_cell_fractions.map { f -> [ f ] })
                 .combine(ch_dnam_scores.map { f -> [ f ] })
                 .combine(ch_phenotypes.map { f -> [ f ] })
-                .map { samples, qc, clocks, cells, scores, phenotypes -> [ [ id: 'biomarkers' ], samples, qc, clocks, cells, scores, phenotypes ] }
+                .combine(ch_ancestry_pcs.map { f -> [ f ] })
+                .map { samples, qc, clocks, cells, scores, phenotypes, ancestry ->
+                    [ [ id: 'biomarkers' ], samples, qc, clocks, cells, scores, phenotypes, ancestry ]
+                }
         )
         ch_multiqc_files = ch_multiqc_files.mix(BIOMARKERS_ASSOCIATE.out.multiqc.map { _meta, files -> files }.flatten())
         def ch_biomarker_tables = BIOMARKERS_ASSOCIATE.out.agreement
             .mix(BIOMARKERS_ASSOCIATE.out.cells_measures, BIOMARKERS_ASSOCIATE.out.cells_phenotypes, BIOMARKERS_ASSOCIATE.out.batch,
-                BIOMARKERS_ASSOCIATE.out.phenotypes, BIOMARKERS_ASSOCIATE.out.quartiles, BIOMARKERS_ASSOCIATE.out.contamination)
+                BIOMARKERS_ASSOCIATE.out.phenotypes, BIOMARKERS_ASSOCIATE.out.quartiles, BIOMARKERS_ASSOCIATE.out.contamination,
+                BIOMARKERS_ASSOCIATE.out.ancestry)
             .map { _meta, f -> f }
         ch_report_files = ch_report_files.mix(ch_biomarker_tables)
     }
 
     //
-    // SUBWORKFLOW: Exploratory analysis (control-probe PCs, PCA associations)
-    //
-    EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes)
-    ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
-    ch_report_files = ch_report_files.mix(EXPLORATION.out.variance.map { _meta, f -> f }, EXPLORATION.out.associations.map { _meta, f -> f },
-        EXPLORATION.out.outliers.map { _meta, f -> f })
-
-    //
     // SUBWORKFLOW: Epigenome-wide association, one model per entry of --models
     //
     EWAS(ch_models, ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, ch_phenotypes, ch_cell_fractions,
-        EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_dnam_scores)
+        EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_ancestry_pcs, ch_dnam_scores)
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
     ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f })
 

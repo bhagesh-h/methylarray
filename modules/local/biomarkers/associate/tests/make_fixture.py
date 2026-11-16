@@ -2,7 +2,8 @@
 # with clocks, cell lineages, two DNA methylation scores and phenotypes. The
 # Horvath acceleration rises with BMI, metabolic syndrome is more common at high
 # BMI, plate P3 shifts the Hannum acceleration, and the SNP outlier score rises
-# with the Hannum acceleration. Random values.
+# with the Hannum acceleration, and ancestry PC1 with the Horvath acceleration.
+# Random values.
 #   python3 make_fixture.py
 import random
 random.seed(11)
@@ -44,3 +45,9 @@ write("cell_fractions.tsv", ["sample", "lineage_B", "lineage_CD4T", "lineage_CD8
       lambda r: [r["sample"]] + [round(r[k], 5) for k in ("b", "cd4", "cd8", "nk", "mono", "gran")])
 write("dnam_scores.tsv", ["sample", "dnam_smoking"], lambda r: [r["sample"], r["smoke"]])
 write("phenotypes.tsv", ["sample", "bmi", "mets", "group"], lambda r: [r["sample"], r["bmi"], r["mets"], r["group"]])
+# Ancestry PCs from their own random stream: PC1 rises with the Horvath acceleration
+ancestry_random = random.Random(9)
+with open("ancestry_pcs.tsv", "w") as out:
+    out.write("sample\tancestry_pc1\tancestry_pc2\n")
+    for r in rows:
+        out.write("%s\t%.4f\t%.4f\n" % (r["sample"], 0.2 * r["eaa_h"] + ancestry_random.gauss(0, 0.8), ancestry_random.gauss(0, 1)))
