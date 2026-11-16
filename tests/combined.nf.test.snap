@@ -164,6 +164,8 @@
                 "qc/ewastools",
                 "qc/ewastools/ewastools_controls.tsv.gz",
                 "qc/ewastools/ewastools_qc.tsv",
+                "qc/ewastools/ewastools_relatedness.tsv.gz",
+                "qc/ewastools/ewastools_relatedness_summary.tsv",
                 "qc/ewastools/ewastools_snp_conflicts.tsv",
                 "qc/ewastools/ewastools_snp_histograms.tsv",
                 "qc/ewastools/ewastools_snp_summary.tsv",
@@ -218,6 +220,8 @@
                 "combined_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
                 "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
+                "ewastools_relatedness.tsv.gz:md5,c370cfd2eb8f8c2cba2c1418dd2337f6",
+                "ewastools_relatedness_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1",
                 "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0",
                 "ewastools_snp_histograms.tsv:md5,ccc64f8a19fa096603b9432c7cd07cc8",
                 "ewastools_snp_summary.tsv:md5,5ab6774a339b89348a049a707085a180",
@@ -226,7 +230,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T23:24:49.148076151",
+        "timestamp": "2026-11-16T13:54:19.129422818",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

@@ -10,7 +10,8 @@ nextflow_process {
     tag "report/quarto"
 
     // Result tables of the six public test arrays (sample QC to PCA), with
-    // simulated association, region and enrichment results so that every section renders
+    // simulated relatedness, association, region and enrichment results so that every
+    // section renders
 
     test("every section") {
 
@@ -34,7 +35,7 @@ nextflow_process {
                           'Methods', 'Limitations'].every { section -> html.contains(section) } },
                 { assert html.contains('minfi') && html.contains('PLANTED') },
                 { assert html.contains('reported, not removed') && html.contains('S3') },
-                { assert ['SNP genotypes', 'Clock and score CpGs', 'Clocks, scores and cell fractions', 'Clocks and scores against the phenotypes',
+                { assert ['SNP genotypes', 'Relatedness', 'below the threshold', 'Clock and score CpGs', 'Clocks, scores and cell fractions', 'Clocks and scores against the phenotypes',
                           'Quartile groups of acceleration'].every { section -> html.contains(section) } },
                 { assert !html.contains('Error in') },
                 { assert snapshot(process.out.versions).match() }

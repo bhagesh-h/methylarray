@@ -13,7 +13,8 @@ nextflow_process {
     // Made-up QC tables that exercise every rule:
     //   A1 clean; A2 15% undetected and failed controls; A3 sex mismatch and SNP
     //   outliers; A4/A5 one replicate group with different genotypes, A5 between
-    //   the sex clusters; A6 excluded in the samplesheet; A7 no reported sex
+    //   the sex clusters; A6 excluded in the samplesheet; A7 no reported sex and a
+    //   first-degree relative of A1
 
     test("all checks") {
 
@@ -45,6 +46,8 @@ nextflow_process {
                 { assert rows.A4.reasons == 'genotypes differ from A5 in the same replicate group (agreement 0.41)' },
                 { assert rows.A5.reasons.contains('outside the male and female clusters') },
                 { assert rows.A7.sex_check == 'not_reported' },
+                // relatives are reported, but do not change the status
+                { assert rows.A1.relatives == 'A7 (first-degree)' && rows.A1.status == 'PASS' },
                 { assert path(process.out.retained[0][1]).readLines() == ['A1', 'A4', 'A5', 'A7'] },
                 { assert snapshot(process.out).match() }
             )

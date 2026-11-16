@@ -57,7 +57,7 @@ if (has_ewastools) {
     ew <- ew[match(samples[["sample"]], ew[["sample"]]), , drop = FALSE]
     conflicts <- read_tsv(conflicts_file)
 }
-ew_value <- function(column) if (is.null(ew)) rep(NA_character_, nrow(samples)) else ew[[column]]
+ew_value <- function(column) if (is.null(ew) || !column %in% names(ew)) rep(NA_character_, nrow(samples)) else ew[[column]]
 ew_sex <- ew_value("predicted_sex")
 # predict_sex runs only with reported males and females; then NA means the X and
 # Y intensities fall outside both clusters
@@ -142,6 +142,7 @@ qc <- data.frame(
     sex_y = ew_value("sex_y"),
     snp_outlier = snp_outlier,
     inferred_donor = ew_value("inferred_donor"),
+    relatives = ew_value("relatives"),
     replicate_group = samples[["replicate_group"]],
     failed_controls = ew_value("failed_controls"),
     check.names = FALSE

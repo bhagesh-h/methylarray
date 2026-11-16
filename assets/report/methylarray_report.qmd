@@ -90,6 +90,36 @@ print(ggplot(snp, aes(snp_outlier)) + geom_histogram(bins = 40, fill = "#dd8452"
     labs(x = "SNP outlier score (higher = more likely contaminated)", y = "Arrays", title = "Contamination (ewastools)"))
 ```
 
+```{r relatedness, results = "asis", fig.width = 9, fig.height = 6, eval = has("^ewastools_relatedness\\.tsv\\.gz$") && has("^ewastools_relatedness_summary\\.tsv$")}
+heading("Relatedness")
+rs <- read(find("^ewastools_relatedness_summary\\.tsv$"))
+rv <- setNames(rs[["value"]], rs[["metric"]])
+pairs <- read(find("^ewastools_relatedness\\.tsv\\.gz$"))
+cat(sprintf("Every pair of the %s arrays below the SNP outlier threshold, from %s autosomal SNPs: %s pairs. A pair is related when its log10 likelihood ratio against unrelated exceeds %s (at most a 5%% chance of any false call). Identical pairs: %s, of them %s from different expected donors; first-degree pairs: %s; replicate pairs that are not identical: %s.\n\n",
+            rv[["arrays"]], rv[["snps"]], format(as.numeric(rv[["pairs"]]), big.mark = ","), rv[["lod_threshold"]], rv[["identical_pairs"]],
+            rv[["identical_pairs_unexpected"]], rv[["first_degree_pairs"]], rv[["replicate_pairs_not_identical"]]))
+if (is.finite(as.numeric(rv[["expected_lod_first_degree"]])) && as.numeric(rv[["expected_lod_first_degree"]]) < as.numeric(rv[["lod_threshold"]])) {
+    cat(sprintf("A true first-degree pair is expected to reach a log10 likelihood ratio of only %s with these SNPs, below the threshold, so most first-degree relatives are missed. Identical pairs are detected reliably. Genotypes from more SNPs (for example a genotyping array) are needed to find relatives.\n\n",
+                rv[["expected_lod_first_degree"]]))
+}
+if (nrow(pairs) > 0) {
+    pairs[, Relation := factor(relation, levels = c("unrelated", "first-degree", "identical", "too few SNPs"))]
+    setorder(pairs, Relation)
+    print(ggplot(pairs, aes(ibs_mean, ibs_var, colour = Relation)) +
+        geom_point(size = 0.8, alpha = 0.6) +
+        geom_point(data = pairs[expected_same_donor == TRUE], shape = 1, size = 3, colour = "black") +
+        scale_colour_manual(values = c(unrelated = "#999999", `first-degree` = "#dd8452", identical = "#c44e52", `too few SNPs` = "#cccccc"), drop = FALSE) +
+        labs(x = "Mean identity by state (alleles shared per SNP)", y = "Variance of identity by state", colour = "Inferred relation",
+             title = "Relatedness of every pair of arrays", subtitle = "Black circles: pairs expected to be the same donor (replicate_group)"))
+    shown <- pairs[relation %in% c("identical", "first-degree") | expected_same_donor == TRUE]
+    if (nrow(shown) > 0) {
+        print(kable(shown[, .(`Array 1` = sample1, `Array 2` = sample2, Relation = relation, `Same donor expected` = ifelse(expected_same_donor, "yes", "no"),
+                              `IBS mean` = ibs_mean, `LOD identical` = lod_identical, `LOD first-degree` = lod_first_degree)],
+                    caption = "Related pairs and expected replicate pairs"))
+    }
+}
+```
+
 # Probe filtering
 
 ```{r attrition, eval = has("_filtered_attrition\\.tsv$")}
