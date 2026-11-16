@@ -71,7 +71,7 @@
                     {
                         "id": "EPICv2"
                     },
-                    "probe_annotation_summary.tsv:md5,0993ed01e6e31a243bafd8e824d11812"
+                    "probe_annotation_summary.tsv:md5,7fa29e1188330195ed1d021b5b0bcda3"
                 ]
             ],
             [
@@ -79,14 +79,14 @@
                     {
                         "id": "EPICv2"
                     },
-                    "probe_annotation_resources.tsv:md5,4e3fb757347294c6096d5c62378ba0ba"
+                    "probe_annotation_resources.tsv:md5,f449fba1ba52381e4de9dbca05673d54"
                 ]
             ],
             [
                 "versions.yml:md5,c789827cb3c8b03f1ceabbf09fe99dfd"
             ]
         ],
-        "timestamp": "2026-11-15T11:07:52.790904549",
+        "timestamp": "2026-11-16T16:02:20.772868735",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

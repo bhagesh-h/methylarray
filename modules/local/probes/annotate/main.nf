@@ -8,7 +8,7 @@ process PROBES_ANNOTATE {
         'community.wave.seqera.io/library/procps-ng_r-base_r-data.table:ec708683a2a90437' }"
 
     input:
-    tuple val(meta), path(manifest, stageAs: 'EPICv2manifest.Rda'), path(probe_mask)
+    tuple val(meta), path(manifest, stageAs: 'EPICv2manifest.Rda'), path(probe_mask), path(illumina_flagged), path(illumina_mapping)
 
     output:
     tuple val(meta), path("${prefix}.tsv.gz")        , emit: annotation

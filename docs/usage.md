@@ -226,6 +226,8 @@ The probe annotation comes from two pinned sources: the Peters et al. 2024 exten
 
 Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are report-only: they are annotated and counted in the attrition table (`report_only_*` rows), never removed.
 
+Illumina lists about 49,000 EPIC v2 probes that did not meet its performance expectations and about 190 probes with mapping inaccuracies, as files on the EPIC v2 product files page of its support site. They may not be redistributed, so the pipeline does not include them. Download them and pass `--illumina_flagged_probes` and `--illumina_mapping_inaccuracy` (Illumina's CSV files with an `IlmnID` or `Name` column, or one probe ID or CpG name per line): the probes are annotated (`illumina_flagged`, `illumina_mapping_inaccuracy`) and counted as report-only rows, not removed. They apply when the annotation is built, so not together with `--probe_annotation` from a run without them.
+
 ## Cell composition
 
 With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH (robust partial correlations) from the filtered, CpG-level beta values without masking. The main reference is `cent12CT` (12 cell types, Luo et al. 2023); `centDHSbloodDMC` (7 types) is reported for comparison. Reference CpGs are matched through their EPIC v1 and 450K IDs as well as the CpG ID, because some CpGs have new names on EPIC v2. The run stops if less than `--min_reference_coverage` (default 90%) of a reference's CpGs are present. Use `--tissue other` for tissues without a blood reference.

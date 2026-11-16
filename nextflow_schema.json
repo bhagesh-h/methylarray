@@ -243,6 +243,22 @@
                     "help_text": "Zhou lab masks from the 1000 Genomes allele frequencies. `common_1pt` and `common_5pt`: SNPs with a global minor allele frequency of at least 1% or 5%. `afr`, `amr`, `eas`, `eur`, `sas`: SNPs with a frequency of at least 1% in that population; choose the population of the study.",
                     "fa_icon": "fas fa-dna"
                 },
+                "illumina_flagged_probes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional list of the probes Illumina flagged for EPIC v2 (Illumina's FlaggedProbes file, or one probe ID per line).",
+                    "help_text": "Illumina lists about 49,000 EPIC v2 probes that did not meet its performance expectations, on the EPIC v2 product files page of its support site. The file may not be redistributed, so the pipeline does not include it. With it, the probe annotation gets an `illumina_flagged` column and the attrition table counts the flagged probes among those kept; the probes are not removed. Applies when the annotation is built, not with `--probe_annotation`.",
+                    "fa_icon": "fas fa-flag"
+                },
+                "illumina_mapping_inaccuracy": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "description": "Optional list of the EPIC v2 probes with mapping inaccuracies (Illumina's file of about 190 probes, or one probe ID per line).",
+                    "help_text": "Annotated as `illumina_mapping_inaccuracy` and counted in the attrition table, not removed, like `--illumina_flagged_probes`.",
+                    "fa_icon": "fas fa-map-marker-alt"
+                },
                 "keep_sex_chr": {
                     "type": "boolean",
                     "description": "Keep probes on chrX and chrY (removed by default for autosomal analyses).",

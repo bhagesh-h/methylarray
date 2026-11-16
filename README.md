@@ -51,7 +51,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
    - probes failing detection or the bead count in too many arrays
    - SNP-affected probes (global or population-specific masks), the Zhou general mask and cross-hybridising probes
 
-   Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poorly titrating probes (Zhou) are annotated and counted, never removed. EPIC v2 replicate probes are then averaged per CpG. An attrition table documents each step.
+   Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`), poorly titrating probes (Zhou) and, from user-supplied lists, Illumina's flagged and mapping-inaccuracy probes are annotated and counted, never removed. EPIC v2 replicate probes are then averaged per CpG. An attrition table documents each step.
 
 5. Estimate leukocyte fractions with [EpiDISH](https://bioconductor.org/packages/EpiDISH/) (12-type `cent12CT` reference, with the 7-type `centDHSbloodDMC` reference for comparison).
 6. Compute epigenetic clocks with [dnaMethyAge](https://github.com/yiluyucheng/dnaMethyAge) (Horvath, Hannum, PhenoAge, skin and blood, PC clocks, DNAmTL, epiTOC2 and others) and [DunedinPACE](https://github.com/danbelsky/DunedinPACE), with age acceleration and the probe coverage of every clock.
