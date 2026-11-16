@@ -213,7 +213,7 @@ The pipeline processes data where it runs and does not upload samples, phenotype
 
 ## Credits
 
-methylarray is developed and maintained by [bhagesh-h](https://github.com/bhagesh-h).
+methylarray is developed and maintained by Bhagesh Hunakunti ([bhagesh-h](https://github.com/bhagesh-h), ORCID [0000-0002-5957-8005](https://orcid.org/0000-0002-5957-8005)).
 
 The workflow diagram is drawn with [nf-metro](https://github.com/seqeralabs/nf-metro) from [assets/metro_map.mmd](assets/metro_map.mmd).
 
