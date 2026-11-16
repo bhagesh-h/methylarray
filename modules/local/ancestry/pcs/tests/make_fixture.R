@@ -59,3 +59,9 @@ colnames(fractions) <- paste0("lineage_", c("B", "CD4T", "CD8T", "NK", "Mono", "
 write.table(data.frame(sample = arrays, fractions), "cell_fractions.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
 write.table(data.frame(sample = arrays, ancestry = population, bmi = round(rnorm(n, 28, 4), 1)),
             "phenotypes.tsv", sep = "\t", quote = FALSE, row.names = FALSE)
+# The same data without the rs probes, as the minfi-based routes deliver it
+se <- loadHDF5SummarizedExperiment("test_se")
+unlink("test_se_no_rs", recursive = TRUE)
+no_rs <- se[!startsWith(rownames(se), "rs"), ]
+assays(no_rs) <- lapply(assays(no_rs), as.matrix)
+saveHDF5SummarizedExperiment(no_rs, "test_se_no_rs")

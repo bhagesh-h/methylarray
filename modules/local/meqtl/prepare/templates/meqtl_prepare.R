@@ -32,8 +32,25 @@ p_max <- as.numeric(opts[["meqtl_p"]])
 suppressPackageStartupMessages(library(data.table))
 writeLines(c('"${task.process}":', paste0("    R: ", getRversion()), paste0("    data.table: ", packageVersion("data.table"))), "versions.yml")
 
-# Read only the needed columns; compressed tables are streamed through gzip
-reader <- function(...) if (grepl("[.]gz\$", meqtl_file)) fread(cmd = paste("gzip -dc", shQuote(meqtl_file)), ...) else fread(meqtl_file, ...)
+# Compressed files are decompressed in R, in chunks of lines, so that neither
+# a gzip command (absent from the Singularity image) nor R.utils is needed and
+# memory stays low; then only the needed columns are read
+plain <- function(file) {
+    if (!grepl("[.]gz\$", file)) return(file)
+    out <- tempfile(fileext = ".txt")
+    input <- gzfile(file, "r")
+    output <- file(out, "w")
+    repeat {
+        lines <- readLines(input, n = 1e6)
+        if (length(lines) == 0) break
+        writeLines(lines, output)
+    }
+    close(input)
+    close(output)
+    out
+}
+meqtl_plain <- plain(meqtl_file)
+reader <- function(...) fread(meqtl_plain, ...)
 header <- names(reader(nrows = 0))
 if (!"cpg" %in% header) stop("The meQTL table needs a 'cpg' column; found: ", paste(header, collapse = ", "))
 columns <- intersect(c("cpg", "snp", "pval", "cistrans", "beta_a1"), header)
@@ -49,7 +66,7 @@ for (column in setdiff(c("snp", "pval", "beta_a1"), columns)) meqtl[, (column) :
 per_name <- meqtl[order(pval), .(snps = .N, top_snp = snp[1], top_p = pval[1], top_beta = beta_a1[1]), by = cpg]
 
 # Match the names to the EPIC v2 CpGs
-anno <- fread(cmd = paste("gzip -dc", shQuote(annotation_file)), select = c("cpg_id", "epicv1_id", "hm450_id"),
+anno <- fread(plain(annotation_file), select = c("cpg_id", "epicv1_id", "hm450_id"),
               colClasses = "character", na.strings = "")
 anno <- unique(anno)
 names_map <- unique(rbind(

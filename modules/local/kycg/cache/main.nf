@@ -20,7 +20,7 @@ process KYCG_CACHE {
     stub:
     """
     mkdir kycg_cache
-    printf 'database\\ttitle\\teh_id\\tfile\\tmd5\\n' > kycg_resources.tsv
+    printf 'database\\ttitle\\teh_id\\tmd5\\n' > kycg_resources.tsv
     printf '"%s":\\n    knowYourCG: stub\\n    ExperimentHub: stub\\n' "${task.process}" > versions.yml
     """
 }

@@ -24,7 +24,7 @@ output:
   resources:
     - kycg_resources.tsv:
         type: file
-        description: Database, ExperimentHub title and ID, cached file and its MD5
+        description: Database, ExperimentHub title and ID, and the MD5 of the cached file
         pattern: "kycg_resources.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475
