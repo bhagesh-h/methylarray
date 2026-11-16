@@ -14,7 +14,9 @@
 #     ages set to the mean), so that technical and biological variation does not
 #     drive the components
 #   - the genotypes of the rs probes (k-means on the beta values with centres
-#     0.2, 0.5 and 0.8, coded 0, 0.5 and 1) are added unchanged
+#     0.2, 0.5 and 0.8, coded 0, 0.5 and 1) are added unchanged, when the data
+#     of the preprocessing route have rs probes (SeSAMe; not the minfi-based
+#     routes, which read the rs probes separately)
 #   - PCA of the combined matrix (centred, not scaled)
 # The first --n_ancestry_pcs components are the ancestry covariates (@ancestry).
 # Each component is tested against the technical and biological variables
@@ -78,10 +80,10 @@ n <- length(arrays)
 if (n < 10) {
     # Too few arrays for population structure: empty tables, so models with
     # @ancestry stop with a clear message
-    fwrite(data.table(sample = arrays), paste0(prefix, ".tsv"), sep = "\t")
-    fwrite(data.table(pc = character(), variance_explained = numeric(), cumulative = numeric(), covariate = logical()), paste0(prefix, "_variance.tsv"), sep = "\t")
-    fwrite(data.table(metric = c("arrays", "note"), value = c(n, "fewer than 10 arrays passed QC; no ancestry PCs computed")), paste0(prefix, "_summary.tsv"), sep = "\t")
-    fwrite(data.table(variable = character(), pc = character(), n = integer(), r_squared = numeric(), p_value = numeric()), paste0(prefix, "_associations.tsv"), sep = "\t")
+    fwrite(data.table(sample = arrays), paste0(prefix, ".tsv"), sep = "\\t")
+    fwrite(data.table(pc = character(), variance_explained = numeric(), cumulative = numeric(), covariate = logical()), paste0(prefix, "_variance.tsv"), sep = "\\t")
+    fwrite(data.table(metric = c("arrays", "note"), value = c(n, "fewer than 10 arrays passed QC; no ancestry PCs computed")), paste0(prefix, "_summary.tsv"), sep = "\\t")
+    fwrite(data.table(variable = character(), pc = character(), n = integer(), r_squared = numeric(), p_value = numeric()), paste0(prefix, "_associations.tsv"), sep = "\\t")
     quit(save = "no")
 }
 
@@ -97,7 +99,6 @@ if (nrow(beta) == 0) stop("No CpG probe with a common SNP passed the call-rate f
 missing <- which(is.na(beta), arr.ind = TRUE)
 if (nrow(missing) > 0) beta[missing] <- rowMeans(beta, na.rm = TRUE)[missing[, 1]]
 
-rs_beta <- as.matrix(assay(se[rs_probes, arrays], "beta_unmasked"))
 call_genotypes <- function(x) {
     ok <- is.finite(x)
     g <- rep(NA_real_, length(x))
@@ -105,11 +106,19 @@ call_genotypes <- function(x) {
     g[ok] <- if (is.null(fit)) ifelse(x[ok] < 0.2, 0, ifelse(x[ok] > 0.8, 2, 1)) else fit[["cluster"]] - 1
     g / 2
 }
-genotypes <- t(apply(rs_beta, 1, call_genotypes))
-genotypes <- genotypes[rowMeans(is.na(genotypes)) <= 1 - min_call_rate, , drop = FALSE]
-genotypes <- genotypes[apply(genotypes, 1, var, na.rm = TRUE) > 0, , drop = FALSE]
-missing <- which(is.na(genotypes), arr.ind = TRUE)
-if (nrow(missing) > 0) genotypes[missing] <- rowMeans(genotypes, na.rm = TRUE)[missing[, 1]]
+# The minfi-based routes keep the rs probes out of the beta values (minfi
+# reads them separately), so their data have none: the components then come
+# from the SNP CpGs alone
+genotypes <- matrix(numeric(), 0, n, dimnames = list(NULL, arrays))
+if (length(rs_probes) > 0) {
+    rs_beta <- as.matrix(assay(se[rs_probes, arrays], "beta_unmasked"))
+    genotypes <- t(apply(rs_beta, 1, call_genotypes))
+    if (length(rs_probes) == 1) genotypes <- matrix(genotypes, nrow = 1, dimnames = list(rs_probes, arrays))
+    genotypes <- genotypes[rowMeans(is.na(genotypes)) <= 1 - min_call_rate, , drop = FALSE]
+    genotypes <- genotypes[apply(genotypes, 1, var, na.rm = TRUE) > 0, , drop = FALSE]
+    missing <- which(is.na(genotypes), arr.ind = TRUE)
+    if (nrow(missing) > 0) genotypes[missing] <- rowMeans(genotypes, na.rm = TRUE)[missing[, 1]]
+}
 
 # Covariates for the residualisation
 samples <- read_table(samples_file)

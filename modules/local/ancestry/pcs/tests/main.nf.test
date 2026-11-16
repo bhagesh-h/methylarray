@@ -12,7 +12,8 @@ nextflow_process {
 
     // Simulated data (make_fixture.R): 60 arrays from two populations on three
     // plates; the SNP CpGs carry the genotypes and a strong plate effect that the
-    // control-probe PC tracks. Two arrays failed sample QC.
+    // control-probe PC tracks. Two arrays failed sample QC. test_se_no_rs is the
+    // same data without the rs probes, as the minfi-based routes deliver it.
 
     test("ancestry PCs from SNP CpGs and rs probes") {
 
@@ -53,6 +54,41 @@ nextflow_process {
                 { assert assoc.find { row -> row.variable == 'DNA plate' && row.pc == 'ancestry_pc1' }.r_squared as double < 0.1 },
                 { assert process.out.multiqc[0][1].collect { f -> file(f).name }.sort() == ['ancestry_pcs_scatter_mqc.json', 'ancestry_pcs_scree_mqc.tsv'] },
                 { assert snapshot(process.out.pcs, process.out.variance, process.out.summary, process.out.associations, process.out.versions).match() }
+            )
+        }
+    }
+
+    test("minfi-route data without rs probes") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'minfi' ],
+                    file("$moduleTestDir/test_se_no_rs", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def read = { channel -> def t = path(channel[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+                t.drop(1).collect { values -> [t[0], values].transpose().collectEntries() } }
+            def summary = read(process.out.summary).collectEntries { row -> [row.metric, row.value] }
+            def assoc = read(process.out.associations)
+            assertAll(
+                { assert process.success },
+                // the components come from the SNP CpGs alone, and still separate the populations
+                { assert summary.rs_snps == '0' && summary.snp_cpgs == '299' },
+                { assert assoc.find { row -> row.variable == 'ancestry' && row.pc == 'ancestry_pc1' }.r_squared as double > 0.8 }
             )
         }
     }
