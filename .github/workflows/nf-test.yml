@@ -111,9 +111,9 @@ jobs:
         # locally with dev/nfdev --engine conda or --engine apptainer.
         profile: [docker]
         isMain:
-          - ${{ github.base_ref == 'master' || github.base_ref == 'main' || github.event_name == 'release' }}
+          - ${{ github.base_ref == 'master' || github.base_ref == 'main' || github.event_name == 'release' || github.event_name == 'workflow_dispatch' }}
         # PRs into dev: the minimum Nextflow version only. The latest Nextflow
-        # runs for main and releases.
+        # runs for main, releases and manual runs.
         exclude:
           - isMain: false
             NXF_VER: "latest-everything"
