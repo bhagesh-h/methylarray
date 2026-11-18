@@ -36,8 +36,10 @@ workflow SAMPLE_QC {
         ch_ewastools_qc = EWASTOOLS_QC.out.qc.map { _meta, qc -> qc }
         ch_snp_conflicts = EWASTOOLS_QC.out.conflicts.map { _meta, conflicts -> conflicts }
         ch_controls = EWASTOOLS_QC.out.controls.map { _meta, controls -> controls }
-        ch_snp_report = EWASTOOLS_QC.out.snp_summary.map { _meta, f -> f }.mix(EWASTOOLS_QC.out.snp_histograms.map { _meta, f -> f })
-        ch_snp_multiqc = EWASTOOLS_QC.out.multiqc.map { _meta, f -> f }
+        ch_snp_report = EWASTOOLS_QC.out.snp_summary
+            .mix(EWASTOOLS_QC.out.snp_histograms, EWASTOOLS_QC.out.relatedness, EWASTOOLS_QC.out.relatedness_summary)
+            .map { _meta, f -> f }
+        ch_snp_multiqc = EWASTOOLS_QC.out.multiqc.map { _meta, f -> f }.flatten()
     }
 
     // Every samplesheet row, so that excluded arrays are listed too
@@ -62,6 +64,6 @@ workflow SAMPLE_QC {
     retained = SAMPLEQC_SUMMARY.out.retained // channel: [ meta, sample_qc_retained.txt ]
     multiqc  = SAMPLEQC_SUMMARY.out.multiqc  // channel: [ meta, [ MultiQC custom content ] ]
     controls = ch_controls                   // channel: control-probe intensities, or [] without ewastools
-    snp      = ch_snp_report                 // channel: SNP summary and histograms (empty without ewastools)
-    snp_mqc  = ch_snp_multiqc                // channel: MultiQC SNP table (empty without ewastools)
+    snp      = ch_snp_report                 // channel: SNP summary, histograms and relatedness (empty without ewastools)
+    snp_mqc  = ch_snp_multiqc                // channel: MultiQC SNP and relatedness tables (empty without ewastools)
 }

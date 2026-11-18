@@ -20,6 +20,7 @@ nextflow_pipeline {
                 outdir        = "$outputDir"
                 preprocessing = 'combined'
                 models        = "${projectDir}/tests/data/models_test.yml"
+                meqtl         = "${projectDir}/modules/local/meqtl/prepare/tests/meqtl.csv.gz"
                 export_geo    = true
             }
         }

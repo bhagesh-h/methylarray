@@ -10,7 +10,7 @@ nextflow_process {
     tag "probes/annotate"
 
     // The pinned sources: Peters et al. 2024 manifest (AnnotationHub AH116484)
-    // and the Zhou lab EPIC v2 mask
+    // and the Zhou lab EPIC v2 mask, with two made-up Illumina probe lists
 
     test("EPICv2 - Peters manifest and Zhou mask") {
 
@@ -20,7 +20,9 @@ nextflow_process {
                 input[0] = [
                     [ id: 'EPICv2' ],
                     file(params.probe_manifest_source, checkIfExists: true),
-                    file(params.probe_mask_source, checkIfExists: true)
+                    file(params.probe_mask_source, checkIfExists: true),
+                    file("$moduleTestDir/illumina_flagged.csv", checkIfExists: true),
+                    file("$moduleTestDir/illumina_mapping.txt", checkIfExists: true)
                 ]
                 """
             }
@@ -38,6 +40,9 @@ nextflow_process {
                 { assert summary.mismatch_pos == 7516 },
                 { assert summary.zhou_general == 31983 },
                 { assert summary.probes == 936166 },
+                // the Illumina lists: three flagged probes (Illumina CSV), one CpG name and one probe ID with mapping inaccuracies
+                { assert summary.illumina_flagged == 3 && summary.illumina_mapping_inaccuracy >= 2 },
+                { assert path(process.out.resources[0][1]).text.contains('Illumina flagged probes (3 IDs)') },
                 { assert snapshot(process.out.summary, process.out.resources, process.out.versions).match() }
             )
         }
@@ -52,7 +57,7 @@ nextflow_process {
         when {
             process {
                 """
-                input[0] = [ [ id: 'EPICv2' ], [], [] ]
+                input[0] = [ [ id: 'EPICv2' ], [], [], [], [] ]
                 """
             }
         }

@@ -56,10 +56,14 @@ graph LR
         clocks[dnaMethyAge]
         pace[DunedinPACE]
         isva[isva]
+        ancestry[Ancestry]
+        varpart[variancePartition]
 
         epidish -->|minfi,sesame,enmix,combined| clocks
         clocks -->|minfi,sesame,enmix,combined| pace
         pace -->|minfi,sesame,enmix,combined| isva
+        isva -->|minfi,sesame,enmix,combined| varpart
+        varpart -->|minfi,sesame,enmix,combined| ancestry
     end
 
     subgraph association [Association]
@@ -82,12 +86,14 @@ graph LR
         go[GO]
         kegg[KEGG]
         msigdb[MSigDB]
+        kycg[KnowYourCG]
 
-        dmrcate -->|minfi,sesame,enmix,combined| missmethyl
+        dmrcate -->|minfi,sesame,enmix,combined| dmrff
         dmrff -->|minfi,sesame,enmix,combined| missmethyl
         missmethyl -->|minfi,sesame,enmix,combined| go
-        missmethyl -->|minfi,sesame,enmix,combined| kegg
-        missmethyl -->|minfi,sesame,enmix,combined| msigdb
+        go -->|minfi,sesame,enmix,combined| kegg
+        kegg -->|minfi,sesame,enmix,combined| msigdb
+        msigdb -->|minfi,sesame,enmix,combined| kycg
     end
 
     subgraph report [Report]
@@ -106,9 +112,7 @@ graph LR
     sesame -->|sesame| ewastools
     enmix -->|enmix,combined| ewastools
     masks -->|minfi,sesame,enmix,combined| epidish
-    isva -->|minfi,sesame,enmix,combined| limma
+    ancestry -->|minfi,sesame,enmix,combined| limma
     bacon -->|minfi,sesame,enmix,combined| dmrcate
-    bacon -->|minfi,sesame,enmix,combined| dmrff
-    go -->|minfi,sesame,enmix,combined| multiqc
-    kegg -->|minfi,sesame,enmix,combined| quarto
-    msigdb -->|minfi,sesame,enmix,combined| quarto
+    kycg -->|minfi,sesame,enmix,combined| multiqc
+    kycg -->|minfi,sesame,enmix,combined| quarto

@@ -66,6 +66,12 @@ input:
         pattern: "*.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475
+    - ancestry_pcs:
+        type: file
+        description: Genetic ancestry components of ANCESTRY_PCS (ancestry_pc* columns, used by @ancestry), or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
 output:
   stats:
     - - meta:

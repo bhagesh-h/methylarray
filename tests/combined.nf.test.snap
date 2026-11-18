@@ -2,6 +2,11 @@
     "-profile test --preprocessing combined - stub": {
         "content": [
             {
+                "ANCESTRY_PCS": {
+                    "HDF5Array": "stub",
+                    "R": "stub",
+                    "SummarizedExperiment": "stub"
+                },
                 "BIOMARKERS_ASSOCIATE": {
                     "R": "stub",
                     "jsonlite": "stub"
@@ -20,6 +25,10 @@
                 "DNAM_SCORES": {
                     "SummarizedExperiment": "stub",
                     "data.table": "stub"
+                },
+                "ENRICHMENT_KYCG": {
+                    "ExperimentHub": "stub",
+                    "knowYourCG": "stub"
                 },
                 "ENRICHMENT_MISSMETHYL": {
                     "GO.db": "stub",
@@ -52,6 +61,14 @@
                     "data.table": "stub",
                     "minfi": "stub"
                 },
+                "KYCG_CACHE": {
+                    "ExperimentHub": "stub",
+                    "knowYourCG": "stub"
+                },
+                "MEQTL_PREPARE": {
+                    "R": "stub",
+                    "data.table": "stub"
+                },
                 "MINFI_PREPROCESS": {
                     "ENmix": "stub",
                     "HDF5Array": "stub",
@@ -82,6 +99,11 @@
                     "sesame": "stub",
                     "sesameData": "stub"
                 },
+                "VARIANCE_PARTITION": {
+                    "HDF5Array": "stub",
+                    "lme4": "stub",
+                    "variancePartition": "stub"
+                },
                 "Workflow": {
                     "bhagesh-h/methylarray": "v1.0.0"
                 }
@@ -89,17 +111,22 @@
             [
                 "biomarkers",
                 "biomarkers/biomarkers_agreement.tsv",
+                "biomarkers/biomarkers_ancestry.tsv",
                 "biomarkers/biomarkers_batch.tsv",
                 "biomarkers/biomarkers_cells_measures.tsv",
                 "biomarkers/biomarkers_cells_phenotypes.tsv",
+                "biomarkers/biomarkers_contamination.tsv",
                 "biomarkers/biomarkers_phenotypes.tsv",
                 "biomarkers/biomarkers_quartiles.tsv",
+                "biomarkers/biomarkers_robust.tsv",
                 "cell_composition",
                 "cell_composition/cell_fractions.tsv",
+                "cell_composition/cell_fractions_idol_agreement.tsv",
                 "cell_composition/cell_fractions_reference_coverage.tsv",
                 "clocks",
                 "clocks/clocks.tsv",
                 "clocks/clocks_coverage.tsv",
+                "clocks/clocks_robust.tsv",
                 "clocks/clocks_weights.tsv",
                 "dmr",
                 "dmr/age",
@@ -116,6 +143,8 @@
                 "enrichment/age",
                 "enrichment/age/enrichment_age.tsv",
                 "enrichment/age/enrichment_age_summary.json",
+                "enrichment/age/kycg_age.tsv",
+                "enrichment/age/kycg_age_summary.json",
                 "ewas",
                 "ewas/age",
                 "ewas/age/ewas_age_design_check.tsv",
@@ -124,18 +153,27 @@
                 "ewas/age/ewas_age_summary.json",
                 "ewas/age/ewas_age_top.tsv",
                 "ewas/ewas_summary.tsv",
+                "ewas/ewas_summary_meqtl.tsv",
                 "exploration",
+                "exploration/ancestry_pcs.tsv",
+                "exploration/ancestry_pcs_associations.tsv",
+                "exploration/ancestry_pcs_summary.tsv",
+                "exploration/ancestry_pcs_variance.tsv",
                 "exploration/pca_associations.tsv",
                 "exploration/pca_ctrl_pca_variance.tsv",
                 "exploration/pca_ctrl_pcs.tsv",
                 "exploration/pca_outliers.tsv",
                 "exploration/pca_scores.tsv",
-                "exploration/pca_scree_mqc.tsv",
                 "exploration/pca_variance.tsv",
+                "exploration/variance_partition.tsv.gz",
+                "exploration/variance_partition_summary.tsv",
                 "geo",
                 "geo/geo_processed_matrix.tsv.gz",
                 "geo/geo_samples.tsv",
                 "geo/geo_signal_intensities.tsv.gz",
+                "meqtl",
+                "meqtl/meqtl_cpgs.tsv",
+                "meqtl/meqtl_cpgs_summary.tsv",
                 "multiqc",
                 "multiqc/multiqc_data",
                 "multiqc/multiqc_data/.stub",
@@ -159,15 +197,14 @@
                 "probe_filter/combined_filtered_se",
                 "probe_filter/combined_filtered_se/assays.h5",
                 "probe_filter/combined_filtered_se/se.rds",
-                "probe_filter/combined_filtered_uncollapsed_se",
-                "probe_filter/combined_filtered_uncollapsed_se/assays.h5",
-                "probe_filter/combined_filtered_uncollapsed_se/se.rds",
                 "qc",
                 "qc/combined",
                 "qc/combined/combined_qc.tsv",
                 "qc/ewastools",
                 "qc/ewastools/ewastools_controls.tsv.gz",
                 "qc/ewastools/ewastools_qc.tsv",
+                "qc/ewastools/ewastools_relatedness.tsv.gz",
+                "qc/ewastools/ewastools_relatedness_summary.tsv",
                 "qc/ewastools/ewastools_snp_conflicts.tsv",
                 "qc/ewastools/ewastools_snp_histograms.tsv",
                 "qc/ewastools/ewastools_snp_summary.tsv",
@@ -180,16 +217,21 @@
             ],
             [
                 "biomarkers_agreement.tsv:md5,94570ddacf5cddfaafb1250eb2684f36",
+                "biomarkers_ancestry.tsv:md5,6e5bdb1df784352e6268011f8b4faf59",
                 "biomarkers_batch.tsv:md5,378cadd9d9ba1bb2cae0d27663993a3e",
                 "biomarkers_cells_measures.tsv:md5,5171816fe4fa28ee0f5b42234ecb96ab",
                 "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c",
+                "biomarkers_contamination.tsv:md5,bd80f2be4ca00d182a917b4b01789fb6",
                 "biomarkers_phenotypes.tsv:md5,f8639e17b0b8d6cfba0d2689a8717e28",
                 "biomarkers_quartiles.tsv:md5,fe324338b369730600fb20b791bf02e5",
+                "biomarkers_robust.tsv:md5,3b34aabf5098dc5fa37f978c8b6c1b65",
                 "cell_fractions.tsv:md5,d522843d0cd415cbf3d1bc5c6bb51d01",
+                "cell_fractions_idol_agreement.tsv:md5,5b4382247fad773911e40b4bfb2b3ff7",
                 "cell_fractions_reference_coverage.tsv:md5,6d1736603c7f62985b7d28b44a2720c5",
                 "clocks.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4",
                 "clocks_coverage.tsv:md5,7928081d93a9a2c67466d59d9be139a9",
-                "clocks_weights.tsv:md5,90fa629f87c29b41affaf8deac4c9682",
+                "clocks_robust.tsv:md5,ed8603bbb6e345fe6185ec9454fa96d4",
+                "clocks_weights.tsv:md5,a72e4be8684b7a73ae063d5c6f8f70d4",
                 "dmr_age_consensus.bed:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "dmr_age_consensus.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "dmr_age_dmrcate.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
@@ -200,22 +242,32 @@
                 "dnam_scores_weights.tsv:md5,fecf0ab9f6eeaa7491a856e65e23c97d",
                 "enrichment_age.tsv:md5,adbf0efb474ed273fc10b48b133a9c58",
                 "enrichment_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
+                "kycg_age.tsv:md5,4fee914ae8a93b3e6ab27a44872a64b0",
+                "kycg_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
                 "ewas_age_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_age_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11",
                 "ewas_age_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
                 "ewas_age_top.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_summary.tsv:md5,163b91e05f33021d9fbf32c250b7c345",
+                "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356",
+                "ancestry_pcs.tsv:md5,13fc07b37bb76fe42f7aa037e8c9fcfb",
+                "ancestry_pcs_associations.tsv:md5,26542c75c72d43e960aab98f33cfb9d8",
+                "ancestry_pcs_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1",
+                "ancestry_pcs_variance.tsv:md5,51b0e4e831c09953be63b0ecc7ba8340",
                 "pca_associations.tsv:md5,ad9be22e4e7a74c14b6bad99b7365e2b",
                 "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94",
                 "pca_ctrl_pcs.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
                 "pca_outliers.tsv:md5,9a7a9681db36858bd2bcd7ca0392825d",
                 "pca_scores.tsv:md5,fc4f6d4673bc687f89061fe547ffe151",
-                "pca_scree_mqc.tsv:md5,95b63210791ceb7b8bcac1b23ce1873f",
                 "pca_variance.tsv:md5,220c70d77202755b60bb0c397eef2b37",
+                "variance_partition.tsv.gz:md5,57f152c40ee6512f57f0c0a987ed883c",
+                "variance_partition_summary.tsv:md5,bdbedfeef66bb4e409bd79d7472b94ed",
                 "geo_processed_matrix.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
                 "geo_samples.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
                 "geo_signal_intensities.tsv.gz:md5,81fdbebe5f0cb7e973b753dcb0860fa9",
+                "meqtl_cpgs.tsv:md5,8058712afd083963edaf7af7e965427e",
+                "meqtl_cpgs_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 ".stub:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "combined_filtered_attrition.tsv:md5,fa491f1fa7e6fbdeb2b5f8490c93bf31",
@@ -223,6 +275,8 @@
                 "combined_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
                 "ewastools_controls.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewastools_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef",
+                "ewastools_relatedness.tsv.gz:md5,c370cfd2eb8f8c2cba2c1418dd2337f6",
+                "ewastools_relatedness_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1",
                 "ewastools_snp_conflicts.tsv:md5,a620e575595f242086463933ddc591e0",
                 "ewastools_snp_histograms.tsv:md5,ccc64f8a19fa096603b9432c7cd07cc8",
                 "ewastools_snp_summary.tsv:md5,5ab6774a339b89348a049a707085a180",
@@ -231,7 +285,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-15T23:24:49.148076151",
+        "timestamp": "2026-11-16T16:19:50.838436916",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

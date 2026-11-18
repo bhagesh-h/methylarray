@@ -9,7 +9,13 @@
                     "ewas_summary_mqc.tsv:md5,96922cda733ed8dfb320b2a5afca949e"
                 ],
                 "2": [
+                    "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
+                ],
+                "3": [
                     "versions.yml:md5,288b9285f04a8c7fa50801f1a55457c9"
+                ],
+                "meqtl": [
+                    "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
                 ],
                 "multiqc": [
                     "ewas_summary_mqc.tsv:md5,96922cda733ed8dfb320b2a5afca949e"
@@ -22,7 +28,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T14:35:14.632487262",
+        "timestamp": "2026-11-16T14:54:24.527304454",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
@@ -38,7 +44,13 @@
                     "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
                 ],
                 "2": [
+                    "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
+                ],
+                "3": [
                     "versions.yml:md5,a7471c16ac9ac0f7c44e4fb5a49e3fc9"
+                ],
+                "meqtl": [
+                    "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
                 ],
                 "multiqc": [
                     "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
@@ -51,7 +63,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T18:33:23.885495338",
+        "timestamp": "2026-11-16T14:54:39.464210604",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

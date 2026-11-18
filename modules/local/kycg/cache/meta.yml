@@ -1,0 +1,41 @@
+name: kycg_cache
+description: Download the KnowYourCG knowledgebases of one array platform from ExperimentHub into a local cache, so that the enrichment tasks run offline
+keywords:
+  - dna methylation
+  - methylation array
+  - enrichment
+  - knowledgebase
+tools:
+  - knowYourCG:
+      description: Enrichment of CpG sets in curated genomic, epigenomic and technical features
+      homepage: https://bioconductor.org/packages/knowYourCG/
+      documentation: https://bioconductor.org/packages/knowYourCG/
+      doi: 10.1126/sciadv.adw3027
+      licence: ["AGPL-3.0-only"]
+input:
+  - platform:
+      type: string
+      description: Array platform, e.g. EPICv2
+output:
+  cache:
+    - kycg_cache:
+        type: directory
+        description: ExperimentHub cache with the knowledgebases of --databases
+  resources:
+    - kycg_resources.tsv:
+        type: file
+        description: Database, ExperimentHub title and ID, and the MD5 of the cached file
+        pattern: "kycg_resources.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

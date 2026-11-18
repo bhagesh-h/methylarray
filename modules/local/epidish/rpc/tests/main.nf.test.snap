@@ -1,4 +1,85 @@
 {
+    "whole blood - cent12CT, centDHSbloodDMC and IDOL": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions.tsv:md5,d0188d19fdbf34de8cdbd27fffca7700"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_reference_coverage.tsv:md5,d5ae040a39b70c8f936d5be847eeafd6"
+                    ]
+                ],
+                "2": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_idol_agreement.tsv:md5,5950e4dde11d8ad04bdae6a2de86b941"
+                    ]
+                ],
+                "3": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_mqc.tsv:md5,94a4faa33c7619a95ae9504d862d259e"
+                    ]
+                ],
+                "4": [
+                    "versions.yml:md5,54e833ddecd148eccd88181140e82658"
+                ],
+                "coverage": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_reference_coverage.tsv:md5,d5ae040a39b70c8f936d5be847eeafd6"
+                    ]
+                ],
+                "fractions": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions.tsv:md5,d0188d19fdbf34de8cdbd27fffca7700"
+                    ]
+                ],
+                "idol_agreement": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_idol_agreement.tsv:md5,5950e4dde11d8ad04bdae6a2de86b941"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_mqc.tsv:md5,94a4faa33c7619a95ae9504d862d259e"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,54e833ddecd148eccd88181140e82658"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T16:13:15.421117525",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
     "whole blood - cent12CT and centDHSbloodDMC": {
         "content": [
             {
@@ -88,10 +169,18 @@
                         {
                             "id": "minfi"
                         },
-                        "cell_fractions_mqc.tsv:md5,7f5c93300e06e54926db32c062be2e5c"
+                        "cell_fractions_idol_agreement.tsv:md5,5b4382247fad773911e40b4bfb2b3ff7"
                     ]
                 ],
                 "3": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_mqc.tsv:md5,7f5c93300e06e54926db32c062be2e5c"
+                    ]
+                ],
+                "4": [
                     "versions.yml:md5,42434947c94b849059f29e397e066917"
                 ],
                 "coverage": [
@@ -110,6 +199,14 @@
                         "cell_fractions.tsv:md5,d522843d0cd415cbf3d1bc5c6bb51d01"
                     ]
                 ],
+                "idol_agreement": [
+                    [
+                        {
+                            "id": "minfi"
+                        },
+                        "cell_fractions_idol_agreement.tsv:md5,5b4382247fad773911e40b4bfb2b3ff7"
+                    ]
+                ],
                 "multiqc": [
                     [
                         {
@@ -123,7 +220,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T12:11:58.118182455",
+        "timestamp": "2026-11-16T16:13:19.12357546",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

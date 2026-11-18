@@ -144,7 +144,6 @@ qc <- data.frame(
     metric_table,
     check.names = FALSE
 )
-write.table(qc, paste0(prefix, "_qc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, na = "")
 
 # SNP summaries (aggregates only, no genotypes are written): genotypes called
 # from the SNP probe betas (below 0.2, 0.2 to 0.8, above 0.8 = 0, 1, 2 B
@@ -202,6 +201,124 @@ write.table(data.frame(Sample = snp_summary[["sample"]], `SNP outlier` = snp_sum
                        `Max agreement (%)` = round(100 * snp_summary[["max_agreement"]], 1), check.names = FALSE),
             paste0(prefix, "_snp_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")
 write.table(conflict_table, paste0(prefix, "_snp_conflicts.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE)
+
+# Relatedness of every pair of arrays below the contamination threshold, from
+# the autosomal SNP genotypes above:
+#   - identity by state (IBS, alleles shared at a SNP: 0, 1 or 2), its mean and
+#     variance over the SNPs; plotted against each other this is the omicsPrint
+#     plot (van Iterson et al. 2018): identical pairs at mean 2 and variance 0,
+#     first-degree relatives between them and the unrelated pairs
+#   - log10 likelihood ratios against unrelated (Thompson 1975) for identical,
+#     parent-offspring and full-sibling pairs, from their IBD sharing
+#     probabilities (k0, k1, k2), allele frequencies of these arrays (shrunk
+#     towards 0.5) and a genotype call error of 2%
+# A pair is related when its best likelihood ratio exceeds 60 times the number
+# of pairs: each ratio has mean 1 for an unrelated pair, so the chance of any
+# false call over all pairs and the three relations is at most 5% (Markov
+# inequality). The expected log10 ratio of a true first-degree pair shows
+# whether this SNP set can detect relatives at all; with the 60 or so SNPs of
+# the array it usually cannot, while identical pairs are always detected.
+relatedness_tables <- function(G, donors, eps = 0.02, shrink = 5) {
+    m <- ncol(G)
+    called <- rowSums(!is.na(G))
+    p <- (rowSums(G, na.rm = TRUE) + shrink) / (2 * called + 2 * shrink)
+    E <- matrix(eps / 2, 3, 3)
+    diag(E) <- 1 - eps
+    k <- list(identical = c(0, 0, 1), parent_offspring = c(0, 1, 0), siblings = c(0.25, 0.5, 0.25), unrelated = c(1, 0, 0))
+    joint <- function(ps, kk) {
+        q <- 1 - ps
+        hw <- c(q^2, 2 * ps * q, ps^2)
+        one <- matrix(c(q^3, ps * q^2, 0, ps * q^2, ps * q, ps^2 * q, 0, ps^2 * q, ps^3), 3, byrow = TRUE)
+        E %*% (kk[1] * outer(hw, hw) + kk[2] * one + kk[3] * diag(hw)) %*% t(E)
+    }
+    ll <- lapply(k, function(kk) matrix(0, m, m))
+    count <- ibs_sum <- ibs_sq <- matrix(0, m, m)
+    expected <- c(parent_offspring = 0, siblings = 0)
+    for (s in seq_len(nrow(G))) {
+        i <- which(!is.na(G[s, ]))
+        if (length(i) < 2) next
+        g <- G[s, i] + 1L
+        tables <- lapply(k, function(kk) joint(p[s], kk))
+        for (r in names(k)) ll[[r]][i, i] <- ll[[r]][i, i] + log10(tables[[r]][g, g])
+        for (r in names(expected)) expected[[r]] <- expected[[r]] + sum(tables[[r]] * log10(tables[[r]] / tables[["unrelated"]]))
+        ibs <- 2 - abs(outer(g, g, "-"))
+        count[i, i] <- count[i, i] + 1
+        ibs_sum[i, i] <- ibs_sum[i, i] + ibs
+        ibs_sq[i, i] <- ibs_sq[i, i] + ibs^2
+    }
+    upper <- which(upper.tri(count), arr.ind = TRUE)
+    upper <- upper[order(upper[, 1], upper[, 2]), , drop = FALSE]
+    n_pairs <- nrow(upper)
+    threshold <- log10(60 * max(1, n_pairs))
+    snps <- count[upper]
+    lod_identical <- (ll[["identical"]] - ll[["unrelated"]])[upper]
+    lod_first <- (pmax(ll[["parent_offspring"]], ll[["siblings"]]) - ll[["unrelated"]])[upper]
+    relation <- ifelse(snps < 20, "too few SNPs",
+                ifelse(pmax(lod_identical, lod_first) < threshold, "unrelated",
+                ifelse(lod_identical >= lod_first, "identical", "first-degree")))
+    pairs <- data.frame(
+        sample1 = colnames(G)[upper[, 1]],
+        sample2 = colnames(G)[upper[, 2]],
+        snps = snps,
+        ibs_mean = round(ibs_sum[upper] / pmax(snps, 1), 4),
+        ibs_var = round(ifelse(snps > 1, (ibs_sq[upper] - ibs_sum[upper]^2 / snps) / (snps - 1), NA), 4),
+        lod_identical = round(lod_identical, 2),
+        lod_first_degree = round(lod_first, 2),
+        relation = relation,
+        expected_same_donor = donors[upper[, 1]] == donors[upper[, 2]]
+    )
+    list(pairs = pairs, threshold = threshold, expected_first_degree = min(expected), snps = sum(called >= 2))
+}
+G <- geno[autosomal, keep, drop = FALSE]
+colnames(G) <- samples[["sample"]][keep]
+relatedness <- if (length(keep) >= 2) relatedness_tables(G, expected_donor[keep]) else
+    list(pairs = data.frame(sample1 = character(), sample2 = character(), snps = integer(), ibs_mean = numeric(), ibs_var = numeric(),
+                            lod_identical = numeric(), lod_first_degree = numeric(), relation = character(), expected_same_donor = logical()),
+         threshold = NA_real_, expected_first_degree = NA_real_, snps = sum(autosomal))
+pairs <- relatedness[["pairs"]]
+related <- pairs[pairs[["relation"]] %in% c("identical", "first-degree"), , drop = FALSE]
+if (nrow(pairs) > 0) {
+    fwrite(pairs, paste0(prefix, "_relatedness.tsv.gz"), sep = "\\t")
+} else {
+    # fwrite writes an incomplete gzip stream for a table without rows
+    gz <- gzfile(paste0(prefix, "_relatedness.tsv.gz"), "w")
+    writeLines(paste(names(pairs), collapse = "\\t"), gz)
+    close(gz)
+}
+write.table(data.frame(
+    metric = c("arrays", "snps", "pairs", "lod_threshold", "expected_lod_first_degree", "identical_pairs",
+               "identical_pairs_unexpected", "first_degree_pairs", "replicate_pairs_not_identical"),
+    value = c(length(keep), relatedness[["snps"]], nrow(pairs), round(relatedness[["threshold"]], 2),
+              round(relatedness[["expected_first_degree"]], 2), sum(related[["relation"]] == "identical"),
+              sum(related[["relation"]] == "identical" & !related[["expected_same_donor"]]), sum(related[["relation"]] == "first-degree"),
+              sum(pairs[["expected_same_donor"]] & pairs[["relation"]] != "identical"))
+), paste0(prefix, "_relatedness_summary.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, na = "")
+
+# Related arrays of each array, e.g. "B (identical); C (first-degree)"
+qc[["relatives"]] <- vapply(qc[["sample"]], function(s) {
+    mine <- related[related[["sample1"]] == s | related[["sample2"]] == s, , drop = FALSE]
+    if (nrow(mine) == 0) return("")
+    paste(sprintf("%s (%s)", ifelse(mine[["sample1"]] == s, mine[["sample2"]], mine[["sample1"]]), mine[["relation"]]), collapse = "; ")
+}, character(1), USE.NAMES = FALSE)
+write.table(qc, paste0(prefix, "_qc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, na = "")
+
+# MultiQC: related pairs and replicate pairs
+shown <- pairs[pairs[["relation"]] %in% c("identical", "first-degree") | pairs[["expected_same_donor"]], , drop = FALSE]
+if (nrow(shown) > 0) {
+    writeLines(c(
+        "# id: 'snp_relatedness'",
+        "# section_name: 'SNP relatedness'",
+        paste0("# description: 'Pairs of arrays called identical or first-degree relatives from ", relatedness[["snps"]],
+               " autosomal SNPs, and the pairs expected to be the same donor (replicate_group). LOD: log10 likelihood ratio against unrelated; a pair is related above ",
+               round(relatedness[["threshold"]], 1), ". A true first-degree pair is expected to reach ", round(relatedness[["expected_first_degree"]], 1),
+               ", so most relatives are missed when that is below the threshold.'"),
+        "# plot_type: 'table'"
+    ), paste0(prefix, "_relatedness_mqc.tsv"))
+    write.table(data.frame(Pair = paste(shown[["sample1"]], shown[["sample2"]], sep = " / "), Relation = shown[["relation"]],
+                           `Same donor expected` = ifelse(shown[["expected_same_donor"]], "yes", "no"), `IBS mean` = shown[["ibs_mean"]],
+                           `LOD identical` = shown[["lod_identical"]], `LOD first-degree` = shown[["lod_first_degree"]], check.names = FALSE),
+                paste0(prefix, "_relatedness_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE)
+}
 
 # Software versions
 writeLines(c('"${task.process}":',

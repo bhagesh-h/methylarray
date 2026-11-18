@@ -54,6 +54,18 @@ input:
         pattern: "*.{tsv,csv}"
         ontologies:
           - edam: http://edamontology.org/format_3475
+    - ancestry_pcs:
+        type: file
+        description: Genetic ancestry components of ANCESTRY_PCS (ancestry_pc columns), or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - clocks_robust:
+        type: file
+        description: Genotype-robust clocks of CLOCKS_COMPUTE, or []
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
 output:
   agreement:
     - - meta:
@@ -115,13 +127,43 @@ output:
           pattern: "*_quartiles.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475
+  contamination:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_contamination.tsv":
+          type: file
+          description: SNP outlier score against each acceleration and score, with the robust cutoff and the arrays above it (header only without the score)
+          pattern: "*_contamination.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  ancestry:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_ancestry.tsv":
+          type: file
+          description: Each acceleration and score against each ancestry component (Spearman; header only without the components)
+          pattern: "*_ancestry.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  robust:
+    - - meta:
+          type: map
+          description: Groovy Map with the id 'biomarkers'
+      - "${prefix}_robust.tsv":
+          type: file
+          description: Each clock acceleration against the genotype-robust one (Spearman; header only without robust clocks)
+          pattern: "*_robust.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
   multiqc:
     - - meta:
           type: map
           description: Groovy Map with the id 'biomarkers'
       - "${prefix}_*_mqc.json":
           type: file
-          description: MultiQC heatmaps (agreement, cells, phenotypes)
+          description: MultiQC heatmaps (agreement, cells, phenotypes) and the contamination table
           pattern: "*_*_mqc.json"
           ontologies:
             - edam: http://edamontology.org/format_3464

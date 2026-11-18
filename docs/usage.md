@@ -107,17 +107,19 @@ A YAML list with one entry per association model. Each model tests one trait aga
 
 Columns can come from the samplesheet, the phenotype table or the covariates the pipeline derives from the methylation data:
 
-| Name or token   | Meaning                                                                                               |
-| --------------- | ----------------------------------------------------------------------------------------------------- |
-| `predicted_sex` | Sex predicted by the preprocessing route                                                              |
-| `dnam_smoking`  | DNA methylation smoking score (McCartney et al. 2018)                                                 |
-| `cc_<lineage>`  | Estimated fraction of one cell lineage: `cc_B`, `cc_CD4T`, `cc_CD8T`, `cc_NK`, `cc_Mono` or `cc_Gran` |
-| `ctrlpc<k>`     | Principal component `k` of the control-probe intensities                                              |
-| `@cells`        | `cc_CD4T`, `cc_CD8T`, `cc_B`, `cc_NK` and `cc_Mono` (granulocytes are the reference)                  |
-| `@ctrlpcs`      | The kept control-probe principal components (`--n_ctrl_pcs`)                                          |
-| `@technical`    | `plate` and `sentrix_row`                                                                             |
-| `@sex`          | `predicted_sex`                                                                                       |
-| `@smoking`      | `dnam_smoking`                                                                                        |
+| Name or token    | Meaning                                                                                               |
+| ---------------- | ----------------------------------------------------------------------------------------------------- |
+| `predicted_sex`  | Sex predicted by the preprocessing route                                                              |
+| `dnam_smoking`   | DNA methylation smoking score (McCartney et al. 2018)                                                 |
+| `cc_<lineage>`   | Estimated fraction of one cell lineage: `cc_B`, `cc_CD4T`, `cc_CD8T`, `cc_NK`, `cc_Mono` or `cc_Gran` |
+| `ctrlpc<k>`      | Principal component `k` of the control-probe intensities                                              |
+| `ancestry_pc<k>` | Genetic ancestry component `k` from the SNP probes                                                    |
+| `@cells`         | `cc_CD4T`, `cc_CD8T`, `cc_B`, `cc_NK` and `cc_Mono` (granulocytes are the reference)                  |
+| `@ctrlpcs`       | The kept control-probe principal components (`--n_ctrl_pcs`)                                          |
+| `@ancestry`      | The genetic ancestry components (`--n_ancestry_pcs`)                                                  |
+| `@technical`     | `plate` and `sentrix_row`                                                                             |
+| `@sex`           | `predicted_sex`                                                                                       |
+| `@smoking`       | `dnam_smoking`                                                                                        |
 
 A model stops the run before any task starts when it names a column found in none of these sources, lists its trait among its covariates (directly or through a token), or uses its `block` column as a covariate as well. Without `--models` the pipeline runs preprocessing, QC, probe filtering, cell composition, clocks, DNA methylation scores and the exploratory analysis, and no association models.
 
@@ -224,9 +226,11 @@ The probe annotation comes from two pinned sources: the Peters et al. 2024 exten
 
 Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are report-only: they are annotated and counted in the attrition table (`report_only_*` rows), never removed.
 
+Illumina lists about 49,000 EPIC v2 probes that did not meet its performance expectations and about 190 probes with mapping inaccuracies, as files on the EPIC v2 product files page of its support site. They may not be redistributed, so the pipeline does not include them. Download them and pass `--illumina_flagged_probes` and `--illumina_mapping_inaccuracy` (Illumina's CSV files with an `IlmnID` or `Name` column, or one probe ID or CpG name per line): the probes are annotated (`illumina_flagged`, `illumina_mapping_inaccuracy`) and counted as report-only rows, not removed. They apply when the annotation is built, so not together with `--probe_annotation` from a run without them.
+
 ## Cell composition
 
-With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH (robust partial correlations) from the filtered, CpG-level beta values without masking. The main reference is `cent12CT` (12 cell types, Luo et al. 2023); `centDHSbloodDMC` (7 types) is reported for comparison. Reference CpGs are matched through their EPIC v1 and 450K IDs as well as the CpG ID, because some CpGs have new names on EPIC v2. The run stops if less than `--min_reference_coverage` (default 90%) of a reference's CpGs are present. Use `--tissue other` for tissues without a blood reference.
+With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH (robust partial correlations) from the filtered, CpG-level beta values without masking. The main reference is `cent12CT` (12 cell types, Luo et al. 2023); `centDHSbloodDMC` (7 types) is reported for comparison. As a cross-check with a different reference and method, the six cell types of the IDOL reference of FlowSorted.Blood.EPIC (Salas et al. 2018; 450 IDOL-optimised CpGs, staged from `--idol_reference` at a fixed commit) are estimated with Houseman's constrained projection and compared with the cent12CT lineages (`--skip_idol` turns this off). Reference CpGs are matched through their EPIC v1 and 450K IDs as well as the CpG ID, because some CpGs have new names on EPIC v2. The run stops if less than `--min_reference_coverage` (default 90%) of a reference's CpGs are present. Use `--tissue other` for tissues without a blood reference.
 
 ## Epigenetic clocks
 
@@ -242,6 +246,22 @@ Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked bet
 
 PCGrimAge needs the reported age and sex (`reported_age`, `reported_sex` in the samplesheet); arrays without them get NA. Age acceleration is computed when at least six arrays have a reported age. GrimAge, GrimAge2 and FitAge need licensed coefficients and are not available. BernabeuE2023c (cAge) is not in the default list: dnaMethyAge 0.2.0 fails for it when an array's estimate is below 20 years. A clock that fails gives NA, with the error in the notes of `clocks/clocks_coverage.tsv`. Intrinsic age acceleration needs at least five residual degrees of freedom after adjusting for age and six cell fractions, so at least 14 arrays with ages. Neither dnaMethyAge nor DunedinPACE is on conda or CRAN: the clock task installs them from their source packages at fixed GitHub commits. For runs without network access, download the two files once and pass their local paths.
 
+### Methylation QTLs and genotype-robust clocks
+
+Many clock CpGs are under genetic control: their methylation depends on a nearby genotype (a cis-meQTL), whose allele frequencies differ between populations. With a meQTL table (`--meqtl`), the pipeline:
+
+- marks the clock CpGs with a cis-meQTL (`meqtl` column of `clocks/clocks_weights.tsv`) and shows each clock's weight on them in the report
+- computes every clock again with the CpGs that have a common SNP or a cis-meQTL held at their mean over the arrays (`clocks/clocks_robust.tsv`), after Meeks et al. (2025), and repeats the phenotype associations with these accelerations (`genotype-robust` version)
+- reports, per association model, how many hits have a cis-meQTL compared with all tested CpGs (`ewas/ewas_summary_meqtl.tsv`)
+
+The pipeline does not ship meQTL data. The table needs a `cpg` column (450K, EPIC v1 or EPIC v2 names); `cistrans` (TRUE for cis) and `pval` are used when present, keeping cis associations with P < `--meqtl_p` (default 1e-8). For the GoDMC blood meQTLs (Min et al. 2021), download `assoc_meta_all.csv.gz` (about 6 GB) from the GoDMC database and keep the cis associations below the threshold once, which gives a file of a few MB:
+
+```bash
+zcat assoc_meta_all.csv.gz | awk -F, 'NR == 1 || ($11 == "TRUE" && $5 + 0 < 1e-8)' | gzip > godmc_cis.csv.gz
+```
+
+Then run with `--meqtl godmc_cis.csv.gz`. Check the terms of use of the meQTL resource before sharing derived results. GoDMC is based on people of European ancestry, so it misses meQTLs that are common only in other populations.
+
 ## Clocks, scores and cell fractions
 
 After the clocks, scores and cell composition, the pipeline relates them to each other and to the data it has: how the accelerations of the clocks (residuals on reported age) and the scores agree, how they follow the cell fractions, whether the DNA plate or BeadChip explains part of them, how each goes with every phenotype column (plain, and with the cell fractions held), and what characterises the bottom and top quarters of each acceleration. Phenotype columns are used as they are: numeric columns with more than two values as continuous, two-value columns as binary. Code categorical traits with more levels as separate yes/no columns if they should be included. The tables are in `biomarkers/` and the plots in the report; neither shows values of single arrays.
@@ -251,7 +271,9 @@ After the clocks, scores and cell composition, the pipeline relates them to each
 The arrays that passed QC are summarised with two principal component analyses:
 
 - Control-probe PCs (Lehne et al. 2015): the non-negative control probes of both channels, read by ewastools, describe technical variation such as bisulfite conversion, staining and hybridisation. `--n_ctrl_pcs` (default `auto`: the smallest number explaining at least 90% of their variance, at most 20) are kept as covariates.
-- PCA of the `--n_variable_cpgs` (default 50,000) most variable CpGs of the filtered data (M-values). `--n_pcs` (default `auto`: the random matrix theory estimate of `isva::EstDimRMT`, at most 20) components are tested for association with plate, batch, Sentrix ID and row, detected fraction, control-probe PCs, predicted sex, age, cell lineages and every phenotype column. A strong association of a top component with plate or Sentrix row points to a batch effect that the models should include.
+- Variance partition (`--variance_partition_cpgs`, default 20,000; `--skip_variance_partition`): for each of the most variable CpGs (M-values), the share of its variance explained by DNA plate, BeadChip, Sentrix row, batch and sex (random effects) and age and five cell lineages (fixed effects), from one linear mixed model per CpG with variancePartition (Hoffman and Schadt 2016). Variables with one value, categorical variables with as many levels as half the arrays, and variables missing in more than 10% of the arrays are left out. It needs at least 10 arrays with complete variables.
+- Genetic ancestry components (`--n_ancestry_pcs`, default 4; `--skip_ancestry`): without genotype data, the CpG probes with a common SNP (minor allele frequency 5% or more within 5 bp of the 3' end, Zhou lab mask) and the rs probes carry the genotypes. Following the EpiAnceR+ approach (Höffler et al. 2025), the CpG beta values are first residualised for the control-probe PCs, the PCs of the cell fractions, sex and age, so that technical and biological variation does not drive the components; the rs genotypes are added and a PCA gives the components. `ancestry_pcs_associations.tsv` and the report show what each component captures. Use them as covariates with `@ancestry` when the arrays come from people of different ancestries. They need at least 10 arrays; they are no replacement for genotype data, and clock accelerations can differ between ancestries through calibration error (see the report).
+- PCA of the `--n_variable_cpgs` (default 50,000) most variable CpGs of the filtered data, on the M-value scale and centred, after sex-chromosome, SNP and cross-hybridising probes were removed by the probe filter (they would otherwise give components for sex and genotype). The CpGs are ranked by the variance of their beta values: ranked by M-value variance, the selection fills with CpGs near 0 or 1, where small beta differences become large M-value differences. `--n_pcs` (default `auto`: the random matrix theory estimate of `isva::EstDimRMT`, at most 20) components are tested for association with plate, batch, Sentrix ID and row, detected fraction, control-probe PCs, predicted sex, age, cell lineages and every phenotype column. A strong association of a top component with plate or Sentrix row points to a batch effect that the models should include (`@technical`, `@ctrlpcs`); the variables are not part of the PCA, they are tested against it. The report colours the associations by adjusted R-squared, because a variable with many levels, such as the BeadChip, has a high R-squared by chance (about the number of levels divided by the number of arrays); MultiQC shows -log10 P, as ChAMP's `champ.SVD` does.
 
 Arrays far from the others on PC1 and PC2 are flagged in `pca_outliers.tsv` and the report (robust Mahalanobis distance above the chi-square 0.999 quantile). They are not removed: check them against the sample QC and exclude them in the samplesheet (`exclude`) if needed.
 
@@ -259,7 +281,7 @@ Arrays far from the others on PC1 and PC2 are flagged in `pca_outliers.tsv` and 
 
 Each model of `--models` is tested at every CpG of the filtered data with limma: a linear model on M-values with the trait and the covariates, moderated with `eBayes(trend = TRUE, robust = TRUE)`, and `duplicateCorrelation` when `block` is set (its consensus correlation is one value per model, estimated on a fixed random set of 50,000 CpGs). The same model on beta values gives the effect as a difference in beta (`delta_beta`). Test statistics are corrected for bias and inflation with bacon, and the genomic lambda is reported before and after.
 
-- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference), `@ctrlpcs` the kept control-probe PCs, `@technical` plate and Sentrix row, `@sex` the predicted sex, `@smoking` the DNA methylation smoking score (`dnam_smoking`).
+- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference), `@ctrlpcs` the kept control-probe PCs, `@ancestry` the genetic ancestry components, `@technical` plate and Sentrix row, `@sex` the predicted sex, `@smoking` the DNA methylation smoking score (`dnam_smoking`).
 - Arrays with a missing trait or covariate are left out of that model and listed with their reason. A model with fewer complete cases than its `min_n` is reported as not tested.
 - Before testing, the trait is checked for association with plate and Sentrix row, and every covariate for collinearity (VIF). Confounding is flagged in `ewas_<model>_design_check.tsv`.
 - Thresholds: FDR < 0.05, `--p_epigenome_wide` (default 9e-8, the EPIC threshold of Mansell et al. 2019) and `--p_suggestive` (default 1e-5).
@@ -288,6 +310,8 @@ For every tested model, the CpGs at FDR < 0.05 are tested for enrichment against
 | `--gene_set_gmts`          | MSigDB Hallmark, Reactome | Comma-separated GMT files with Entrez IDs (URLs or paths); empty to skip |
 | `--enrichment_min_hits`    | `10`                      | Minimum number of CpGs at FDR < 0.05 for a contrast to be tested         |
 | `--skip_enrichment`        | `false`                   | Skip enrichment for every model (`skip_enrichment: true` for one model)  |
+
+The same significant CpGs are also tested for genomic context with KnowYourCG: all of them, and separately those with higher and those with lower methylation (sign of `delta_beta`), against all tested CpGs, in the knowledgebases of `--kycg_databases` (EPIC v2: chromatin states, transcription factor binding sites, histone marks, CTCF binding, A/B compartments, imprinting DMRs, gene features). CpGs are matched to the probe IDs of the knowledgebases through the probe annotation. Fisher's exact test gives a log2 odds ratio and P, with the FDR within each knowledgebase. The knowledgebases are downloaded from ExperimentHub once per run (about 200 MB with TFBS); keep them with `--save_reference` and pass `--kycg_cache references/kycg_cache` for runs without network access. `--skip_kycg` turns it off.
 
 ## DNA methylation scores
 

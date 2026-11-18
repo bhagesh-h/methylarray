@@ -1,6 +1,7 @@
 # Builds the test fixture in this folder (test_se/): the rows of a filtered,
 # CpG-level SummarizedExperiment (minfi route, -profile test, six public GEO
-# arrays) that match a reference CpG of cent12CT.m or centDHSbloodDMC.m by CpG,
+# arrays) that match a reference CpG of cent12CT.m, centDHSbloodDMC.m or the
+# IDOL table of FlowSorted.Blood.EPIC (IDOLOptimizedCpGs.compTable) by CpG,
 # EPIC v1 or 450K ID.
 #   Rscript make_fixture.R <filtered_se> <reference ID list> <this folder>
 # annotation.tsv.gz holds the rows of probe_annotation.tsv.gz whose cpg_id,

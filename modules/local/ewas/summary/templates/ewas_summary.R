@@ -9,12 +9,17 @@
 # p_study_wide = --p_epigenome_wide / Meff. Under the null the correlation of
 # the statistics follows the correlation of the traits, so phenotype values are
 # not needed.
+# With a cis-meQTL list (--meqtl): per model and contrast, the CpGs at FDR <
+# 0.05 that have a cis-meQTL, against the share among all tested CpGs (Fisher's
+# exact test). Such hits are candidates for genetic confounding, especially
+# without ancestry covariates.
 #
 
 prefix <- "${prefix}"
 summary_files <- strsplit("${summaries}", " ")[[1]]
 stats_files <- strsplit(trimws("${stats}"), "[[:space:]]+")[[1]]
 stats_files <- stats_files[nzchar(stats_files)]
+meqtl_file <- "${meqtl_cpgs}"
 
 defaults <- list(p_epigenome_wide = "9e-8")
 parse_args <- function(x, defaults) {
@@ -51,7 +56,9 @@ rows <- rbindlist(lapply(sort(summary_files), function(file) {
 tests <- list()
 for (file in stats_files) {
     model <- sub("_stats[.]tsv[.]gz\$", "", basename(file))
-    s <- fread(text = readLines(gzfile(file)), select = c("cpg_id", "contrast", "t", "p_value"))
+    s <- fread(text = readLines(gzfile(file)))
+    if (!"fdr" %in% names(s)) s[, fdr := p.adjust(p_value, "BH"), by = contrast]
+    s <- s[, c("cpg_id", "contrast", "t", "p_value", "fdr"), with = FALSE]
     if (nrow(s) > 0) tests[[model]] <- s
 }
 if (length(tests) > 0) {
@@ -79,6 +86,23 @@ if (length(tests) > 0) {
     setorder(rows, model)
 }
 fwrite(rows, paste0(prefix, ".tsv"), sep = "\\t", na = "")
+
+# Hits with a cis-meQTL
+meqtl <- data.table(model = character(), contrast = character(), tested = integer(), tested_meqtl = integer(), hits_fdr = integer(),
+                    hits_meqtl = integer(), share_tested = numeric(), share_hits = numeric(), odds_ratio = numeric(), p_value = numeric())
+if (nzchar(meqtl_file) && length(tests) > 0) {
+    meqtl_cpgs <- fread(meqtl_file, colClasses = list(character = "cpg_id"))[["cpg_id"]]
+    meqtl <- stats[, {
+        has <- cpg_id %in% meqtl_cpgs
+        hit <- !is.na(fdr) & fdr < 0.05
+        test <- if (sum(hit) > 0 && sum(has) > 0) fisher.test(table(factor(hit, c(TRUE, FALSE)), factor(has, c(TRUE, FALSE)))) else NULL
+        .(tested = .N, tested_meqtl = sum(has), hits_fdr = sum(hit), hits_meqtl = sum(hit & has),
+          share_tested = round(mean(has), 4), share_hits = if (sum(hit) > 0) round(mean(has[hit]), 4) else NA_real_,
+          odds_ratio = if (is.null(test)) NA_real_ else signif(unname(test[["estimate"]]), 4),
+          p_value = if (is.null(test)) NA_real_ else signif(test[["p.value"]], 4))
+    }, by = .(model, contrast)]
+}
+fwrite(meqtl, paste0(prefix, "_meqtl.tsv"), sep = "\\t", na = "")
 
 columns <- intersect(c("model", "contrast", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_epigenome_wide",
                        "hits_suggestive", "hits_fdr_bacon", "meff", "p_study_wide", "hits_study_wide", "top_cpg", "top_p", "status"), names(rows))

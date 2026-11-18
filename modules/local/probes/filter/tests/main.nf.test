@@ -46,10 +46,12 @@ nextflow_process {
                 { assert attrition.collectEntries { step, row -> [ step, row.removed ] } == [
                     start: 0, probe_type: 1, non_cg: 1, no_position: 1, sex_chromosome: 2, detection: 1,
                     bead_or_quality_mask: 1, snp: 1, zhou_general_mask: 1, cross_hybridisation: 1,
-                    report_only_mismatch_pos: 0, report_only_zhou_uncorr_titration: 0 ] },
+                    report_only_mismatch_pos: 0, report_only_zhou_uncorr_titration: 0, report_only_illumina_flagged: 0 ] },
                 { assert attrition.cross_hybridisation.remaining == 6 },
                 // report-only flag counted among the kept probes
                 { assert attrition.report_only_mismatch_pos.n == 1 },
+                // Illumina flagged probes: one kept, one removed by the Zhou mask; no mapping row without a list
+                { assert attrition.report_only_illumina_flagged.n == 1 && !attrition.containsKey('report_only_illumina_mapping_inaccuracy') },
                 // a probe with two reasons is removed at the first and lists both
                 { assert exclusions['cg00000015_TC11'] == [ first: 'sex_chromosome', reasons: 'sex_chromosome;detection' ] },
                 // the population-specific SNP mask is not applied with common_1pt, the BLAT-only probe is kept with wgbs

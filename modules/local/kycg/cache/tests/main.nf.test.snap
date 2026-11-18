@@ -1,0 +1,50 @@
+{
+    "EPIC v2 - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        
+                    ]
+                ],
+                "1": [
+                    "kycg_resources.tsv:md5,9fff2f44a3e2886ac8bdc32c45afba80"
+                ],
+                "2": [
+                    "versions.yml:md5,cb5ba5bf46d722c0faa6bf6994f96b8b"
+                ],
+                "cache": [
+                    [
+                        
+                    ]
+                ],
+                "resources": [
+                    "kycg_resources.tsv:md5,9fff2f44a3e2886ac8bdc32c45afba80"
+                ],
+                "versions": [
+                    "versions.yml:md5,cb5ba5bf46d722c0faa6bf6994f96b8b"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T19:49:11.379414601",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "EPIC v2 ChromHMM knowledgebase": {
+        "content": [
+            [
+                "kycg_resources.tsv:md5,a8b43cc350327000a3e5a663fa748c5b"
+            ],
+            [
+                "versions.yml:md5,2a2c36b278fb08faabc9d4e2dfff6ed0"
+            ]
+        ],
+        "timestamp": "2026-11-16T19:49:00.545186611",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

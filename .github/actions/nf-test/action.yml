@@ -35,43 +35,37 @@ runs:
         version: "${{ env.NFT_VER }}"
         install-pdiff: true
 
-    - name: Setup apptainer
-      if: contains(inputs.profile, 'singularity')
-      uses: eWaterCycle/setup-apptainer@95b5c781df5f72fd2271cc3cff06904a09d2a087 # v3
-
-    - name: Set up Singularity
-      if: contains(inputs.profile, 'singularity')
-      shell: bash
-      run: |
-        mkdir -p $NXF_SINGULARITY_CACHEDIR
-        mkdir -p $NXF_SINGULARITY_LIBRARYDIR
-
-    - name: Conda setup
-      if: contains(inputs.profile, 'conda')
-      uses: conda-incubator/setup-miniconda@be893c923ea9cf1cf7cd510fbdde27c7e18cbdcb # v4.1.0
-      with:
-        auto-update-conda: true
-        conda-solver: libmamba
-        channels: conda-forge
-        channel-priority: strict
-        conda-remove-defaults: true
-
     - name: Run nf-test
       shell: bash
       env:
         NFT_WORKDIR: ${{ env.NFT_WORKDIR }}
       run: |
-        nf-test test \
-          --profile=+${{ inputs.profile }} \
-          $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \
-          --ci \
-          --changed-since HEAD^ \
-          --verbose \
-          --tap=test.tap \
-          --shard ${{ inputs.shard }}/${{ inputs.total_shards }}
+        run_tests() {
+          nf-test test \
+            --profile=+${{ inputs.profile }} \
+            $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \
+            --ci \
+            --changed-since HEAD^ \
+            --verbose \
+            --tap=test.tap \
+            --shard ${{ inputs.shard }}/${{ inputs.total_shards }} 2>&1 | tee nf-test.log
+          return "${PIPESTATUS[0]}"
+        }
 
-          # Save the absolute path of the test.tap file to the output
-          echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
+        # Image and file downloads sometimes break off on the runners;
+        # images already pulled stay in the cache, so one more run usually passes.
+        # Any other failure fails the job at once.
+        if ! run_tests; then
+          if grep -qE 'connection reset by peer|TLS handshake timeout|Read timed out|connect timed out' nf-test.log; then
+            echo "::warning::An image download failed (network); running the shard again"
+            run_tests
+          else
+            exit 1
+          fi
+        fi
+
+        # Save the absolute path of the test.tap file to the output
+        echo "tap_file_path=$(realpath test.tap)" >> $GITHUB_OUTPUT
 
     - name: Generate test summary
       if: always()

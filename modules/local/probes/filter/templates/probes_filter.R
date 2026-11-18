@@ -94,6 +94,10 @@ reasons <- list(
     cross_hybridisation = crosshyb
 )
 report_only <- list(mismatch_pos = anno[["mismatch_pos"]], zhou_uncorr_titration = anno[["zhou_uncorr_titration"]])
+# Illumina's flagged and mapping-inaccuracy probes, when their lists were supplied
+for (flag in c("illumina_flagged", "illumina_mapping_inaccuracy")) {
+    if (flag %in% names(anno) && any(anno[[flag]] %in% TRUE)) report_only[[flag]] <- anno[[flag]] %in% TRUE
+}
 
 reason_matrix <- do.call(cbind, reasons)
 excluded <- rowSums(reason_matrix) > 0

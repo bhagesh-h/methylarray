@@ -14,6 +14,7 @@ workflow CLOCKS {
     ch_retained        // channel: [ meta, list of the arrays that passed sample QC ]
     ch_annotation      // channel: probe annotation table
     ch_cell_fractions  // channel: cell fraction table, or [] without cell composition
+    ch_meqtl_cpgs      // channel: CpGs with a cis-meQTL, or [] without --meqtl
     dnamethyage_source // string: dnaMethyAge source tarball (URL or path)
     dunedinpace_source // string: DunedinPACE source tarball (URL or path)
 
@@ -24,7 +25,8 @@ workflow CLOCKS {
             .combine(ch_annotation)
             .combine(sampleTable(ch_arrays, false))
             .combine(ch_cell_fractions.map { fractions -> [ fractions ] })
-            .map { meta, se, retained, annotation, samples, fractions -> [ meta, se, retained, annotation, samples, fractions ] },
+            .combine(ch_meqtl_cpgs.map { cpgs -> [ cpgs ] })
+            .map { meta, se, retained, annotation, samples, fractions, meqtl -> [ meta, se, retained, annotation, samples, fractions, meqtl ] },
         file(dnamethyage_source, checkIfExists: true),
         file(dunedinpace_source, checkIfExists: true)
     )
@@ -33,5 +35,6 @@ workflow CLOCKS {
     clocks   = CLOCKS_COMPUTE.out.clocks   // channel: [ meta, clock values per array ]
     coverage = CLOCKS_COMPUTE.out.coverage // channel: [ meta, CpG coverage per clock ]
     weights  = CLOCKS_COMPUTE.out.weights  // channel: [ meta, standardised CpG weights per clock ]
+    robust   = CLOCKS_COMPUTE.out.robust   // channel: [ meta, genotype-robust clocks ] (only with a meQTL list)
     multiqc  = CLOCKS_COMPUTE.out.multiqc  // channel: [ meta, MultiQC custom content ]
 }

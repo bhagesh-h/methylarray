@@ -6,6 +6,12 @@
 #     lineages (B, CD4T, CD8T, NK, Mono, Gran)
 #   - centDHSbloodDMC.m: 7 blood cell types (Teschendorff et al. 2017), for
 #     comparison
+#   - with an IDOL reference (--idol_reference): the 450 IDOL-optimised CpGs
+#     of FlowSorted.Blood.EPIC (Salas et al. 2018) for six cell types, with
+#     Houseman's constrained projection (EpiDISH method CP, inequality
+#     constraint, as projectCellType_CP), as a cross-check of the cent12CT
+#     lineages; a coverage below the minimum skips it with a note instead of
+#     stopping the run
 # Reference CpGs are matched through the EPIC v1 and 450K IDs of the probe
 # annotation first, then by CpG ID, so that CpGs renamed on EPIC v2 are found.
 # Coverage is computed on the autosomal reference CpGs: sex-chromosome CpGs are
@@ -18,6 +24,7 @@
 prefix <- "${prefix}"
 se_dir <- "${se}"
 annotation_file <- "${annotation}"
+idol_file <- "${idol_reference}"
 
 defaults <- list(min_coverage = "0.9", warn_coverage = "0.98", maxit = "50")
 parse_args <- function(x, defaults) {
@@ -79,6 +86,13 @@ array_chr <- function(ids) {
 data(cent12CT.m, package = "EpiDISH", envir = environment())
 data(centDHSbloodDMC.m, package = "EpiDISH", envir = environment())
 references <- list(cent12CT = cent12CT.m, centDHSbloodDMC = centDHSbloodDMC.m)
+methods <- list(cent12CT = "RPC", centDHSbloodDMC = "RPC")
+if (nzchar(idol_file)) {
+    idol_env <- new.env()
+    idol_name <- load(idol_file, envir = idol_env)[1]
+    references[["IDOL"]] <- as.matrix(get(idol_name, envir = idol_env))
+    methods[["IDOL"]] <- "CP"
+}
 
 coverage <- list()
 fractions <- list()
@@ -106,11 +120,19 @@ for (name in names(references)) {
         imputed_values = missing_values,
         status = if (share < min_coverage) "fail" else if (share < warn_coverage) "warn" else "ok"
     )
+    if (share < min_coverage && name == "IDOL") {
+        coverage[[name]][["status"]] <- "fail: skipped"
+        next
+    }
     if (share < min_coverage) {
         fwrite(rbindlist(coverage), paste0(prefix, "_reference_coverage.tsv"), sep = "\\t")
         stop(sprintf("Only %.1f%% of the autosomal %s reference CpGs are in the data (minimum %.0f%%)", 100 * share, name, 100 * min_coverage))
     }
-    estimates <- epidish(beta.m = ref_beta, ref.m = ref[found, , drop = FALSE], method = "RPC", maxit = maxit)[["estF"]]
+    estimates <- if (methods[[name]] == "CP") {
+        epidish(beta.m = ref_beta, ref.m = ref[found, , drop = FALSE], method = "CP", constraint = "inequality")[["estF"]]
+    } else {
+        epidish(beta.m = ref_beta, ref.m = ref[found, , drop = FALSE], method = "RPC", maxit = maxit)[["estF"]]
+    }
     fractions[[name]] <- estimates[colnames(se), , drop = FALSE]
 }
 
@@ -131,6 +153,21 @@ out <- data.table(
     sum_cent12 = round(rowSums(f12), 4),
     sum_dhs7 = round(rowSums(fractions[["centDHSbloodDMC"]]), 4)
 )
+# IDOL cross-check: fractions per array and their agreement with the lineages
+idol_columns <- c(B = "Bcell", CD4T = "CD4T", CD8T = "CD8T", NK = "NK", Mono = "Mono", Gran = "Neu")
+agreement <- data.table(lineage = character(), idol_type = character(), rho = numeric(), mean_difference = numeric(), n = integer())
+if (!is.null(fractions[["IDOL"]])) {
+    idol <- fractions[["IDOL"]]
+    out <- cbind(out, setNames(as.data.table(round(idol, 5)), paste0("idol_", colnames(idol))))
+    agreement <- rbindlist(lapply(names(idol_columns), function(l) {
+        if (!idol_columns[[l]] %in% colnames(idol)) return(NULL)
+        a <- lineages[, l]
+        b <- idol[, idol_columns[[l]]]
+        data.table(lineage = l, idol_type = idol_columns[[l]], rho = round(suppressWarnings(cor(a, b, method = "spearman")), 4),
+                   mean_difference = round(mean(a - b), 4), n = length(a))
+    }))
+}
+fwrite(agreement, paste0(prefix, "_idol_agreement.tsv"), sep = "\\t")
 setorder(out, sample)
 fwrite(out, paste0(prefix, ".tsv"), sep = "\\t")
 fwrite(rbindlist(coverage), paste0(prefix, "_reference_coverage.tsv"), sep = "\\t")

@@ -51,21 +51,25 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
    - probes failing detection or the bead count in too many arrays
    - SNP-affected probes (global or population-specific masks), the Zhou general mask and cross-hybridising probes
 
-   Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poorly titrating probes (Zhou) are annotated and counted, never removed. EPIC v2 replicate probes are then averaged per CpG. An attrition table documents each step.
+   Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`), poorly titrating probes (Zhou) and, from user-supplied lists, Illumina's flagged and mapping-inaccuracy probes are annotated and counted, never removed. EPIC v2 replicate probes are then averaged per CpG. An attrition table documents each step.
 
 5. Estimate leukocyte fractions with [EpiDISH](https://bioconductor.org/packages/EpiDISH/) (12-type `cent12CT` reference, with the 7-type `centDHSbloodDMC` reference for comparison).
 6. Compute epigenetic clocks with [dnaMethyAge](https://github.com/yiluyucheng/dnaMethyAge) (Horvath, Hannum, PhenoAge, skin and blood, PC clocks, DNAmTL, epiTOC2 and others) and [DunedinPACE](https://github.com/danbelsky/DunedinPACE), with age acceleration and the probe coverage of every clock.
 7. Compute DNA methylation scores for smoking, alcohol and BMI (McCartney et al. 2018) and IL-6 (Stevenson et al. 2021), with their probe coverage.
 8. Exploratory analysis:
    - control-probe principal components, used as model covariates
+   - genetic ancestry components from the SNP probes (EpiAnceR+ approach), used as model covariates with `@ancestry`
+   - with a user-supplied meQTL table (`--meqtl`): the clock weight on CpGs under genetic control, genotype-robust clocks and the association hits with a cis-meQTL
    - principal components of the most variable CpGs (number estimated with [isva](https://cran.r-project.org/package=isva)) and their associations with technical, biological and phenotype variables
    - PCA outlier flags (report only, no array is removed)
+   - variance partition of the most variable CpGs with [variancePartition](https://bioconductor.org/packages/variancePartition/): the share explained by plate, BeadChip, row, sex, age and cell types
 9. When a models file is given, for every model:
    - [limma](https://bioconductor.org/packages/limma/) on M-values, with effect sizes reported as differences in beta values, and a design check (confounding with plate and Sentrix row, collinearity)
    - bias and inflation control with [bacon](https://bioconductor.org/packages/bacon/)
    - a study-wide threshold across models from the effective number of independent tests (Meff)
    - differentially methylated regions with [DMRcate](https://bioconductor.org/packages/DMRcate/) and [dmrff](https://github.com/perishky/dmrff), and their consensus
    - gene set enrichment with [missMethyl](https://bioconductor.org/packages/missMethyl/): GO, KEGG (downloaded at run time) and MSigDB collections
+   - genomic context enrichment with [KnowYourCG](https://bioconductor.org/packages/knowYourCG/): chromatin states, transcription factor binding sites, histone marks and other features
 10. Optionally write GEO submission files (`--export_geo`).
 11. Build a [MultiQC](https://seqera.io/multiqc/) report and an HTML analysis report with [Quarto](https://quarto.org/), including a methods text with references.
 
@@ -148,7 +152,7 @@ An optional CSV or TSV file with a `sample` column and any number of analysis va
 
 ### Models
 
-An optional YAML file listing the association models to run. Each model names a trait, its type, an optional transformation and the covariates. Shortcut tokens expand to derived covariates: `@cells` (five cell lineages, granulocytes as reference), `@technical` (plate and Sentrix row), `@ctrlpcs` (control-probe components), `@sex` (predicted sex) and `@smoking` (DNA methylation smoking score).
+An optional YAML file listing the association models to run. Each model names a trait, its type, an optional transformation and the covariates. Shortcut tokens expand to derived covariates: `@cells` (five cell lineages, granulocytes as reference), `@technical` (plate and Sentrix row), `@ctrlpcs` (control-probe components), `@ancestry` (genetic ancestry components from the SNP probes), `@sex` (predicted sex) and `@smoking` (DNA methylation smoking score).
 
 ```yaml
 - name: bmi
@@ -213,7 +217,7 @@ The pipeline processes data where it runs and does not upload samples, phenotype
 
 ## Credits
 
-methylarray is developed and maintained by [bhagesh-h](https://github.com/bhagesh-h).
+methylarray is developed and maintained by Bhagesh Hunakunti ([bhagesh-h](https://github.com/bhagesh-h), ORCID [0000-0002-5957-8005](https://orcid.org/0000-0002-5957-8005)).
 
 The workflow diagram is drawn with [nf-metro](https://github.com/seqeralabs/nf-metro) from [assets/metro_map.mmd](assets/metro_map.mmd).
 
@@ -223,7 +227,7 @@ Bug reports and feature requests are welcome through GitHub issues. Development 
 
 ## Citations
 
-All tools, methods, reference data and frameworks used by the pipeline are listed in [CITATIONS.md](CITATIONS.md). A Zenodo DOI for the pipeline will be added at the first release.
+To cite methylarray, use the citation in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
 
 ## License
 

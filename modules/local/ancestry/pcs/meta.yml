@@ -1,0 +1,117 @@
+name: ancestry_pcs
+description: Genetic ancestry principal components from the CpG probes with a common SNP and the rs probes, after the EpiAnceR+ approach (CpG beta values residualised for control-probe PCs, cell fractions, sex and age)
+keywords:
+  - dna methylation
+  - methylation array
+  - genetic ancestry
+  - principal component analysis
+tools:
+  - SummarizedExperiment:
+      description: Container for the preprocessed data
+      homepage: https://bioconductor.org/packages/SummarizedExperiment/
+      licence: ["Artistic-2.0"]
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the preprocessing method as id
+          e.g. [ id:'minfi' ]
+    - se:
+        type: directory
+        description: SummarizedExperiment of the preprocessing route, one row per probe (assays beta and beta_unmasked), before probe filtering
+    - annotation:
+        type: file
+        description: Probe annotation (probe_id, probe_type, chr, snp_common_5pt)
+        pattern: "*.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - samples:
+        type: file
+        description: Sample metadata (plate, Sentrix ID and position, reported sex and age)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - sample_qc:
+        type: file
+        description: Sample QC table (status, predicted_sex_<method>)
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - ctrl_pcs:
+        type: file
+        description: Control-probe PCs from EXPLORATION_PCA; [] without them
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - cell_fractions:
+        type: file
+        description: EpiDISH cell fractions (lineage_* columns); [] without cell composition
+        pattern: "*.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - phenotypes:
+        type: file
+        description: Phenotype table; an ancestry, ethnicity or race column is tested against the components; [] without phenotypes
+        pattern: "*.{tsv,csv}"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+output:
+  pcs:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}.tsv":
+          type: file
+          description: The kept ancestry components per array (ancestry_pc1..k)
+          pattern: "*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  variance:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_variance.tsv":
+          type: file
+          description: Variance share per component and whether it is a covariate
+          pattern: "*_variance.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_summary.tsv":
+          type: file
+          description: Arrays, SNP CpGs and rs probes used, and the residualisation covariates
+          pattern: "*_summary.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  associations:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_associations.tsv":
+          type: file
+          description: Each component against technical and biological variables (R-squared, P)
+          pattern: "*_associations.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the preprocessing method as id
+      - "${prefix}_*_mqc.*":
+          type: file
+          description: MultiQC scatter plot of PC1 against PC2 and scree plot (not written below 10 arrays)
+          pattern: "*_mqc.*"
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

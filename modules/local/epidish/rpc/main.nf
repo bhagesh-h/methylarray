@@ -8,11 +8,12 @@ process EPIDISH_RPC {
         'community.wave.seqera.io/library/bioconductor-epidish_bioconductor-hdf5array_bioconductor-summarizedexperiment_procps-ng_pruned:0716f5da89501159' }"
 
     input:
-    tuple val(meta), path(se), path(annotation)
+    tuple val(meta), path(se), path(annotation), path(idol_reference)
 
     output:
     tuple val(meta), path("${prefix}.tsv")                   , emit: fractions
     tuple val(meta), path("${prefix}_reference_coverage.tsv"), emit: coverage
+    tuple val(meta), path("${prefix}_idol_agreement.tsv")    , emit: idol_agreement
     tuple val(meta), path("${prefix}_mqc.tsv")               , emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
@@ -26,6 +27,7 @@ process EPIDISH_RPC {
     printf 'sample\\tlineage_B\\n' > ${prefix}.tsv
     printf 'reference\\treference_cpgs\\tsex_chromosome\\tnot_on_array\\tremoved_by_filter\\tfound\\n' > ${prefix}_reference_coverage.tsv
     printf 'Sample\\tB\\n' > ${prefix}_mqc.tsv
+    printf 'lineage\\tidol_type\\trho\\tmean_difference\\tn\\n' > ${prefix}_idol_agreement.tsv
     printf '"%s":\\n    EpiDISH: stub\\n    SummarizedExperiment: stub\\n    HDF5Array: stub\\n' "${task.process}" > versions.yml
     """
 }

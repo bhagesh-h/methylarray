@@ -222,7 +222,7 @@ def validateUniqueIdats(samplesheet) {
 // reuse these names, and models may refer to them without a phenotype table.
 //
 def isDerivedCovariate(name) {
-    return name in ['predicted_sex', 'dnam_smoking'] || name ==~ /cc_[A-Za-z0-9_]+/ || name ==~ /ctrlpc[0-9]+/
+    return name in ['predicted_sex', 'dnam_smoking'] || name ==~ /cc_[A-Za-z0-9_]+/ || name ==~ /ctrlpc[0-9]+/ || name ==~ /ancestry_pc[0-9]+/
 }
 
 //
@@ -307,7 +307,7 @@ def validateModels(models, samplesheet_rows, phenotype_columns) {
         if (missing) {
             problems << "model '${model.name}' uses columns that are not in the samplesheet, the phenotype table or the derived covariates: ${missing.join(', ')}"
         }
-        // Tokens with a fixed expansion; @cells and @ctrlpcs depend on the data
+        // Tokens with a fixed expansion; @cells, @ctrlpcs and @ancestry depend on the data
         def fixed = model.covariates.collectMany { covariate -> tokenExpansion(covariate) }
         if (model.trait in fixed) {
             problems << "model '${model.name}' lists its trait '${model.trait}' as a covariate"

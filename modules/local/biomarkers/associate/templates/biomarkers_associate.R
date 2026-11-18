@@ -16,6 +16,19 @@
 #   - phenotypes: each acceleration and score against every phenotype, plain and
 #     with cells held: difference in SD of acceleration between the two groups of
 #     a binary phenotype (t-test), Spearman correlation for a continuous one
+#   - contamination: Spearman correlation of the ewastools SNP outlier score with
+#     each acceleration and score, and the phenotype associations again without
+#     the arrays above the median plus three MADs of the score (borderline
+#     contamination below the FAIL threshold), as the 'low contamination' version
+#   - ancestry: Spearman correlation of each acceleration and score with each
+#     genetic ancestry PC, and the phenotype associations again with the
+#     measures residualised on the ancestry PCs ('ancestry held'). Clocks are
+#     less accurate in admixed individuals (Cruz-Gonzalez et al. 2026), so a
+#     difference in acceleration between ancestries can be calibration error
+#   - genotype-robust clocks (with --meqtl): each acceleration against the one
+#     from the same clock without the CpGs with a common SNP or cis-meQTL
+#     (Spearman), and the phenotype associations with the robust accelerations
+#     ('genotype-robust')
 #   - quartile groups: bottom quarter (decelerated), middle half (normal) and top
 #     quarter (accelerated) of each acceleration, with the median (or percentage)
 #     of every characteristic per group and a trend test across the ordered
@@ -34,6 +47,8 @@ clocks_file <- "${clocks}"
 cells_file <- "${cell_fractions}"
 scores_file <- "${dnam_scores}"
 phenotypes_file <- "${phenotypes}"
+ancestry_file <- "${ancestry_pcs}"
+robust_file <- "${clocks_robust}"
 
 defaults <- list(min_n = "20")
 parse_args <- function(x, defaults) {
@@ -222,7 +237,70 @@ if (length(batches) > 0 && length(measures) > 0) {
 }
 write_tsv(round_table(batch), paste0(prefix, "_batch.tsv"))
 
-# Ageing measures against the phenotypes, plain and with cells held
+# Contamination: DNA from another person pulls beta values towards the middle
+# and can bias clocks. The SNP outlier score against every measure, and the
+# arrays above a robust cutoff among the analysed arrays
+snp_outlier <- if ("snp_outlier" %in% names(sample_qc)) {
+    suppressWarnings(as.numeric(sample_qc[["snp_outlier"]][match(data[["sample"]], sample_qc[["sample"]])]))
+} else rep(NA_real_, nrow(data))
+contamination <- empty(c("measure", "rho", "p", "n", "q", "cutoff", "arrays_above_cutoff"))
+above_cutoff <- rep(FALSE, nrow(data))
+if (sum(is.finite(snp_outlier)) >= min_n && length(measures) > 0) {
+    spread <- mad(snp_outlier, na.rm = TRUE)
+    cutoff <- median(snp_outlier, na.rm = TRUE) + 3 * spread
+    above_cutoff <- spread > 0 & is.finite(snp_outlier) & snp_outlier > cutoff
+    contamination <- do.call(rbind, lapply(names(measures), function(m) {
+        r <- spearman(snp_outlier, measures[[m]])
+        data.frame(measure = m, rho = r[["rho"]], p = r[["p"]], n = r[["n"]])
+    }))
+    contamination[["q"]] <- bh(contamination[["p"]])
+    contamination[["cutoff"]] <- cutoff
+    contamination[["arrays_above_cutoff"]] <- sum(above_cutoff)
+}
+write_tsv(round_table(contamination), paste0(prefix, "_contamination.tsv"))
+
+# Ancestry: the genetic ancestry PCs against every measure
+ancestry <- read_table(ancestry_file)
+ancestry_pcs <- if (is.null(ancestry)) character() else grep("^ancestry_pc[0-9]+\$", names(ancestry), value = TRUE)
+ancestry_table <- empty(c("measure", "pc", "rho", "p", "n", "q"))
+measures_ancestry <- list()
+if (length(ancestry_pcs) > 0 && length(measures) > 0) {
+    pcs <- as.data.frame(ancestry[match(data[["sample"]], ancestry[["sample"]]), ancestry_pcs, drop = FALSE])
+    ancestry_table <- do.call(rbind, lapply(names(measures), function(m) do.call(rbind, lapply(ancestry_pcs, function(pc) {
+        r <- spearman(measures[[m]], pcs[[pc]])
+        data.frame(measure = m, pc = pc, rho = r[["rho"]], p = r[["p"]], n = r[["n"]])
+    }))))
+    ancestry_table[["q"]] <- bh(ancestry_table[["p"]])
+    measures_ancestry <- lapply(measures, function(a) residual(a, pcs))
+}
+write_tsv(round_table(ancestry_table), paste0(prefix, "_ancestry.tsv"))
+
+# Genotype-robust clocks: the same measure from the clocks without the CpGs
+# with a common SNP or a cis-meQTL
+robust_clocks <- read_table(robust_file)
+measures_robust <- list()
+robust_table <- empty(c("measure", "rho", "n"))
+if (!is.null(robust_clocks)) {
+    robust_clocks <- robust_clocks[match(data[["sample"]], robust_clocks[["sample"]]), , drop = FALSE]
+    has_age <- sum(is.finite(age)) >= min_n
+    for (clock in intersect(clock_columns, names(robust_clocks))) {
+        name <- if (has_age) paste(clock, "acceleration") else clock
+        if (!name %in% names(measures)) next
+        y <- suppressWarnings(as.numeric(robust_clocks[[clock]]))
+        measures_robust[[name]] <- if (paste0("eaa_", clock) %in% names(robust_clocks)) as.numeric(robust_clocks[[paste0("eaa_", clock)]])
+                                   else if (has_age) residual(y, data.frame(age = age)) else y
+    }
+    if (length(measures_robust) > 0) {
+        robust_table <- do.call(rbind, lapply(names(measures_robust), function(m) {
+            r <- spearman(measures[[m]], measures_robust[[m]])
+            data.frame(measure = m, rho = r[["rho"]], n = r[["n"]])
+        }))
+    }
+}
+write_tsv(round_table(robust_table), paste0(prefix, "_robust.tsv"))
+
+# Ageing measures against the phenotypes, plain, with cells held, with the
+# ancestry PCs held and without the arrays above the contamination cutoff
 association <- function(a, trait) {
     a <- a / sd(a, na.rm = TRUE)
     x <- trait[["values"]]
@@ -237,6 +315,9 @@ association <- function(a, trait) {
     c(estimate = r[["rho"]], p = r[["p"]], n = r[["n"]])
 }
 versions <- list(plain = measures, `cells held` = measures_cells)
+if (length(measures_ancestry) > 0) versions[["ancestry held"]] <- measures_ancestry
+if (length(measures_robust) > 0) versions[["genotype-robust"]] <- measures_robust
+if (any(above_cutoff)) versions[["low contamination"]] <- lapply(measures, function(a) replace(a, above_cutoff, NA))
 measure_traits <- empty(c("measure", "trait", "type", "version", "estimate", "p", "n", "q"))
 rows <- list()
 for (version in names(versions)) for (m in names(versions[[version]])) for (t in names(traits)) {
@@ -288,7 +369,7 @@ write_tsv(round_table(quartiles), paste0(prefix, "_quartiles.tsv"))
 heatmap_json <- function(id, section, description, title, rows, columns, values, file, min = -1, max = 1) {
     write_json(list(id = id, section_name = section, description = description, plot_type = "heatmap",
                     pconfig = list(id = paste0(id, "_plot"), title = title, min = min, max = max, square = FALSE, decimalPlaces = 2),
-                    xcats = columns, ycats = rows, data = values),
+                    xcats = I(columns), ycats = I(rows), data = values),
                file, auto_unbox = TRUE, pretty = TRUE, digits = NA, na = "null")
 }
 if (nrow(agreement) > 0) {
@@ -324,4 +405,24 @@ if (nrow(plain) > 0) {
     heatmap_json("biomarker_phenotypes", "Ageing measures and phenotypes",
                  "Each acceleration and score against every phenotype: Spearman correlation for continuous phenotypes, difference in SD of acceleration between the groups for binary ones. Tested values with q are in biomarkers_phenotypes.tsv.",
                  "Accelerations and scores against the phenotypes", measure_names, trait_names, values, paste0(prefix, "_phenotypes_mqc.json"))
+}
+if (nrow(contamination) > 0) {
+    write_json(list(id = "biomarker_contamination", section_name = "Contamination and ageing measures",
+                    description = paste0("Spearman correlation of the ewastools SNP outlier score (higher: more likely contaminated) with each acceleration and score, on the arrays that passed QC. ",
+                                         contamination[["arrays_above_cutoff"]][1], " arrays lie above the robust cutoff of ", signif(contamination[["cutoff"]][1], 3),
+                                         " (median plus three MADs); the phenotype associations without them are the 'low contamination' version in biomarkers_phenotypes.tsv."),
+                    plot_type = "table", pconfig = list(id = "biomarker_contamination_table", title = "Contamination against accelerations and scores"),
+                    data = setNames(lapply(seq_len(nrow(contamination)), function(i) list(rho = round(contamination[["rho"]][i], 3), q = signif(contamination[["q"]][i], 3),
+                                                                                         n = contamination[["n"]][i])), contamination[["measure"]])),
+               paste0(prefix, "_contamination_mqc.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA, na = "null")
+}
+if (nrow(ancestry_table) > 0) {
+    measure_names <- unique(ancestry_table[["measure"]])
+    values <- lapply(measure_names, function(m) lapply(ancestry_pcs, function(pc) {
+        v <- ancestry_table[["rho"]][ancestry_table[["measure"]] == m & ancestry_table[["pc"]] == pc]
+        if (length(v) == 0 || is.na(v)) NA else round(v, 2)
+    }))
+    heatmap_json("biomarker_ancestry", "Ancestry and ageing measures",
+                 "Spearman correlation of each acceleration and score with the genetic ancestry PCs. Clocks are less accurate in admixed individuals, so differences between ancestries can be calibration error rather than biology. The phenotype associations with the ancestry PCs held are the 'ancestry held' version in biomarkers_phenotypes.tsv.",
+                 "Accelerations and scores against the ancestry PCs (Spearman)", measure_names, ancestry_pcs, values, paste0(prefix, "_ancestry_mqc.json"))
 }

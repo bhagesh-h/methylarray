@@ -1,0 +1,83 @@
+name: enrichment_kycg
+description: KnowYourCG genomic context enrichment of the CpGs significant in one association model (all, higher and lower methylation) against all tested CpGs
+keywords:
+  - dna methylation
+  - methylation array
+  - enrichment
+  - chromatin states
+tools:
+  - knowYourCG:
+      description: Enrichment of CpG sets in curated genomic, epigenomic and technical features
+      homepage: https://bioconductor.org/packages/knowYourCG/
+      documentation: https://bioconductor.org/packages/knowYourCG/
+      doi: 10.1126/sciadv.adw3027
+      licence: ["AGPL-3.0-only"]
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map with the model name as id
+          e.g. [ id:'bmi' ]
+    - stats:
+        type: file
+        description: EWAS statistics of the model (cpg_id, contrast, delta_beta, p_value, fdr)
+        pattern: "*_stats.tsv.gz"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
+    - resolved:
+        type: file
+        description: Resolved model (skip_enrichment)
+        pattern: "*_resolved.json"
+        ontologies:
+          - edam: http://edamontology.org/format_3464
+  - cache:
+      type: directory
+      description: KnowYourCG cache of KYCG_CACHE or --kycg_cache
+  - annotation:
+      type: file
+      description: Probe annotation (probe_id, cpg_id), to map CpGs to the probe IDs of the knowledgebases
+      pattern: "*.tsv.gz"
+      ontologies:
+        - edam: http://edamontology.org/format_3475
+output:
+  enrichment:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}.tsv":
+          type: file
+          description: One row per contrast, query, knowledgebase and feature (log2 odds ratio, P, FDR, overlap)
+          pattern: "kycg_*.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  summary:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_summary.json":
+          type: file
+          description: Significant and tested CpGs per contrast and the status of each query
+          pattern: "kycg_*_summary.json"
+          ontologies:
+            - edam: http://edamontology.org/format_3464
+  multiqc:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_mqc.tsv":
+          type: file
+          description: MultiQC table of the top enriched sets (only when any query ran)
+          pattern: "kycg_*_mqc.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
+  versions:
+    - versions.yml:
+        type: file
+        description: File containing software versions
+        pattern: "versions.yml"
+        ontologies:
+          - edam: http://edamontology.org/format_3750
+authors:
+  - "@bhagesh-h"
+maintainers:
+  - "@bhagesh-h"

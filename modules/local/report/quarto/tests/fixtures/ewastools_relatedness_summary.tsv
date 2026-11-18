@@ -1,0 +1,10 @@
+metric	value
+arrays	6
+snps	58
+pairs	15
+lod_threshold	2.95
+expected_lod_first_degree	2.71
+identical_pairs	1
+identical_pairs_unexpected	0
+first_degree_pairs	0
+replicate_pairs_not_identical	0

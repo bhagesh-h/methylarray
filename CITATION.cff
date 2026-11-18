@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use methylarray, please cite it as below, and cite the tools and methods it runs, listed in CITATIONS.md."
+type: software
+title: "methylarray: quality control, preprocessing and association analysis of Illumina Infinium DNA methylation arrays (EPIC v2)"
+authors:
+  - given-names: Bhagesh
+    family-names: Hunakunti
+    orcid: "https://orcid.org/0000-0002-5957-8005"
+    alias: bhagesh-h
+    website: "https://github.com/bhagesh-h"
+version: 1.0.0
+date-released: "2026-11-16"
+license: MIT
+repository-code: "https://github.com/bhagesh-h/methylarray"
+url: "https://github.com/bhagesh-h/methylarray"
+abstract: >-
+  methylarray is a Nextflow pipeline built from the nf-core template for
+  Illumina Infinium DNA methylation arrays (EPIC v2). It runs sample and probe
+  quality control, minfi, SeSAMe or ENmix preprocessing, blood cell-type
+  composition, epigenetic clocks and DNA methylation scores, exploratory
+  analysis, epigenome-wide association with limma, differentially methylated
+  regions and gene set enrichment, and writes a MultiQC report and an HTML
+  analysis report.
+keywords:
+  - DNA methylation
+  - Illumina EPIC v2
+  - methylation array
+  - epigenome-wide association study
+  - epigenetic clock
+  - Nextflow
+  - nf-core

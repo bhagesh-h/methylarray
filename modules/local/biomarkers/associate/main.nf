@@ -7,7 +7,7 @@ process BIOMARKERS_ASSOCIATE {
         'community.wave.seqera.io/library/procps-ng_r-base_r-jsonlite:78d6964c424dbe27' }"
 
     input:
-    tuple val(meta), path(samples), path(sample_qc), path(clocks), path(cell_fractions), path(dnam_scores), path(phenotypes)
+    tuple val(meta), path(samples), path(sample_qc), path(clocks), path(cell_fractions), path(dnam_scores), path(phenotypes), path(ancestry_pcs), path(clocks_robust)
 
     output:
     tuple val(meta), path("${prefix}_agreement.tsv")       , emit: agreement
@@ -16,6 +16,9 @@ process BIOMARKERS_ASSOCIATE {
     tuple val(meta), path("${prefix}_batch.tsv")           , emit: batch
     tuple val(meta), path("${prefix}_phenotypes.tsv")      , emit: phenotypes
     tuple val(meta), path("${prefix}_quartiles.tsv")       , emit: quartiles
+    tuple val(meta), path("${prefix}_contamination.tsv")   , emit: contamination
+    tuple val(meta), path("${prefix}_ancestry.tsv")        , emit: ancestry
+    tuple val(meta), path("${prefix}_robust.tsv")          , emit: robust
     tuple val(meta), path("${prefix}_*_mqc.json")          , emit: multiqc, optional: true
     path "versions.yml", emit: versions, topic: versions
 
@@ -32,6 +35,9 @@ process BIOMARKERS_ASSOCIATE {
     printf 'measure\\tbatch\\tadj_r2\\tp\\tlevels\\tn\\n' > ${prefix}_batch.tsv
     printf 'measure\\ttrait\\ttype\\tversion\\testimate\\tp\\tn\\tq\\n' > ${prefix}_phenotypes.tsv
     printf 'measure\\ttrait\\ttype\\tgroup\\tvalue\\tmean_z\\tp_trend\\tq\\n' > ${prefix}_quartiles.tsv
+    printf 'measure\\trho\\tp\\tn\\tq\\tcutoff\\tarrays_above_cutoff\\n' > ${prefix}_contamination.tsv
+    printf 'measure\\tpc\\trho\\tp\\tn\\tq\\n' > ${prefix}_ancestry.tsv
+    printf 'measure\\trho\\tn\\n' > ${prefix}_robust.tsv
     printf '"%s":\\n    R: stub\\n    jsonlite: stub\\n' "${task.process}" > versions.yml
     """
 }

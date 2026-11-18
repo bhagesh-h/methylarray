@@ -1,0 +1,100 @@
+{
+    "cis-meQTL CpGs - stub": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs.tsv:md5,8058712afd083963edaf7af7e965427e"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,74e86890ac6d4bd9baa8d3022dfe01c2"
+                ],
+                "cpgs": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs.tsv:md5,8058712afd083963edaf7af7e965427e"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,74e86890ac6d4bd9baa8d3022dfe01c2"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T14:51:51.911836339",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    },
+    "cis-meQTL CpGs on the array": {
+        "content": [
+            {
+                "0": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs.tsv:md5,7bc300b5b14b7bcd469913553bf39276"
+                    ]
+                ],
+                "1": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_summary.tsv:md5,c41ffe9446ba237be230f4e860be0800"
+                    ]
+                ],
+                "2": [
+                    "versions.yml:md5,b38d86b4da0a13e859293c1b9c251e3f"
+                ],
+                "cpgs": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs.tsv:md5,7bc300b5b14b7bcd469913553bf39276"
+                    ]
+                ],
+                "summary": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_summary.tsv:md5,c41ffe9446ba237be230f4e860be0800"
+                    ]
+                ],
+                "versions": [
+                    "versions.yml:md5,b38d86b4da0a13e859293c1b9c251e3f"
+                ]
+            }
+        ],
+        "timestamp": "2026-11-16T14:51:48.229949534",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}
