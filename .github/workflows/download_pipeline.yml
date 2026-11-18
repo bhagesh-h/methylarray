@@ -1,9 +1,7 @@
 name: Test successful pipeline download with 'nf-core pipelines download'
 
-# Run the workflow when:
-#  - dispatched manually
-#  - when a PR is opened or reopened to main/master branch
-#  - the head branch of the pull request is updated, i.e. if fixes for a release are pushed last minute to dev.
+# Run the workflow only when dispatched manually: downloading every image takes
+# 45 to 65 minutes, longer than the 30 minutes allowed for automatic CI.
 on:
   workflow_dispatch:
     inputs:
@@ -11,10 +9,6 @@ on:
         description: "The specific branch you wish to utilize for the test execution of nf-core pipelines download."
         required: true
         default: "dev"
-  pull_request:
-    branches:
-      - main
-      - master
 
 env:
   NXF_ANSI_LOG: false

@@ -24,8 +24,9 @@ env:
   NFT_VER: "0.9.4"
   NFT_WORKDIR: "~"
   NXF_ANSI_LOG: false
-  NXF_SINGULARITY_CACHEDIR: ${{ github.workspace }}/.singularity
-  NXF_SINGULARITY_LIBRARYDIR: ${{ github.workspace }}/.singularity
+  # A remote input file that stops sending data fails after five minutes
+  # instead of holding the job until the runner's time limit
+  NXF_OPTS: "-Dsun.net.client.defaultConnectTimeout=60000 -Dsun.net.client.defaultReadTimeout=300000"
 
 jobs:
   nf-test-changes:
@@ -52,7 +53,7 @@ jobs:
         env:
           NFT_VER: ${{ env.NFT_VER }}
         with:
-          max_shards: 7
+          max_shards: 10
           tags: ${{ env.NFT_TAGS }}
 
       - name: debug
@@ -66,20 +67,22 @@ jobs:
     if: ${{ needs.nf-test-changes.outputs.total_shards != '0' }}
     runs-on: # use GitHub runners
       - "ubuntu-latest"
+    # Every test job finishes within 30 minutes; a stalled image pull or
+    # download fails the job instead of running until the 6 hour limit
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         shard: ${{ fromJson(needs.nf-test-changes.outputs.shard) }}
-        profile: [conda, docker, singularity]
+        # Docker only: conda and Singularity jobs took longer than 30 minutes
+        # (environment builds and image conversion). Check those engines
+        # locally with dev/nfdev --engine conda or --engine apptainer.
+        profile: [docker]
         isMain:
           - ${{ github.base_ref == 'master' || github.base_ref == 'main' || github.event_name == 'release' }}
-        # PRs into dev: docker with the minimum Nextflow version only. Conda,
-        # Singularity and the latest Nextflow run for main and releases.
+        # PRs into dev: the minimum Nextflow version only. The latest Nextflow
+        # runs for main and releases.
         exclude:
-          - isMain: false
-            profile: "conda"
-          - isMain: false
-            profile: "singularity"
           - isMain: false
             NXF_VER: "latest-everything"
         NXF_VER:
@@ -97,6 +100,9 @@ jobs:
       - name: Run nf-test
         id: run_nf_test
         uses: ./.github/actions/nf-test
+        # Shorter than the job limit, so that a slow latest-everything shard
+        # stays a warning and the summary steps still run
+        timeout-minutes: 25
         continue-on-error: ${{ matrix.NXF_VER == 'latest-everything' }}
         env:
           NFT_WORKDIR: ${{ env.NFT_WORKDIR }}

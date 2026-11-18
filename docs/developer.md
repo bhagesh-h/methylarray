@@ -321,7 +321,7 @@ Guidelines:
 
 - Assert the biology, not only the snapshot: predicted sex of the two test arrays (one female, one male), sample order, expected flags. A snapshot alone also passes when a wrong result is stable.
 - Snapshot only files with stable content. Binary or time-stamped files (HDF5, RDS, HTML) go into `tests/.nftignore` for pipeline tests, or are checked by name for module tests.
-- Tag every test that needs no download (stub tests, tests on small fixtures in the `tests/` folder, input validation) with `tag "fast"` inside its `test()` block. Pull requests into `dev` run only these tests in CI; run the real-data tests locally on Docker, Apptainer and conda before pushing.
+- Tag every test that needs no download (stub tests, tests on small fixtures in the `tests/` folder, input validation) with `tag "fast"` inside its `test()` block. Pull requests into `dev` run only these tests in CI; pull requests into `main` and releases run every test. CI runs Docker only, with at most 30 minutes per job, and the pipeline download test (`download_pipeline.yml`) runs only when started by hand. Run the real-data tests locally on Docker, Apptainer and conda before pushing, since CI does not cover the other engines.
 - Keep real-data tests to two arrays. New pipeline-level tests are stub runs (`options "-stub"`), so CI stays short.
 - Module-specific configuration (for example `ext.args`) goes into `tests/nextflow.config` next to the test, loaded with `config "./nextflow.config"`.
 
