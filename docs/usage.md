@@ -363,6 +363,15 @@ outdir: './results/'
 
 You can also write such a file interactively with `nf-core pipelines launch bhagesh-h/methylarray`.
 
+### Work directory cleanup
+
+A run writes every intermediate file to the Nextflow work directory (`work/` by default), which is often many times the size of the results. When a run finishes successfully, the pipeline deletes the task directories of that run (Nextflow `cleanup`) and the run's cache of downloaded remote inputs (`work/stage-<session>`), after the results have been copied to `--outdir`. Failed runs keep their task directories, so you can inspect them and continue with `-resume`.
+
+- Add `--skip_cleanup` while you still expect to change parameters and rerun with `-resume`: a cleaned run cannot be resumed, so every step would run again.
+- Cleanup needs real copies of the results. It cannot be combined with `--publish_dir_mode symlink` or `rellink`, and the pipeline stops at the start if you try. `copy` (the default) and `link` work.
+- Task directories of older or failed runs are not touched. Remove them with `nextflow clean` (preview with `nextflow clean -n`).
+- Caches you pass with `--sesame_cache` or `--kycg_cache` are outside the work directory and are kept. The caches the pipeline builds itself during a run are inside it and are removed; use `--save_reference` to keep a copy in the results.
+
 ### Updating the pipeline
 
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available, even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:

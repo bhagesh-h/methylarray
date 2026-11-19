@@ -85,6 +85,14 @@ workflow PIPELINE_INITIALISATION {
     )
 
     //
+    // Work directory cleanup: published results must not point into the work
+    // directory that is deleted at the end of a successful run
+    //
+    if (!params.skip_cleanup && params.publish_dir_mode in ['symlink', 'rellink']) {
+        error("--publish_dir_mode ${params.publish_dir_mode} links the results to the work directory, which is deleted after a successful run. Use --publish_dir_mode copy (the default) or link, or keep the work directory with --skip_cleanup.")
+    }
+
+    //
     // Create channel from input file provided through params.input:
     // one element per array, [ meta, idat_red, idat_grn ]
     //
@@ -146,6 +154,7 @@ workflow PIPELINE_COMPLETION {
         }
 
         completionSummary(monochrome_logs)
+        cleanupWorkDirectory()
 
     }
 
@@ -159,6 +168,18 @@ workflow PIPELINE_COMPLETION {
     FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
+//
+// After a successful run: Nextflow removes the task directories of the run
+// (cleanup = true); remove also the run's cache of downloaded remote inputs
+// (work/stage-<session>), which Nextflow keeps
+//
+def cleanupWorkDirectory() {
+    if (!workflow.success || params.skip_cleanup) return
+    def stage = workflow.workDir.resolve("stage-${workflow.sessionId}")
+    if (stage.exists()) stage.deleteDir()
+    log.info "The task directories and downloaded inputs of this run in ${workflow.workDir} are being removed (Nextflow cleanup). Use --skip_cleanup to keep them for -resume."
+}
 
 //
 // Validate one samplesheet row and add the Sentrix ID, position and row to meta

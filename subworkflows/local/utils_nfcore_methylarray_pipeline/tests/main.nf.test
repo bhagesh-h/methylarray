@@ -116,6 +116,49 @@ nextflow_workflow {
         }
     }
 
+    test("cleanup with symlinked results - fails") {
+
+        tag "fast"
+
+        when {
+            params {
+                def dir = new File("$outputDir/fixtures")
+                dir.mkdirs()
+                new File(dir, '207059430159_R01C01_Red.idat').text = 'placeholder'
+                new File(dir, '207059430159_R01C01_Grn.idat').text = 'placeholder'
+                new File(dir, 'samplesheet.csv').text = [
+                    'sample,idat_red,idat_grn',
+                    "S1,${dir}/207059430159_R01C01_Red.idat,${dir}/207059430159_R01C01_Grn.idat",
+                ].join('\n') + '\n'
+                outdir = "$outputDir"
+                input  = "${dir}/samplesheet.csv"
+                publish_dir_mode = 'symlink'
+            }
+            workflow {
+                """
+                input[0] = false
+                input[1] = true
+                input[2] = false
+                input[3] = []
+                input[4] = params.outdir
+                input[5] = params.input
+                input[6] = params.phenotypes
+                input[7] = params.models
+                input[8] = false
+                input[9] = false
+                input[10] = false
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.failed },
+                { assert (workflow.stdout + workflow.stderr).any { line -> line.contains('which is deleted after a successful run') } }
+            )
+        }
+    }
+
     test("IDAT file used twice - fails") {
 
         tag "fast"

@@ -656,6 +656,12 @@
                     "enum": ["symlink", "rellink", "link", "copy", "copyNoFollow", "move"],
                     "hidden": true
                 },
+                "skip_cleanup": {
+                    "type": "boolean",
+                    "description": "Keep the work directory after a successful run.",
+                    "help_text": "By default, the task directories of a run and its cache of downloaded remote inputs (`work/stage-<session>`) are deleted once every task has succeeded and the results are published (Nextflow `cleanup`), which frees most of the disk space a run uses. A cleaned run cannot be continued with `-resume`: use `--skip_cleanup` while you still expect to change parameters and resume. Failed runs keep their work directory for troubleshooting and `-resume`; remove old ones with `nextflow clean`. Cleanup needs real copies of the results, so it cannot be combined with `--publish_dir_mode symlink` or `rellink`.",
+                    "fa_icon": "fas fa-broom"
+                },
                 "email_on_fail": {
                     "type": "string",
                     "description": "Email address for completion summary, only when pipeline fails.",
