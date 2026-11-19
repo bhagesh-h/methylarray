@@ -56,7 +56,7 @@ runs:
         # images already pulled stay in the cache, so one more run usually passes.
         # Any other failure fails the job at once.
         if ! run_tests; then
-          if grep -qE 'connection reset by peer|TLS handshake timeout|Read timed out|connect timed out' nf-test.log; then
+          if grep -qE 'connection reset by peer|TLS handshake timeout|Read timed out|connect timed out|Can.t stage file' nf-test.log; then
             echo "::warning::An image download failed (network); running the shard again"
             run_tests
           else
