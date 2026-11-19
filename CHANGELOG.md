@@ -41,6 +41,7 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - PCA: the most variable CpGs are ranked by the variance of their beta values (the PCA itself stays on M-values), because ranking by M-value variance favours CpGs near 0 or 1; `pca_associations.tsv` adds the adjusted R-squared, which the report heatmap now shows, so that variables with many levels such as the BeadChip are not overstated.
 - Report: SNP genotypes, clock and score weights, agreement and cell, batch, phenotype and quartile-group plots, R-squared heatmap of the principal components with their variance shares, and gene set enrichment dot plots; MultiQC tables of the top gene sets per model.
 - Developer guide (`docs/developer.md`) and `dev/nfdev container`, which builds a module's images from its `environment.yml` with Wave.
+- The task directories of a run and its cache of downloaded remote inputs are deleted once it has finished successfully (Nextflow `cleanup`); `--skip_cleanup` keeps them for `-resume`. The pipeline stops at the start when cleanup would break symlinked results (`--publish_dir_mode symlink` or `rellink`).
 
 ### `Changed`
 
