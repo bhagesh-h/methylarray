@@ -212,7 +212,8 @@ workflow METHYLARRAY {
         EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_ancestry_pcs, ch_dnam_scores, ch_meqtl_cpgs)
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
     ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f },
-        EWAS.out.design_check.map { _meta, f -> f }, EWAS.out.cells.map { _meta, f -> f }, EWAS.out.cells_summary, EWAS.out.meqtl)
+        EWAS.out.design_check.map { _meta, f -> f }, EWAS.out.cells.map { _meta, f -> f }, EWAS.out.cells_summary, EWAS.out.meqtl,
+        EWAS.out.characteristics.map { _meta, f -> f }, EWAS.out.comparison)
 
     //
     // SUBWORKFLOW: Differentially methylated regions of every model

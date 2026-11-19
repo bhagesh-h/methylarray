@@ -52,6 +52,13 @@ output:
         pattern: "*_cells.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475
+  comparison:
+    - "${prefix}_comparison.tsv":
+        type: file
+        description: Overlap and agreement of every pair of model contrasts (header only with fewer than two tested contrasts)
+        pattern: "*_comparison.tsv"
+        ontologies:
+          - edam: http://edamontology.org/format_3475
   multiqc:
     - "${prefix}*_mqc.tsv":
         type: file

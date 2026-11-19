@@ -93,6 +93,16 @@ output:
           pattern: "*_cells.tsv.gz"
           ontologies:
             - edam: http://edamontology.org/format_3475
+  characteristics:
+    - - meta:
+          type: map
+          description: Groovy Map with the model name as id
+      - "${prefix}_characteristics.tsv":
+          type: file
+          description: Baseline characteristics of the model's arrays, by trait group for a binary or categorical trait (aggregates only, counts below 5 suppressed)
+          pattern: "*_characteristics.tsv"
+          ontologies:
+            - edam: http://edamontology.org/format_3475
   top:
     - - meta:
           type: map

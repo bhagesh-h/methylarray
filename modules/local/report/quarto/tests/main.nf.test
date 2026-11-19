@@ -39,7 +39,8 @@ nextflow_process {
                           'Quartile groups of acceleration', 'Contamination and the ageing measures', 'Genetic ancestry', 'Ancestry and the ageing measures', 'Genomic context enrichment', 'Genetic influence on the clocks', 'Association hits with a cis-meQTL', 'Variance partition', 'Agreement of the lineages with IDOL',
                           'Reference CpGs found in the data', 'Flagged design checks', 'VIF cc_Gran', 'regions per method', 'consensus regions of DMRcate and dmrff, by dmrff P',
                           'score: cell types', 'cell-type-specific hits per lineage', 'with higher methylation and the smallest P', 'with lower methylation and the smallest P',
-                          'Figure 1.', 'CpGs with higher and lower methylation'].every { section -> html.contains(section) } },
+                          'Figure 1.', 'CpGs with higher and lower methylation', 'volcano plot', 'genomic context of the hits', 'binomial test asks',
+                          'characteristics of the arrays', 'Overlap and agreement of every pair', 'follows the trait'].every { section -> html.contains(section) } },
                 { assert html.contains('overflow-x: auto') && html.contains('id="TOC"') },
                 { assert !html.contains('Error in') && !html.contains('report_figures/') },
                 // every numbered figure of the report is saved as PNG and PDF

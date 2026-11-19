@@ -103,6 +103,26 @@ if (length(tests) > 0) {
         meff <- sum(sqrt(eigenvalues))^2 / sum(eigenvalues)
     }
     p_study <- p_ewide / meff
+    # Overlap and agreement of every pair of model contrasts (Uddin et al. 2022:
+    # shared hits against chance, and the correlation of the test statistics
+    # over all CpGs and over the hits of either)
+    comparison <- rbindlist(lapply(seq_along(keys), function(i) rbindlist(lapply(seq_along(keys), function(j) {
+        if (j <= i) return(NULL)
+        a <- stats[key == keys[i], .(cpg_id, t_a = t, hit_a = !is.na(fdr) & fdr < 0.05)]
+        b <- stats[key == keys[j], .(cpg_id, t_b = t, hit_b = !is.na(fdr) & fdr < 0.05)]
+        both <- merge(a, b, by = "cpg_id")
+        if (nrow(both) < 10) return(NULL)
+        shared <- both[hit_a & hit_b]
+        test <- if (sum(both[["hit_a"]]) > 0 && sum(both[["hit_b"]]) > 0) fisher.test(table(factor(both[["hit_a"]], c(TRUE, FALSE)), factor(both[["hit_b"]], c(TRUE, FALSE)))) else NULL
+        union <- both[hit_a | hit_b]
+        data.table(contrast_a = keys[i], contrast_b = keys[j], cpgs = nrow(both), hits_a = sum(both[["hit_a"]]), hits_b = sum(both[["hit_b"]]),
+                   shared = nrow(shared), share_of_a = if (sum(both[["hit_a"]]) > 0) round(nrow(shared) / sum(both[["hit_a"]]), 4) else NA_real_,
+                   same_direction = if (nrow(shared) > 0) round(mean(sign(shared[["t_a"]]) == sign(shared[["t_b"]])), 4) else NA_real_,
+                   odds_ratio = if (is.null(test)) NA_real_ else signif(unname(test[["estimate"]]), 4),
+                   p_overlap = if (is.null(test)) NA_real_ else signif(test[["p.value"]], 4),
+                   r_all = round(cor(both[["t_a"]], both[["t_b"]], use = "complete.obs"), 4),
+                   r_hits = if (nrow(union) >= 3) round(cor(union[["t_a"]], union[["t_b"]], use = "complete.obs"), 4) else NA_real_)
+    }))))
     hits <- stats[, .(hits_study_wide = sum(p_value < p_study, na.rm = TRUE)), by = .(model, contrast)]
     if (!"contrast" %in% names(rows)) rows[, contrast := NA_character_]
     rows <- merge(rows, hits, by = c("model", "contrast"), all.x = TRUE, sort = FALSE)
@@ -110,6 +130,21 @@ if (length(tests) > 0) {
     setorder(rows, model)
 }
 fwrite(rows, paste0(prefix, ".tsv"), sep = "\\t", na = "")
+if (!exists("comparison") || nrow(comparison) == 0) {
+    comparison <- data.table(contrast_a = character(), contrast_b = character(), cpgs = integer(), hits_a = integer(), hits_b = integer(), shared = integer(),
+                             share_of_a = numeric(), same_direction = numeric(), odds_ratio = numeric(), p_overlap = numeric(), r_all = numeric(), r_hits = numeric())
+}
+fwrite(comparison, paste0(prefix, "_comparison.tsv"), sep = "\\t", na = "")
+if (nrow(comparison) > 0) {
+    writeLines(c(
+        "# id: 'ewas_comparison'",
+        "# section_name: 'Association models: comparison'",
+        "# description: 'Every pair of model contrasts: hits (FDR < 0.05) of each, shared hits, the share of the first model hits found by the second, the share of shared hits with the same direction, Fisher odds ratio and P of the overlap against chance, and the Pearson correlation of the t statistics over all CpGs and over the hits of either.'",
+        "# plot_type: 'table'"
+    ), paste0(prefix, "_comparison_mqc.tsv"))
+    write.table(data.frame(Pair = paste(comparison[["contrast_a"]], "vs", comparison[["contrast_b"]]), comparison[, !c("contrast_a", "contrast_b")], check.names = FALSE),
+                paste0(prefix, "_comparison_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")
+}
 
 # Hits with a cis-meQTL
 meqtl <- data.table(model = character(), contrast = character(), tested = integer(), tested_meqtl = integer(), hits_fdr = integer(),
@@ -131,7 +166,7 @@ fwrite(meqtl, paste0(prefix, "_meqtl.tsv"), sep = "\\t", na = "")
 # MultiQC: the summary, with the hits that have a cis-meQTL when a meQTL list was given
 if (nrow(meqtl) > 0) rows <- merge(rows, meqtl[, .(model, contrast, hits_meqtl, share_hits_meqtl = share_hits)], by = c("model", "contrast"), all.x = TRUE, sort = FALSE)
 columns <- intersect(c("model", "contrast", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_epigenome_wide",
-                       "hits_suggestive", "hits_fdr_bacon", "meff", "p_study_wide", "hits_study_wide", "hits_meqtl", "share_hits_meqtl",
+                       "hits_higher", "hits_lower", "hits_suggestive", "hits_fdr_bacon", "meff", "p_study_wide", "hits_study_wide", "hits_meqtl", "share_hits_meqtl",
                        "top_cpg", "top_p", "status", "design_flags"), names(rows))
 writeLines(c(
     "# id: 'ewas_summary'",

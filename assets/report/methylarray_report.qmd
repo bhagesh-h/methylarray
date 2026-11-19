@@ -117,7 +117,7 @@ directional_genome <- function(d, lines, title) {
     setorder(d, class)
     d <- d[order(-as.integer(class))]
     centres <- d[, .(x = mean(range(x))), by = chromosome]
-    ggplot(d, aes(x, signed, colour = class)) + geom_point(size = 0.7, show.legend = TRUE) +
+    ggplot(d, aes(x, signed, colour = class)) + geom_point(size = 0.7, show.legend = c(colour = TRUE, linetype = FALSE)) +
         geom_hline(yintercept = 0, colour = "grey20", linewidth = 0.3) +
         geom_hline(data = lines, aes(yintercept = y, linetype = line), colour = "grey20", linewidth = 0.4, inherit.aes = FALSE) +
         scale_colour_manual(values = manhattan_colours, breaks = c("FDR < 0.05, higher", "FDR < 0.05, lower"),
@@ -139,6 +139,104 @@ top_by_direction <- function(d, effect, columns, caption, n = 20) {
         print(kable(part[, columns, with = FALSE], col.names = names(columns),
                     caption = paste0(caption, ": the ", nrow(part), " CpGs with ", direction, " methylation and the smallest P")))
     }
+}
+# Interpretation of association results (todo section 2e: I1, I3, I4, I5),
+# after Uddin et al. 2022 and Kirmani et al. 2025
+significant_direction <- function(d, effect) {
+    ifelse(!is.na(d[["fdr"]]) & d[["fdr"]] < 0.05, ifelse(d[[effect]] > 0, "higher", "lower"), "not significant")
+}
+volcano_plot <- function(d, effect, effect_label, title) {
+    d <- d[!is.na(p_value) & !is.na(get(effect))]
+    d[, class := factor(significant_direction(d, effect), levels = c("higher", "lower", "not significant"))]
+    d <- d[class != "not significant" | p_value < 0.01 | seq_len(.N) %% 10 == 0][order(-as.integer(class))]
+    lines <- data.table(y = -log10(as.numeric(param("p_epigenome_wide"))), line = paste0("P = ", param("p_epigenome_wide"), " (epigenome-wide)"))
+    if (any(d[["class"]] != "not significant")) lines <- rbind(lines, data.table(y = -log10(max(d[class != "not significant", p_value])), line = "FDR = 0.05"))
+    ggplot(d, aes(get(effect), -log10(pmax(p_value, 1e-300)), colour = class)) + geom_point(size = 0.7, show.legend = c(colour = TRUE, linetype = FALSE)) +
+        geom_vline(xintercept = 0, colour = "grey40", linewidth = 0.3) +
+        geom_hline(data = lines, aes(yintercept = y, linetype = line), colour = "grey20", linewidth = 0.4, inherit.aes = FALSE) +
+        scale_colour_manual(values = c(higher = "#b2182b", lower = "#2166ac", `not significant` = "grey70"), drop = FALSE,
+                            labels = c(higher = "Higher methylation (FDR < 0.05)", lower = "Lower methylation (FDR < 0.05)", `not significant` = "Not significant")) +
+        scale_linetype_manual(values = setNames(c(1, 2), c(paste0("P = ", param("p_epigenome_wide"), " (epigenome-wide)"), "FDR = 0.05"))) +
+        guides(colour = guide_legend(override.aes = list(size = 2.5))) +
+        theme(legend.position = "bottom", legend.box = "vertical") +
+        labs(x = effect_label, y = expression(-log[10](italic(P))), colour = NULL, linetype = NULL, title = title,
+             subtitle = "Volcano plot: effect size against significance for every CpG; CpGs with P >= 0.01 that are not significant are thinned to every 10th.")
+}
+# I3: hits by direction, with a binomial test of the balance
+direction_summary <- function(d, effect) {
+    hits <- !is.na(d[["fdr"]]) & d[["fdr"]] < 0.05
+    higher <- sum(hits & d[[effect]] > 0, na.rm = TRUE)
+    lower <- sum(hits & d[[effect]] < 0, na.rm = TRUE)
+    data.table(`CpGs tested` = nrow(d), `Hits (FDR < 0.05)` = higher + lower,
+               Higher = higher, `Higher (% of tested)` = round(100 * higher / nrow(d), 3),
+               Lower = lower, `Lower (% of tested)` = round(100 * lower / nrow(d), 3),
+               `Share higher` = if (higher + lower > 0) round(higher / (higher + lower), 3) else NA_real_,
+               `Binomial P (balance)` = if (higher + lower > 0) binom.test(higher, higher + lower)[["p.value"]] else NA_real_)
+}
+# I4: genomic context of the hits by direction, against all tested CpGs
+context_categories <- function(d) {
+    cgi <- d[["cgi_relation"]]
+    cgi[is.na(cgi)] <- ""
+    feature <- d[["gene_group"]]
+    feature[is.na(feature)] <- ""
+    gene <- d[["gene"]]
+    gene[is.na(gene)] <- ""
+    list(
+        `CpG island context` = list(
+            Island = grepl("Island", cgi), Shore = grepl("Shore", cgi), Shelf = grepl("Shelf", cgi), `Open sea` = cgi == ""),
+        `Gene feature` = list(
+            TSS1500 = grepl("TSS1500", feature), TSS200 = grepl("TSS200", feature), `5'UTR` = grepl("5UTR", feature),
+            `First exon` = grepl("exon_1(;|$)", feature), `Other exons` = grepl("exon_([2-9]|[1-9][0-9]+)(;|$)", feature),
+            `3'UTR` = grepl("3UTR", feature), `Intron or other gene part` = feature == "" & gene != "", Intergenic = feature == "" & gene == "")
+    )
+}
+context_enrichment <- function(d, effect) {
+    if (!all(c("cgi_relation", "gene_group", "gene") %in% names(d))) return(data.table())
+    direction <- significant_direction(d, effect)
+    categories <- context_categories(d)
+    rbindlist(lapply(c("all hits", "higher", "lower"), function(query_name) {
+        query <- if (query_name == "all hits") direction != "not significant" else direction == query_name
+        if (sum(query) < 5) return(NULL)
+        rbindlist(lapply(names(categories), function(group) rbindlist(lapply(names(categories[[group]]), function(category) {
+            member <- categories[[group]][[category]]
+            test <- fisher.test(matrix(c(sum(query & member), sum(query & !member), sum(!query & member), sum(!query & !member)), 2))
+            data.table(group = group, category = category, query = query_name, hits_in = sum(query & member), hits = sum(query),
+                       share_hits = sum(query & member) / sum(query), share_tested = mean(member),
+                       odds_ratio = unname(test[["estimate"]]), ci_low = test[["conf.int"]][1], ci_high = test[["conf.int"]][2], p_value = test[["p.value"]])
+        }))))
+    }))
+}
+context_plot <- function(table, title) {
+    table <- copy(table)[is.finite(odds_ratio) & odds_ratio > 0]
+    if (nrow(table) == 0) return(NULL)
+    table[, category := factor(category, levels = rev(unique(category)))]
+    table[, query := factor(query, levels = c("all hits", "higher", "lower"), labels = c("All hits", "Higher methylation", "Lower methylation"))]
+    table[, ci_low := pmax(ci_low, 1e-3)]
+    table[, ci_high := pmin(ci_high, 1e3)]
+    ggplot(table, aes(odds_ratio, category, colour = query)) + geom_vline(xintercept = 1, colour = "grey40", linetype = 2) +
+        geom_pointrange(aes(xmin = ci_low, xmax = ci_high), position = position_dodge(width = 0.6), size = 0.3) +
+        scale_x_log10() + scale_colour_manual(values = c(`All hits` = "grey25", `Higher methylation` = "#b2182b", `Lower methylation` = "#2166ac")) +
+        facet_grid(group ~ ., scales = "free_y", space = "free_y") + theme(legend.position = "bottom", strip.text.y = element_text(angle = 0)) +
+        labs(x = "Odds ratio against all tested CpGs (log scale)", y = NULL, colour = NULL, title = title,
+             subtitle = "Two-sided Fisher's exact test of the hits (FDR < 0.05) in each CpG island context and gene feature; bars show 95% confidence intervals. An odds ratio above 1 means the hits are over-represented there.")
+}
+# I5: methylation level of the hits
+level_plot <- function(d, effect, title) {
+    if (!"mean_beta" %in% names(d)) return(NULL)
+    direction <- significant_direction(d, effect)
+    groups <- rbind(data.table(group = "All tested CpGs", mean_beta = d[["mean_beta"]][seq_len(nrow(d)) %% 10 == 0]),
+                    data.table(group = "Higher methylation (FDR < 0.05)", mean_beta = d[["mean_beta"]][direction == "higher"]),
+                    data.table(group = "Lower methylation (FDR < 0.05)", mean_beta = d[["mean_beta"]][direction == "lower"]))[!is.na(mean_beta)]
+    counts <- groups[, .N, by = group]
+    groups <- groups[group %in% counts[N >= 5, group]]
+    if (uniqueN(groups[["group"]]) < 2) return(NULL)
+    groups[, group := factor(group, levels = c("All tested CpGs", "Higher methylation (FDR < 0.05)", "Lower methylation (FDR < 0.05)"))]
+    ggplot(groups, aes(group, mean_beta, fill = group)) + geom_violin(colour = NA, alpha = 0.6, scale = "width") +
+        geom_boxplot(width = 0.12, outlier.shape = NA, fill = "white") +
+        scale_fill_manual(values = c(`All tested CpGs` = "grey60", `Higher methylation (FDR < 0.05)` = "#b2182b", `Lower methylation (FDR < 0.05)` = "#2166ac"), guide = "none") +
+        scale_y_continuous(limits = c(0, 1)) +
+        labs(x = NULL, y = "Mean beta value over the arrays", title = title,
+             subtitle = "Methylation level of the hits against all tested CpGs (every 10th shown). Hits at intermediate levels are typical of CpGs that differ between blood cell types.")
 }
 ```
 
@@ -621,7 +719,7 @@ if ("note" %in% names(vs) && any(!is.na(vs[["note"]]) & vs[["note"]] != "")) {
 ```{r ewas-summary, results = "asis", eval = has("^ewas_summary\\.tsv$")}
 heading("Association models")
 ewas <- read(find("^ewas_summary\\.tsv$"))
-columns <- intersect(c("model", "contrast", "status", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_epigenome_wide", "hits_suggestive", "hits_study_wide", "top_cpg", "top_p"), names(ewas))
+columns <- intersect(c("model", "contrast", "status", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_higher", "hits_lower", "hits_epigenome_wide", "hits_suggestive", "hits_study_wide", "top_cpg", "top_p"), names(ewas))
 print(kable(ewas[, ..columns]))
 checks <- rbindlist(lapply(find("^ewas_.*_design_check\\.tsv$"), function(file) {
     if (file.info(file)[["size"]] == 0) return(NULL)
@@ -631,13 +729,48 @@ checks <- rbindlist(lapply(find("^ewas_.*_design_check\\.tsv$"), function(file) 
 }), fill = TRUE)
 if (nrow(checks) > 0) {
     flagged <- checks[!is.na(flag) & nzchar(flag)]
-    cat("\n\nDesign checks: the trait against the DNA plate and Sentrix row (Kruskal-Wallis or Fisher P; flagged as confounded at P < 0.01), and the variance inflation factor of every design column (flagged as collinear above 10). A confounded or collinear term makes its own coefficient unstable and can absorb or create part of the trait effect. ",
+    cat("\n\nDesign checks: the trait against the DNA plate and Sentrix row (Kruskal-Wallis or Fisher P; flagged as confounded at P < 0.01), the variance inflation factor of every design column (flagged as collinear above 10), and every numeric covariate against the trait (Spearman rho for a continuous trait, R-squared otherwise). Methylation-derived covariates (cell fractions, control-probe and ancestry PCs, DNA methylation scores, PCs) that follow the trait at P < 0.001 are flagged: adjusting for an axis that the trait itself drives can absorb the association (Uddin et al. 2022). A confounded or collinear term makes its own coefficient unstable and can absorb or create part of the trait effect. ",
         if (nrow(flagged) == 0) "No check was flagged.\n\n" else sprintf("Flagged checks: %d.\n\n", nrow(flagged)), sep = "")
     if (nrow(flagged) > 0) print(kable(flagged[, .(Model = model, Check = check, Value = value, P = signif(p_value, 3), Flag = flag)], caption = "Flagged design checks"))
 }
 if ("meff" %in% names(ewas) && any(!is.na(ewas[["meff"]]))) {
     cat("\n\nEffective number of independent tests across the models (Meff, Galwey 2009): ", ewas[["meff"]][!is.na(ewas[["meff"]])][1],
         "; study-wide threshold P < ", ewas[["p_study_wide"]][!is.na(ewas[["p_study_wide"]])][1], " (hits_study_wide).\n\n", sep = "")
+}
+if (has("^ewas_summary_comparison\\.tsv$")) {
+    comparison <- read(find("^ewas_summary_comparison\\.tsv$"))
+    if (nrow(comparison) > 0) {
+        cat("\n\nComparison of the model contrasts (Uddin et al. 2022): shared hits against chance, and the correlation of the t statistics over all CpGs and over the hits of either contrast. A correlation that is low over all CpGs but high over the hits means the contrasts share a specific signal rather than a genome-wide one.\n\n")
+        print(kable(comparison[, .(`Contrast A` = contrast_a, `Contrast B` = contrast_b, `Hits A` = hits_a, `Hits B` = hits_b, Shared = shared,
+                                   `Share of A` = share_of_a, `Same direction` = same_direction, `Odds ratio` = odds_ratio, `P (overlap)` = p_overlap,
+                                   `r (all CpGs)` = r_all, `r (hits)` = r_hits)], caption = "Overlap and agreement of every pair of model contrasts"))
+        pairs <- head(comparison, 6)
+        stats_files <- find("^ewas_.*_stats\\.tsv\\.gz$")
+        all_stats <- rbindlist(lapply(stats_files, function(f) {
+            x <- read(f)
+            if (nrow(x) == 0) return(NULL)
+            x[, .(key = paste(model_of(f, "ewas_", "_stats\\.tsv\\.gz"), contrast, sep = " | "), cpg_id, t, hit = !is.na(fdr) & fdr < 0.05)]
+        }))
+        scatter <- rbindlist(lapply(seq_len(nrow(pairs)), function(i) {
+            a <- all_stats[key == pairs[["contrast_a"]][i], .(cpg_id, t_a = t, hit_a = hit)]
+            b <- all_stats[key == pairs[["contrast_b"]][i], .(cpg_id, t_b = t, hit_b = hit)]
+            both <- merge(a, b, by = "cpg_id")
+            both <- both[hit_a | hit_b | seq_len(.N) %% 50 == 0]
+            both[, `:=`(pair = paste(pairs[["contrast_a"]][i], "vs", pairs[["contrast_b"]][i]),
+                        class = factor(ifelse(hit_a & hit_b, "Hit in both", ifelse(hit_a | hit_b, "Hit in one", "Neither (every 50th)")),
+                                       levels = c("Neither (every 50th)", "Hit in one", "Hit in both")))]
+        }))
+        if (nrow(scatter) > 0) {
+            show_plot(ggplot(scatter[order(class)], aes(t_a, t_b, colour = class)) + geom_hline(yintercept = 0, colour = "grey60") + geom_vline(xintercept = 0, colour = "grey60") +
+                      geom_point(size = 0.7, alpha = 0.8) + facet_wrap(~ pair, scales = "free") +
+                      scale_colour_manual(values = c(`Neither (every 50th)` = "grey75", `Hit in one` = "#4c72b0", `Hit in both` = "#b2182b")) +
+                      guides(colour = guide_legend(override.aes = list(size = 2.5))) + theme(legend.position = "bottom") +
+                      labs(x = "t statistic, first contrast", y = "t statistic, second contrast", colour = NULL,
+                           title = "t statistics of every pair of model contrasts",
+                           subtitle = "Each point is a CpG; hits are CpGs at FDR < 0.05. Points along the diagonal agree in direction and strength."),
+                      9, 3 + 3 * ceiling(nrow(pairs) / 3))
+        }
+    }
 }
 ```
 
@@ -647,6 +780,14 @@ for (file in find("^ewas_.*_stats\\.tsv\\.gz$")) {
     stats <- read(file)
     if (nrow(stats) == 0) next
     cat("\n\n## Model", model, "\n\n")
+    characteristics_file <- sub("_stats\\.tsv\\.gz$", "_characteristics.tsv", file)
+    if (file.exists(characteristics_file) && file.info(characteristics_file)[["size"]] > 0) {
+        characteristics <- read(characteristics_file)
+        if (nrow(characteristics) > 0) {
+            setnames(characteristics, c("variable", "level", "p_value"), c("Variable", "Level", "P"), skip_absent = TRUE)
+            print(kable(characteristics, caption = paste0(model, ": characteristics of the arrays in the model (aggregates; counts below 5 shown as <5; P: Kruskal-Wallis or Fisher's exact test between the groups)")))
+        }
+    }
     for (k in unique(stats[["contrast"]])) {
         s <- stats[contrast == k & !is.na(p_value)]
         n <- nrow(s)
@@ -678,6 +819,20 @@ for (file in find("^ewas_.*_stats\\.tsv\\.gz$")) {
                            subtitle = paste0("Each point is a CpG at its genomic position; the line marks P = ", param("p_epigenome_wide"), " (epigenome-wide). CpGs with P >= 0.01 are thinned to every 20th.")),
                       10, 4.2)
             show_plot(directional_genome(points, threshold_lines(s), paste0(label, ": CpGs with higher and lower methylation")), 10, 5.2)
+        }
+        print(kable(direction_summary(s, "delta_beta"), caption = paste0(label, ": CpGs at FDR < 0.05 with higher and with lower methylation; the binomial test asks whether one direction dominates")))
+        show_plot(volcano_plot(s, "delta_beta", "Difference in methylation (beta) per unit of the trait or between the groups", paste0(label, ": volcano plot")), 8, 5.5)
+        if (sum(!is.na(s[["fdr"]]) & s[["fdr"]] < 0.05) >= 5) {
+            context <- context_enrichment(s, "delta_beta")
+            if (nrow(context) > 0) {
+                context_figure <- context_plot(context, paste0(label, ": genomic context of the CpGs at FDR < 0.05"))
+                if (!is.null(context_figure)) show_plot(context_figure, 9, 6)
+                print(kable(context[, .(Annotation = group, Category = category, Hits = query, `Hits in category` = hits_in, `Share of hits` = round(share_hits, 3),
+                                        `Share of tested` = round(share_tested, 3), `Odds ratio` = odds_ratio, P = p_value)],
+                            caption = paste0(label, ": genomic context of the hits against all tested CpGs (Fisher's exact test)")))
+            }
+            level <- level_plot(s, "delta_beta", paste0(label, ": methylation level of the CpGs at FDR < 0.05"))
+            if (!is.null(level)) show_plot(level, 7, 4.5)
         }
         top_by_direction(s, "t", c(CpG = "cpg_id", Chr = "chr", Position = "pos", Gene = "gene", `Gene feature` = "gene_group", `CpG island` = "cgi_relation",
                                    `Delta beta` = "delta_beta", t = "t", P = "p_value", FDR = "fdr", `P (bacon)` = "p_bacon"), label)

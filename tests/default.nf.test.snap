@@ -199,6 +199,7 @@
                 "qc/sample_qc.tsv",
                 "qc/sample_qc_retained.txt",
                 "report",
+                "report/figures",
                 "report/methylarray_report.html"
             ],
             [
@@ -262,7 +263,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-19T22:33:09.201309568",
+        "timestamp": "2026-11-19T23:10:44.771206593",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
