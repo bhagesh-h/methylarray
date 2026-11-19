@@ -467,6 +467,12 @@
                     "maximum": 1,
                     "description": "Suggestive significance threshold.",
                     "fa_icon": "fas fa-less-than"
+                },
+                "skip_cell_ewas": {
+                    "type": "boolean",
+                    "description": "Skip the cell-type-specific association of every model.",
+                    "help_text": "By default, each model with a binary or continuous trait and blood cell fractions is also fitted with the CellDMC design of EpiDISH (Zheng et al. 2018): beta values on the six lineages, the trait times each lineage and the other covariates of the model. Each interaction tests whether the trait changes methylation within one lineage. Results: `ewas/<model>/ewas_<model>_cells.tsv.gz`.",
+                    "fa_icon": "fas fa-forward"
                 }
             }
         },

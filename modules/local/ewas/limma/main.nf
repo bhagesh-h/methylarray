@@ -12,6 +12,7 @@ process EWAS_LIMMA {
 
     output:
     tuple val(meta), path("${prefix}_stats.tsv.gz")    , emit: stats
+    tuple val(meta), path("${prefix}_cells.tsv.gz")    , emit: cells
     tuple val(meta), path("${prefix}_top.tsv")         , emit: top
     tuple val(meta), path("${prefix}_design_check.tsv"), emit: design_check
     tuple val(meta), path("${prefix}_resolved.json")   , emit: resolved
@@ -26,6 +27,7 @@ process EWAS_LIMMA {
     prefix = task.ext.prefix ?: "ewas_${meta.id}"
     """
     printf '\\x1f\\x8b\\x08\\x00\\x00\\x00\\x00\\x00\\x00\\x03\\x03\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00\\x00' > ${prefix}_stats.tsv.gz
+    cp ${prefix}_stats.tsv.gz ${prefix}_cells.tsv.gz
     touch ${prefix}_top.tsv ${prefix}_design_check.tsv
     printf '{}\\n' > ${prefix}_resolved.json
     printf '{"model": "${meta.id}", "status": "stub"}\\n' > ${prefix}_summary.json

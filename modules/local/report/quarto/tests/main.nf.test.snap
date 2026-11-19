@@ -18,7 +18,17 @@
                     "methylarray_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
                 ],
                 "1": [
+                    [
+                        
+                    ]
+                ],
+                "2": [
                     "versions.yml:md5,195b2b4c6793e26811b07b2fce5d3719"
+                ],
+                "figures": [
+                    [
+                        
+                    ]
                 ],
                 "report": [
                     "methylarray_report.html:md5,d41d8cd98f00b204e9800998ecf8427e"
@@ -28,7 +38,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T18:14:10.734771758",
+        "timestamp": "2026-11-19T22:41:43.373016182",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

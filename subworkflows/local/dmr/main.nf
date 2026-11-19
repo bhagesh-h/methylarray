@@ -26,4 +26,5 @@ workflow DMR {
     dmrff     = DMR_CALL.out.dmrff     // channel: [ meta, dmrff regions ]
     consensus = DMR_CALL.out.consensus // channel: [ meta, consensus regions ]
     summary   = DMR_CALL.out.summary   // channel: [ meta, per-model summary ]
+    multiqc   = DMR_CALL.out.multiqc   // channel: [ meta, MultiQC table ]
 }

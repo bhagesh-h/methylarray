@@ -118,3 +118,13 @@ write.table(data.frame(Score = coverage[["score"]], CpGs = coverage[["cpgs"]], P
                        `Found by old ID` = coverage[["present_by_legacy_id"]], `Share present` = coverage[["share_present"]],
                        `Filled values` = coverage[["filled_values"]], check.names = FALSE),
             paste0(prefix, "_coverage_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE)
+
+# MultiQC: the distribution of each score over the arrays
+writeLines(c(
+    "# id: 'dnam_score_values'",
+    "# section_name: 'DNA methylation scores: values'",
+    "# description: 'Each score over the analysed arrays. Scores are weighted sums on their own scale; compare arrays within a score, not across scores.'",
+    "# plot_type: 'violin'"
+), paste0(prefix, "_values_mqc.tsv"))
+write.table(data.frame(Sample = scores[["sample"]], scores[, setdiff(names(scores), "sample"), with = FALSE], check.names = FALSE),
+            paste0(prefix, "_values_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")

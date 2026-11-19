@@ -387,10 +387,11 @@ def toolCitationText() {
     def clocks = params.skip_clocks ? '' : "Epigenetic clocks were computed with dnaMethyAge (Wang et al. 2024)${params.clocks.tokenize(',').contains('DunedinPACE') ? ' and DunedinPACE (Belsky et al. 2022)' : ''} on the detection-masked beta values averaged per CpG; values that failed detection were set to the CpG mean over the other arrays."
     def exploration = "Technical variation was summarised with principal components of the control-probe intensities (Lehne et al. 2015), and the principal components of the most variable CpGs were tested for association with technical and biological variables${params.n_pcs == 'auto' ? ', their number estimated by random matrix theory (isva, Teschendorff et al. 2011)' : ''}."
     def ewas = params.models ? "Each association model was fitted at every CpG with limma (Ritchie et al. 2015) on M-values with eBayes moderation (trend and robust), effect sizes were taken from the same model on beta values, and test statistics were corrected for bias and inflation with bacon (van Iterson et al. 2017). CpGs were reported at FDR < 0.05 and at P < ${params.p_epigenome_wide} (Mansell et al. 2019); across several models, this threshold was divided by the effective number of independent tests, estimated from the correlation of the model statistics (Galwey 2009)." : ''
+    def cell_ewas = params.models && params.tissue == 'blood' && !params.skip_cell_ewas ? "Cell-type-specific associations were tested with the CellDMC design (Zheng et al. 2018): beta values on the six leukocyte lineages, the trait times each lineage and the other covariates, fitted with limma, with an ordinary t-test of each interaction and FDR within each lineage." : ''
     def dmr = params.models && !params.skip_dmr ? "Differentially methylated regions were called with DMRcate (Peters et al. 2015; lambda ${params.dmr_lambda}, C ${params.dmr_c}) and dmrff (Suderman et al. 2018) from the same model statistics, and regions found by both methods in the same direction were reported as consensus regions." : ''
     def enrichment = params.models && !params.skip_enrichment ? "Gene set enrichment of the CpGs at FDR < 0.05 against all tested CpGs was tested with missMethyl (Maksimovic et al. 2021), which accounts for the number of CpGs per gene, for Gene Ontology and KEGG terms and the MSigDB gene set collections." : ''
     def scores = params.skip_dnam_scores ? '' : "DNA methylation scores for smoking, alcohol and BMI (McCartney et al. 2018) and IL-6 (Stevenson et al. 2021) were computed as weighted sums of the published CpG sets."
-    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, scores, exploration, ewas, dmr, enrichment, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, scores, exploration, ewas, cell_ewas, dmr, enrichment, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
 }
 
 //
@@ -421,6 +422,7 @@ def toolBibliographyText() {
         dunedinpace: referenceHtml('Belsky, D. W., Caspi, A., Corcoran, D. L., et al.', 2022, 'DunedinPACE, a DNA methylation biomarker of the pace of aging', 'eLife, 11, e73420', '10.7554/eLife.73420'),
         lehne2015: referenceHtml('Lehne, B., Drong, A. W., Loh, M., et al.', 2015, 'A coherent approach for analysis of the Illumina HumanMethylation450 BeadChip improves data quality and performance in epigenome-wide association studies', 'Genome Biology, 16, 37', '10.1186/s13059-015-0600-x'),
         rmt: referenceHtml('Teschendorff, A. E., Zhuang, J., & Widschwendter, M.', 2011, 'Independent surrogate variable analysis to deconvolve confounding factors in large-scale microarray profiling studies', 'Bioinformatics, 27(11), 1496-1505', '10.1093/bioinformatics/btr171'),
+        celldmc: referenceHtml('Zheng, S. C., Breeze, C. E., Beck, S., & Teschendorff, A. E.', 2018, 'Identification of differentially methylated cell types in epigenome-wide association studies', 'Nature Methods, 15(12), 1059-1066', '10.1038/s41592-018-0213-x'),
         limma: referenceHtml('Ritchie, M. E., Phipson, B., Wu, D., et al.', 2015, 'limma powers differential expression analyses for RNA-sequencing and microarray studies', 'Nucleic Acids Research, 43(7), e47', '10.1093/nar/gkv007'),
         bacon: referenceHtml('van Iterson, M., van Zwet, E. W., the BIOS Consortium, & Heijmans, B. T.', 2017, 'Controlling bias and inflation in epigenome- and transcriptome-wide association studies using the empirical null distribution', 'Genome Biology, 18, 19', '10.1186/s13059-016-1131-9'),
         mansell2019: referenceHtml('Mansell, G., Gorrie-Stone, T. J., Bao, Y., et al.', 2019, 'Guidance for DNA methylation studies: statistical insights from the Illumina EPIC array', 'BMC Genomics, 20, 366', '10.1186/s12864-019-5761-7'),
@@ -443,7 +445,7 @@ def toolBibliographyText() {
     def cell_keys = params.tissue == 'blood' ? ['epidish', 'luo2023'] : []
     def clock_keys = params.skip_clocks ? [] : ['dnamethyage'] + (params.clocks.tokenize(',').contains('DunedinPACE') ? ['dunedinpace'] : [])
     def exploration_keys = (params.skip_dnam_scores ? [] : ['mccartney2018', 'stevenson2021']) + ['lehne2015'] + (params.n_pcs == 'auto' ? ['rmt'] : [])
-    def ewas_keys = params.models ? ['limma', 'bacon', 'mansell2019', 'galwey2009'] + (params.skip_dmr ? [] : ['dmrcate', 'dmrff']) + (params.skip_enrichment ? [] : ['missmethyl']) : []
+    def ewas_keys = params.models ? ['limma', 'bacon', 'mansell2019', 'galwey2009'] + (params.tissue == 'blood' && !params.skip_cell_ewas ? ['celldmc'] : []) + (params.skip_dmr ? [] : ['dmrcate', 'dmrff']) + (params.skip_enrichment ? [] : ['missmethyl']) : []
     return (keys + qc_keys + ['peters2024', 'zhou2017'] + cell_keys + clock_keys + exploration_keys + ewas_keys + ['multiqc']).unique().collect { key -> refs[key] }.join(' ')
 }
 

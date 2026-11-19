@@ -9,10 +9,16 @@
                     "ewas_summary_mqc.tsv:md5,96922cda733ed8dfb320b2a5afca949e"
                 ],
                 "2": [
-                    "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
+                    "ewas_summary_cells.tsv:md5,5f0ae33037330df9c23841168d3e6f06"
                 ],
                 "3": [
+                    "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
+                ],
+                "4": [
                     "versions.yml:md5,288b9285f04a8c7fa50801f1a55457c9"
+                ],
+                "cells": [
+                    "ewas_summary_cells.tsv:md5,5f0ae33037330df9c23841168d3e6f06"
                 ],
                 "meqtl": [
                     "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
@@ -28,7 +34,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-16T14:54:24.527304454",
+        "timestamp": "2026-11-19T22:35:00.612759388",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
@@ -38,32 +44,38 @@
         "content": [
             {
                 "0": [
-                    "ewas_summary.tsv:md5,e85324754741345a5b9178fd206d8777"
+                    "ewas_summary.tsv:md5,1aad75be5836d100b72cf00eed5e39e0"
                 ],
                 "1": [
-                    "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
+                    "ewas_summary_mqc.tsv:md5,03389323fe5d5aa5f4edac011285df1f"
                 ],
                 "2": [
-                    "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
+                    "ewas_summary_cells.tsv:md5,619cf94b9da527447b5fc572b7b34b98"
                 ],
                 "3": [
+                    "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
+                ],
+                "4": [
                     "versions.yml:md5,a7471c16ac9ac0f7c44e4fb5a49e3fc9"
+                ],
+                "cells": [
+                    "ewas_summary_cells.tsv:md5,619cf94b9da527447b5fc572b7b34b98"
                 ],
                 "meqtl": [
                     "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
                 ],
                 "multiqc": [
-                    "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
+                    "ewas_summary_mqc.tsv:md5,03389323fe5d5aa5f4edac011285df1f"
                 ],
                 "summary": [
-                    "ewas_summary.tsv:md5,e85324754741345a5b9178fd206d8777"
+                    "ewas_summary.tsv:md5,1aad75be5836d100b72cf00eed5e39e0"
                 ],
                 "versions": [
                     "versions.yml:md5,a7471c16ac9ac0f7c44e4fb5a49e3fc9"
                 ]
             }
         ],
-        "timestamp": "2026-11-16T14:54:39.464210604",
+        "timestamp": "2026-11-19T22:34:57.073513333",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

@@ -194,6 +194,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Salas LA, Koestler DC, Butler RA, et al. An optimized library for reference-based deconvolution of whole-blood biospecimens assayed using the Illumina HumanMethylationEPIC BeadArray. Genome Biol. 2018;19:64.
 
+- [CellDMC (cell-type-specific association design)](https://doi.org/10.1038/s41592-018-0213-x)
+
+  > Zheng SC, Breeze CE, Beck S, Teschendorff AE. Identification of differentially methylated cell types in epigenome-wide association studies. Nat Methods. 2018;15(12):1059-1066.
+
 - [Houseman constrained projection (IDOL cross-check, EpiDISH method CP)](https://doi.org/10.1186/1471-2105-13-86)
 
   > Houseman EA, Accomando WP, Koestler DC, et al. DNA methylation arrays as surrogate measures of cell mixture distribution. BMC Bioinformatics. 2012;13:86.
@@ -295,6 +299,14 @@ This file is the single reference list for the pipeline. The README, the documen
 - [Effective number of tests](https://doi.org/10.1002/gepi.20408)
 
   > Galwey NW. A new measure of the effective number of tests, a practical tool for comparing families of non-independent significance tests. Genet Epidemiol. 2009;33(7):559-568.
+
+- [Directional Manhattan plots and the presentation of association results](https://doi.org/10.1038/s41467-022-33093-3)
+
+  > Uddin MM, Nguyen NQH, Yu B, et al. Clonal hematopoiesis of indeterminate potential, DNA methylation, and risk for coronary artery disease. Nat Commun. 2022;13:5350.
+
+- [Presentation of association results by direction](https://doi.org/10.1038/s41467-025-59333-w)
+
+  > Kirmani S, Huan T, Van Amburg JC, et al. Epigenome-wide DNA methylation association study of CHIP provides insight into perturbed gene regulation. Nat Commun. 2025;16:4678.
 
 ## Differentially methylated regions and enrichment
 

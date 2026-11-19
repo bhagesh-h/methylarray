@@ -81,3 +81,14 @@ fwrite(result, paste0(prefix, ".tsv"), sep = "\\t", na = "")
 fwrite(data.table(metric = c("rows_read", "rows_cis", "rows_kept", "p_threshold", "cpgs_in_table", "cpgs_on_array"),
                   value = c(rows_read, rows_cis, rows_kept, if ("pval" %in% columns) p_max else NA, nrow(per_name), nrow(result))),
        paste0(prefix, "_summary.tsv"), sep = "\\t", na = "")
+
+# MultiQC: the same numbers as one table row
+writeLines(c(
+    "# id: 'meqtl_summary'",
+    "# section_name: 'meQTL table'",
+    "# description: 'The user-supplied meQTL table (--meqtl): rows read, cis rows, rows below the P threshold, CpG names in the table and the EPIC v2 CpGs they match. Association hits and clock CpGs with a cis-meQTL are reported in the association and clock sections of the HTML report.'",
+    "# plot_type: 'table'"
+), paste0(prefix, "_mqc.tsv"))
+write.table(data.table(Table = "meQTL", rows_read = rows_read, rows_cis = rows_cis, rows_kept = rows_kept,
+                       cpgs_in_table = nrow(per_name), cpgs_on_array = nrow(result)),
+            paste0(prefix, "_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")

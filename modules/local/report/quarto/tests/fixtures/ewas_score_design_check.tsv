@@ -1,0 +1,4 @@
+check	value	p_value	flag
+trait ~ plate	2	0.4985	
+VIF score	1.197		
+VIF cc_Gran	12.41		collinear

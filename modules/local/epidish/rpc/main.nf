@@ -14,7 +14,7 @@ process EPIDISH_RPC {
     tuple val(meta), path("${prefix}.tsv")                   , emit: fractions
     tuple val(meta), path("${prefix}_reference_coverage.tsv"), emit: coverage
     tuple val(meta), path("${prefix}_idol_agreement.tsv")    , emit: idol_agreement
-    tuple val(meta), path("${prefix}_mqc.tsv")               , emit: multiqc
+    tuple val(meta), path("${prefix}*_mqc.tsv")              , emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
     script:

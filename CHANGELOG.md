@@ -41,6 +41,10 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - PCA: the most variable CpGs are ranked by the variance of their beta values (the PCA itself stays on M-values), because ranking by M-value variance favours CpGs near 0 or 1; `pca_associations.tsv` adds the adjusted R-squared, which the report heatmap now shows, so that variables with many levels such as the BeadChip are not overstated.
 - Report: SNP genotypes, clock and score weights, agreement and cell, batch, phenotype and quartile-group plots, R-squared heatmap of the principal components with their variance shares, and gene set enrichment dot plots; MultiQC tables of the top gene sets per model.
 - Developer guide (`docs/developer.md`) and `dev/nfdev container`, which builds a module's images from its `environment.yml` with Wave.
+- Every result reaches both reports. MultiQC adds the regions per DMR method, the meQTL table, the clock and score values (violin plots), the IDOL agreement, the batch tests of the accelerations and scores, and in the association summary the hits with a cis-meQTL and the flagged design checks. The HTML report adds the flagged design checks, the regions per DMR method, the age clocks against reported age, the distributions of the accelerations and scores, and PC1 against PC2.
+- Cell-type-specific association for every model with a binary or continuous trait and blood cell fractions (`--skip_cell_ewas` to skip): the CellDMC design of EpiDISH, fitted for all CpGs at once with limma, in `ewas/<model>/ewas_<model>_cells.tsv.gz`, with hits per lineage in `ewas/ewas_summary_cells.tsv` and MultiQC.
+- HTML report: a directional Manhattan plot (Uddin et al. 2022: -log10 P drawn upwards for higher and downwards for lower methylation, CpGs at FDR < 0.05 coloured) and tables of the top 20 CpGs with higher and with lower methylation, for every model and contrast and for every blood cell lineage of the cell-type-specific association.
+- HTML report figures are publication-ready: one theme, labelled axes and legends, no titles on the images; each figure has a numbered caption with its description, and every figure is also saved as a 300 dpi PNG and a vector PDF in `report/figures/`.
 
 ### `Changed`
 
@@ -57,6 +61,7 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - The test profiles stage the GEO test IDATs four at a time to avoid HTTP 503 responses (#7).
 - MultiQC heatmaps with a single row or column (for example sex as the only phenotype, without a phenotype table or ages) are written with list categories, so MultiQC accepts them.
 - The pipeline download test uses Apptainer 1.4.5, which converts task images whose OCI manifest holds a Docker-typed layer (Apptainer 1.3 refuses them).
+- HTML report: wide tables (cell reference coverage, consensus DMRs) no longer run under the table of contents, which stays in the right margin; tables scroll sideways within the text column. Small P-values print in scientific notation instead of as 0.
 
 ### `Dependencies`
 

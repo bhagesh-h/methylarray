@@ -45,12 +45,36 @@ writeLines(c('"${task.process}":', paste0("    jsonlite: ", packageVersion("json
 
 rows <- rbindlist(lapply(sort(summary_files), function(file) {
     s <- fromJSON(file, simplifyVector = FALSE)
-    base <- list(model = s[["model"]], trait = s[["trait"]], n = s[["n"]], status = s[["status"]])
+    base <- list(model = s[["model"]], trait = s[["trait"]], n = s[["n"]], status = s[["status"]],
+                 design_flags = if (is.null(s[["design_flags"]])) "" else s[["design_flags"]])
     if (is.null(s[["contrasts"]]) || length(s[["contrasts"]]) == 0) return(as.data.table(base))
     rbindlist(lapply(names(s[["contrasts"]]), function(contrast) {
         as.data.table(c(base, list(contrast = contrast), s[["contrasts"]][[contrast]]))
     }), fill = TRUE)
 }), fill = TRUE)
+
+# Cell-type-specific hits (CellDMC design), one row per model and lineage
+cell_rows <- rbindlist(lapply(sort(summary_files), function(file) {
+    s <- fromJSON(file, simplifyVector = FALSE)
+    lineages <- s[["cells"]][["lineages"]]
+    if (is.null(lineages) || length(lineages) == 0) return(NULL)
+    rbindlist(lapply(names(lineages), function(cell) as.data.table(c(list(model = s[["model"]], cell = cell), lineages[[cell]]))), fill = TRUE)
+}), fill = TRUE)
+if (nrow(cell_rows) == 0) {
+    cell_rows <- data.table(model = character(), cell = character(), hits_fdr = integer(), hits_higher = integer(), hits_lower = integer(),
+                            lambda = numeric(), top_cpg = character(), top_p = numeric(), top_estimate = numeric())
+}
+fwrite(cell_rows, paste0(prefix, "_cells.tsv"), sep = "\\t", na = "")
+if (nrow(cell_rows) > 0) {
+    writeLines(c(
+        "# id: 'ewas_cells'",
+        "# section_name: 'Association models: cell types'",
+        "# description: 'Cell-type-specific associations (CellDMC design: the trait times each blood cell lineage, with the other covariates of the model). One row per model and lineage: CpGs at FDR < 0.05 within the lineage, with higher and with lower methylation, genomic lambda, and the top CpG. Small lineages (B, NK) have little power.'",
+        "# plot_type: 'table'"
+    ), paste0(prefix, "_cells_mqc.tsv"))
+    write.table(data.frame(Model = paste0(cell_rows[["model"]], " (", cell_rows[["cell"]], ")"), cell_rows[, !c("model", "cell")], check.names = FALSE),
+                paste0(prefix, "_cells_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")
+}
 
 # Meff and the study-wide threshold over the tested model contrasts
 tests <- list()
@@ -104,12 +128,15 @@ if (nzchar(meqtl_file) && length(tests) > 0) {
 }
 fwrite(meqtl, paste0(prefix, "_meqtl.tsv"), sep = "\\t", na = "")
 
+# MultiQC: the summary, with the hits that have a cis-meQTL when a meQTL list was given
+if (nrow(meqtl) > 0) rows <- merge(rows, meqtl[, .(model, contrast, hits_meqtl, share_hits_meqtl = share_hits)], by = c("model", "contrast"), all.x = TRUE, sort = FALSE)
 columns <- intersect(c("model", "contrast", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_epigenome_wide",
-                       "hits_suggestive", "hits_fdr_bacon", "meff", "p_study_wide", "hits_study_wide", "top_cpg", "top_p", "status"), names(rows))
+                       "hits_suggestive", "hits_fdr_bacon", "meff", "p_study_wide", "hits_study_wide", "hits_meqtl", "share_hits_meqtl",
+                       "top_cpg", "top_p", "status", "design_flags"), names(rows))
 writeLines(c(
     "# id: 'ewas_summary'",
     "# section_name: 'Association models'",
-    "# description: 'One row per model and contrast: complete cases, genomic lambda, bacon inflation and bias, CpGs at FDR < 0.05, P < 9e-8 and P < 1e-5 (and at FDR < 0.05 after bacon), the effective number of tests across the models (Meff) with the study-wide threshold and its hits, and the top CpG.'",
+    "# description: 'One row per model and contrast: complete cases, genomic lambda, bacon inflation and bias, CpGs at FDR < 0.05, P < 9e-8 and P < 1e-5 (and at FDR < 0.05 after bacon), the effective number of tests across the models (Meff) with the study-wide threshold and its hits, the hits with a cis-meQTL (with --meqtl), the top CpG, and the design checks that were flagged (trait confounded with plate or Sentrix row at P < 0.01, or a variance inflation factor above 10).'",
     "# plot_type: 'table'"
 ), paste0(prefix, "_mqc.tsv"))
 table <- rows[, ..columns]
