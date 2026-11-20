@@ -1,0 +1,65 @@
+# Documentation website, built from the repository's Markdown files by
+# dev/docs/build_site.py (into .site/src) and published to GitHub Pages by
+# .github/workflows/docs.yml. Preview locally with: dev/nfdev docs
+site_name: bhagesh-h/methylarray
+site_description: Nextflow pipeline for Illumina DNA methylation arrays (EPIC v2)
+site_url: https://bhagesh-h.github.io/methylarray/
+repo_url: https://github.com/bhagesh-h/methylarray
+repo_name: bhagesh-h/methylarray
+edit_uri: ""
+docs_dir: .site/src
+site_dir: .site/html
+strict: true
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.highlight
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Dark theme
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Light theme
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.details
+
+nav:
+  - Home: index.md
+  - Usage: usage.md
+  - Output: output.md
+  - Citations: citations.md
+  - Changelog: changelog.md
+  - Development:
+      - Contributing: contributing.md
+      - Developer guide: developer.md
+      - Lint exceptions: development/lint_exceptions.md
+
+validation:
+  links:
+    not_found: warn
+    anchors: warn
+    absolute_links: info
+    unrecognized_links: warn

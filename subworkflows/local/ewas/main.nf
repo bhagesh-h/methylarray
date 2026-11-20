@@ -51,7 +51,12 @@ workflow EWAS {
     stats    = EWAS_LIMMA.out.stats    // channel: [ meta, full statistics per model ]
     resolved = EWAS_LIMMA.out.resolved // channel: [ meta, resolved model ]
     top     = EWAS_LIMMA.out.top      // channel: [ meta, top CpGs per model ]
+    design_check = EWAS_LIMMA.out.design_check // channel: [ meta, design checks per model ]
+    characteristics = EWAS_LIMMA.out.characteristics // channel: [ meta, baseline characteristics per model ]
+    cells    = EWAS_LIMMA.out.cells    // channel: [ meta, cell-type-specific statistics per model ]
     summary = EWAS_SUMMARY.out.summary // channel: summary table across models
     multiqc = EWAS_SUMMARY.out.multiqc // channel: MultiQC table
     meqtl   = EWAS_SUMMARY.out.meqtl   // channel: hits with a cis-meQTL per model (header only without --meqtl)
+    comparison = EWAS_SUMMARY.out.comparison // channel: overlap and agreement of every pair of model contrasts
+    cells_summary = EWAS_SUMMARY.out.cells // channel: cell-type-specific hits per model and lineage
 }

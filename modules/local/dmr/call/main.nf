@@ -17,6 +17,7 @@ process DMR_CALL {
     tuple val(meta), path("${prefix}_consensus.tsv"), emit: consensus
     tuple val(meta), path("${prefix}_consensus.bed"), emit: bed
     tuple val(meta), path("${prefix}_summary.json") , emit: summary
+    tuple val(meta), path("${prefix}_mqc.tsv")      , emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
     script:
@@ -28,6 +29,7 @@ process DMR_CALL {
     """
     touch ${prefix}_dmrcate.tsv ${prefix}_dmrff.tsv ${prefix}_consensus.tsv ${prefix}_consensus.bed
     printf '{"model": "${meta.id}", "status": "stub"}\\n' > ${prefix}_summary.json
+    printf "# id: 'dmr_summary'\\n# plot_type: 'table'\\nModel\\tstatus\\n${meta.id}\\tstub\\n" > ${prefix}_mqc.tsv
     printf '"%s":\\n    DMRcate: stub\\n    dmrff: stub\\n' "${task.process}" > versions.yml
     """
 }

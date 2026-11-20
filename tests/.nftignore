@@ -11,3 +11,4 @@ pipeline_info/*.{html,json,txt,yml}
 preprocessing/*/*_se/{assays.h5,se.rds}
 probe_filter/*_se/{assays.h5,se.rds}
 report/methylarray_report.html
+report/figures/*.{png,pdf}

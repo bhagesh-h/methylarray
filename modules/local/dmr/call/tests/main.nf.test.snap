@@ -55,6 +55,14 @@
                     ]
                 ],
                 "5": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_mqc.tsv:md5,8cdf67f21f918997dc7e3790a58bd9f7"
+                    ]
+                ],
+                "6": [
                     "versions.yml:md5,bcc28738990dfd8263ba5850ad9e0dd2"
                 ],
                 "bed": [
@@ -89,6 +97,14 @@
                         "dmr_score_dmrff.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "dmr_score_mqc.tsv:md5,8cdf67f21f918997dc7e3790a58bd9f7"
+                    ]
+                ],
                 "summary": [
                     [
                         {
@@ -102,7 +118,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T15:10:51.5768016",
+        "timestamp": "2026-11-19T22:24:11.469890332",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

@@ -15,7 +15,7 @@
                         {
                             "id": "score"
                         },
-                        "ewas_score_top.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "ewas_score_cells.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "2": [
@@ -23,7 +23,7 @@
                         {
                             "id": "score"
                         },
-                        "ewas_score_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                        "ewas_score_top.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "3": [
@@ -31,7 +31,7 @@
                         {
                             "id": "score"
                         },
-                        "ewas_score_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                        "ewas_score_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "4": [
@@ -39,11 +39,43 @@
                         {
                             "id": "score"
                         },
-                        "ewas_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                        "ewas_score_characteristics.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
                     ]
                 ],
                 "5": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11"
+                    ]
+                ],
+                "6": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_summary.json:md5,c04593bf4c38e22d269c67fcd6139a49"
+                    ]
+                ],
+                "7": [
                     "versions.yml:md5,c844c3649cf66be3426d50d9a5bc8b27"
+                ],
+                "cells": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_cells.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
+                ],
+                "characteristics": [
+                    [
+                        {
+                            "id": "score"
+                        },
+                        "ewas_score_characteristics.tsv:md5,d41d8cd98f00b204e9800998ecf8427e"
+                    ]
                 ],
                 "design_check": [
                     [
@@ -90,7 +122,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T14:33:25.430600115",
+        "timestamp": "2026-11-19T23:01:20.750652952",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

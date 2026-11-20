@@ -267,6 +267,18 @@ write.table(data.frame(Clock = coverage[["clock"]], CpGs = coverage[["cpgs"]], P
                        `Filled values` = coverage[["filled_values"]], check.names = FALSE),
             paste0(prefix, "_coverage_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE)
 
+# MultiQC: the distribution of each clock over the arrays (clock outputs only,
+# not the reported age or the accelerations derived from it)
+clock_columns <- intersect(coverage[["clock"]], names(result))
+writeLines(c(
+    "# id: 'clock_values'",
+    "# section_name: 'Epigenetic clocks: values'",
+    "# description: 'Each clock over the analysed arrays, in its own unit (years for the age clocks, years of ageing per year for DunedinPACE, the estimated mitotic count for epiTOC2). The accelerations and their associations are in the HTML report.'",
+    "# plot_type: 'violin'"
+), paste0(prefix, "_values_mqc.tsv"))
+write.table(data.frame(Sample = result[["sample"]], result[, clock_columns, with = FALSE], check.names = FALSE),
+            paste0(prefix, "_values_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")
+
 # Software versions
 writeLines(c('"${task.process}":',
     paste0("    dnaMethyAge: ", packageVersion("dnaMethyAge", lib.loc = library_dir)),

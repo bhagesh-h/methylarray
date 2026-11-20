@@ -12,6 +12,7 @@ process REPORT_QUARTO {
 
     output:
     path "methylarray_report.html", emit: report
+    path "figures"                , emit: figures
     // Not on the 'versions' topic: the report reads the collated versions, which
     // are only complete when every process on the topic has finished
     path "versions.yml", emit: versions
@@ -40,6 +41,7 @@ process REPORT_QUARTO {
     stub:
     """
     touch methylarray_report.html
+    mkdir figures
     printf '"%s":\\n    quarto: stub\\n    R: stub\\n' "${task.process}" > versions.yml
     """
 }

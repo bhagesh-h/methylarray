@@ -12,7 +12,9 @@ process EWAS_SUMMARY {
 
     output:
     path "${prefix}.tsv"    , emit: summary
-    path "${prefix}_mqc.tsv", emit: multiqc
+    path "${prefix}*_mqc.tsv", emit: multiqc
+    path "${prefix}_cells.tsv", emit: cells
+    path "${prefix}_comparison.tsv", emit: comparison
     path "${prefix}_meqtl.tsv", emit: meqtl
     path "versions.yml", emit: versions, topic: versions
 
@@ -25,6 +27,8 @@ process EWAS_SUMMARY {
     """
     printf 'model\\tn\\tstatus\\n' > ${prefix}.tsv
     printf 'Model\\n' > ${prefix}_mqc.tsv
+    printf 'model\\tcell\\thits_fdr\\n' > ${prefix}_cells.tsv
+    printf 'contrast_a\\tcontrast_b\\n' > ${prefix}_comparison.tsv
     printf 'model\\tcontrast\\ttested\\ttested_meqtl\\thits_fdr\\thits_meqtl\\tshare_tested\\tshare_hits\\todds_ratio\\tp_value\\n' > ${prefix}_meqtl.tsv
     printf '"%s":\\n    jsonlite: stub\\n' "${task.process}" > versions.yml
     """

@@ -9,10 +9,22 @@
                     "ewas_summary_mqc.tsv:md5,96922cda733ed8dfb320b2a5afca949e"
                 ],
                 "2": [
-                    "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
+                    "ewas_summary_cells.tsv:md5,5f0ae33037330df9c23841168d3e6f06"
                 ],
                 "3": [
+                    "ewas_summary_comparison.tsv:md5,178b8b51032e8f9b388a4b070661fc49"
+                ],
+                "4": [
+                    "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
+                ],
+                "5": [
                     "versions.yml:md5,288b9285f04a8c7fa50801f1a55457c9"
+                ],
+                "cells": [
+                    "ewas_summary_cells.tsv:md5,5f0ae33037330df9c23841168d3e6f06"
+                ],
+                "comparison": [
+                    "ewas_summary_comparison.tsv:md5,178b8b51032e8f9b388a4b070661fc49"
                 ],
                 "meqtl": [
                     "ewas_summary_meqtl.tsv:md5,d51643c56811d23ddb0eca78a0b6a356"
@@ -28,7 +40,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-16T14:54:24.527304454",
+        "timestamp": "2026-11-19T23:01:28.089496925",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
@@ -38,32 +50,50 @@
         "content": [
             {
                 "0": [
-                    "ewas_summary.tsv:md5,e85324754741345a5b9178fd206d8777"
+                    "ewas_summary.tsv:md5,1aad75be5836d100b72cf00eed5e39e0"
                 ],
                 "1": [
-                    "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
+                    [
+                        "ewas_summary_comparison_mqc.tsv:md5,b606dfa56f1c33e93fdfa2f4b6ef4586",
+                        "ewas_summary_mqc.tsv:md5,03389323fe5d5aa5f4edac011285df1f"
+                    ]
                 ],
                 "2": [
-                    "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
+                    "ewas_summary_cells.tsv:md5,c20dd510bb8b1a715ded0bde9d36b0d1"
                 ],
                 "3": [
+                    "ewas_summary_comparison.tsv:md5,66e3d451a9448078ca818ea2be5b61ff"
+                ],
+                "4": [
+                    "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
+                ],
+                "5": [
                     "versions.yml:md5,a7471c16ac9ac0f7c44e4fb5a49e3fc9"
+                ],
+                "cells": [
+                    "ewas_summary_cells.tsv:md5,c20dd510bb8b1a715ded0bde9d36b0d1"
+                ],
+                "comparison": [
+                    "ewas_summary_comparison.tsv:md5,66e3d451a9448078ca818ea2be5b61ff"
                 ],
                 "meqtl": [
                     "ewas_summary_meqtl.tsv:md5,e719d18d17a3bf49e740aa8361b1db7e"
                 ],
                 "multiqc": [
-                    "ewas_summary_mqc.tsv:md5,32eeed0cb03681484df7bcf09689c5b3"
+                    [
+                        "ewas_summary_comparison_mqc.tsv:md5,b606dfa56f1c33e93fdfa2f4b6ef4586",
+                        "ewas_summary_mqc.tsv:md5,03389323fe5d5aa5f4edac011285df1f"
+                    ]
                 ],
                 "summary": [
-                    "ewas_summary.tsv:md5,e85324754741345a5b9178fd206d8777"
+                    "ewas_summary.tsv:md5,1aad75be5836d100b72cf00eed5e39e0"
                 ],
                 "versions": [
                     "versions.yml:md5,a7471c16ac9ac0f7c44e4fb5a49e3fc9"
                 ]
             }
         ],
-        "timestamp": "2026-11-16T14:54:39.464210604",
+        "timestamp": "2026-11-20T13:11:41.234450862",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

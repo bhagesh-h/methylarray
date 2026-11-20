@@ -28,7 +28,7 @@ process EXPLORATION_PCA {
     prefix = task.ext.prefix ?: "pca"
     """
     printf 'sample\\n' > ${prefix}_ctrl_pcs.tsv
-    printf 'pc\\tvariance_explained\\tcumulative\\n' > ${prefix}_ctrl_pca_variance.tsv
+    printf 'pc\\tvariance_explained\\tcumulative\\tsex_removed\\n' > ${prefix}_ctrl_pca_variance.tsv
     printf 'sample\\tPC1\\n' > ${prefix}_scores.tsv
     printf 'pc\\tvariance_explained\\tcumulative\\ttested\\n' > ${prefix}_variance.tsv
     printf 'variable\\tgroup\\tpc\\ttest\\tn\\tr_squared\\tp_value\\n' > ${prefix}_associations.tsv

@@ -190,6 +190,18 @@ mqc <- data.frame(Sample = out[["sample"]], out[, paste0("lineage_", colnames(li
 names(mqc) <- sub("^lineage_", "", names(mqc))
 write.table(mqc,
             paste0(prefix, "_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE)
+if (nrow(agreement) > 0) {
+    # MultiQC: agreement of the lineages with the IDOL cross-check
+    writeLines(c(
+        "# id: 'cell_fractions_idol'",
+        "# section_name: 'Cell composition: IDOL cross-check'",
+        "# description: 'Each cent12CT lineage against the matching IDOL cell type (FlowSorted.Blood.EPIC, constrained projection): Spearman rho over the arrays and the mean difference of the fractions. Gran includes eosinophils and basophils; IDOL neutrophils do not.'",
+        "# plot_type: 'table'"
+    ), paste0(prefix, "_idol_mqc.tsv"))
+    write.table(data.frame(Lineage = agreement[["lineage"]], `IDOL type` = agreement[["idol_type"]], rho = agreement[["rho"]],
+                           `Mean difference` = agreement[["mean_difference"]], Arrays = agreement[["n"]], check.names = FALSE),
+                paste0(prefix, "_idol_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE)
+}
 
 # Software versions
 writeLines(c('"${task.process}":',

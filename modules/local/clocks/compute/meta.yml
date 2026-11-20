@@ -104,9 +104,9 @@ output:
     - - meta:
           type: map
           description: Groovy Map with the preprocessing method as id
-      - "${prefix}_coverage_mqc.tsv":
+      - "${prefix}_*_mqc.tsv":
           type: file
-          description: MultiQC table of the clock coverage
+          description: MultiQC custom content with the clock coverage table and the clock values (violin plot)
           pattern: "*_mqc.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475

@@ -236,6 +236,19 @@ if (length(batches) > 0 && length(measures) > 0) {
     if (is.null(batch)) batch <- empty(c("measure", "batch", "adj_r2", "p", "levels", "n"))
 }
 write_tsv(round_table(batch), paste0(prefix, "_batch.tsv"))
+if (nrow(batch) > 0) {
+    # MultiQC: one row per measure, the F-test P of each batch variable
+    wide <- reshape(batch[, c("measure", "batch", "p")], idvar = "measure", timevar = "batch", direction = "wide")
+    names(wide) <- sub("^p[.]", "P ", names(wide))
+    names(wide)[1] <- "Measure"
+    writeLines(c(
+        "# id: 'biomarker_batch'",
+        "# section_name: 'Clocks and scores: technical batches'",
+        "# description: 'F-test P of each acceleration and score against the DNA plate, BeadChip and Sentrix row. A small P means the batch explains part of the measure; then include it in the models.'",
+        "# plot_type: 'table'"
+    ), paste0(prefix, "_batch_mqc.tsv"))
+    write.table(round_table(wide), paste0(prefix, "_batch_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")
+}
 
 # Contamination: DNA from another person pulls beta values towards the middle
 # and can bias clocks. The SNP outlier score against every measure, and the

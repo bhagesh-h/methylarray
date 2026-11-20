@@ -64,7 +64,7 @@ nextflow_process {
                 // genotype-robust clocks: the Horvath acceleration agrees more closely than the Hannum one
                 { assert robust.collect { row -> row.measure } == ['HorvathS2013 acceleration', 'HannumG2013 acceleration'] },
                 { assert (robust[0].rho as double) > 0.8 && (robust[1].rho as double) < (robust[0].rho as double) },
-                { assert process.out.multiqc[0][1].size() == 5 },
+                { assert process.out.multiqc[0][1].size() == 6 && process.out.multiqc[0][1].any { f -> f.toString().endsWith('_batch_mqc.tsv') } },
                 { assert snapshot(process.out.agreement, process.out.cells_measures, process.out.cells_phenotypes, process.out.batch,
                                   process.out.phenotypes, process.out.quartiles, process.out.contamination, process.out.ancestry, process.out.robust, process.out.versions).match() }
             )

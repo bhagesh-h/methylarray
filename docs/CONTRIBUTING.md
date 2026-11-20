@@ -41,6 +41,17 @@ The environment includes pre-installed nf-core tools, Nextflow, and a few other 
 
 To get started, open the repository in [Codespaces](https://github.com/bhagesh-h/methylarray/codespaces).
 
+### Documentation website
+
+The documentation website ([bhagesh-h.github.io/methylarray](https://bhagesh-h.github.io/methylarray/)) is built from the Markdown files in this repository: `README.md` is the home page, `docs/*.md` the guides, and `CITATIONS.md` and `CHANGELOG.md` their own pages. Edit those files, not the website. `dev/docs/build_site.py` assembles them into `.site/src` and rewrites the links between them; `mkdocs.yml` sets the navigation and theme. Preview your changes in Docker with:
+
+```bash
+dev/nfdev docs          # build into .site/html
+dev/nfdev docs serve    # preview at http://localhost:8000
+```
+
+Every pull request builds the website in strict mode, so a broken link or anchor fails the check. The website is published only from `main`, so it always describes the released pipeline. A new page needs an entry in `PAGES` of `dev/docs/build_site.py` and in `nav` of `mkdocs.yml`.
+
 ### Testing
 
 Once you have made your changes, run the tests with nf-test locally.

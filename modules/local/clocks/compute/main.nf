@@ -17,7 +17,7 @@ process CLOCKS_COMPUTE {
     tuple val(meta), path("${prefix}_coverage.tsv")    , emit: coverage
     tuple val(meta), path("${prefix}_weights.tsv")     , emit: weights
     tuple val(meta), path("${prefix}_robust.tsv")      , emit: robust, optional: true
-    tuple val(meta), path("${prefix}_coverage_mqc.tsv"), emit: multiqc
+    tuple val(meta), path("${prefix}_*_mqc.tsv")       , emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
     script:
