@@ -62,14 +62,14 @@ cell_rows <- rbindlist(lapply(sort(summary_files), function(file) {
 }), fill = TRUE)
 if (nrow(cell_rows) == 0) {
     cell_rows <- data.table(model = character(), cell = character(), hits_fdr = integer(), hits_higher = integer(), hits_lower = integer(),
-                            lambda = numeric(), top_cpg = character(), top_p = numeric(), top_estimate = numeric())
+                            lambda = numeric(), median_fraction = numeric(), status = character(), top_cpg = character(), top_p = numeric(), top_estimate = numeric())
 }
 fwrite(cell_rows, paste0(prefix, "_cells.tsv"), sep = "\\t", na = "")
 if (nrow(cell_rows) > 0) {
     writeLines(c(
         "# id: 'ewas_cells'",
         "# section_name: 'Association models: cell types'",
-        "# description: 'Cell-type-specific associations (CellDMC design: the trait times each blood cell lineage, with the other covariates of the model). One row per model and lineage: CpGs at FDR < 0.05 within the lineage, with higher and with lower methylation, genomic lambda, and the top CpG. Small lineages (B, NK) have little power.'",
+        "# description: 'Cell-type-specific associations (CellDMC design: the trait times each blood cell lineage, with the other covariates of the model). One row per model and lineage: CpGs at FDR < 0.05 within the lineage, with higher and with lower methylation, genomic lambda, the median fraction of the lineage, its status and the top CpG. Lineages with a median fraction below 5% or a lambda above 1.3 are marked unreliable: their interaction estimates are unstable and can give thousands of false hits.'",
         "# plot_type: 'table'"
     ), paste0(prefix, "_cells_mqc.tsv"))
     write.table(data.frame(Model = paste0(cell_rows[["model"]], " (", cell_rows[["cell"]], ")"), cell_rows[, !c("model", "cell")], check.names = FALSE),

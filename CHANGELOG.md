@@ -64,6 +64,8 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - MultiQC heatmaps with a single row or column (for example sex as the only phenotype, without a phenotype table or ages) are written with list categories, so MultiQC accepts them.
 - The pipeline download test uses Apptainer 1.4.5, which converts task images whose OCI manifest holds a Docker-typed layer (Apptainer 1.3 refuses them).
 - HTML report: wide tables (cell reference coverage, consensus DMRs) no longer run under the table of contents, which stays in the right margin; tables scroll sideways within the text column. Small P-values print in scientific notation instead of as 0.
+- Control-probe PCs no longer carry sex. Some normalisation controls differ between women and men, which gave a PC that followed predicted sex (r = -0.92 in a 299-array run). Models with both `@sex` and `@ctrlpcs` then had collinear covariates (VIF about 100). Predicted sex is now removed from every control probe before the PCA; `pca_ctrl_pca_variance.tsv` records it in `sex_removed`.
+- Cell-type-specific association: lineages with a median fraction below 5% or a genomic lambda above 1.3 are marked unreliable (`lineage_status`, `status`). In a 299-array run, B cells (about 3%) gave about 48,000 hits at lambda 1.5 to 1.6 for traits without a hit in the main model. The HTML report lists them without plots or top tables. The limits are the `EWAS_LIMMA` options `--min_cell_fraction` and `--max_cell_lambda` (`ext.args`).
 
 ### `Dependencies`
 

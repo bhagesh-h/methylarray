@@ -41,6 +41,16 @@ nextflow_process {
                 { assert process.success },
                 // auto rule: the smallest number of control-probe PCs explaining at least 90% of the variance
                 { assert ctrl[0].split('\t') as List == ['sample', 'ctrl_PC1', 'ctrl_PC2', 'ctrl_PC3'] && ctrl.size() == 7 },
+                // predicted sex (2 women, 4 men) is removed from the control probes: every kept PC is uncorrelated with it
+                { assert path(process.out.ctrl_variance[0][1]).readLines()[1].split('\t')[3] == 'TRUE' },
+                { assert ctrl[0].split('\t').drop(1).every { pc ->
+                    def column = ctrl[0].split('\t').toList().indexOf(pc)
+                    def x = ctrl.drop(1).collect { line -> line.split('\t')[column] as double }
+                    def s = ctrl.drop(1).collect { line -> ['BeCOME_1', 'BeCOME_2'].contains(line.split('\t')[0]) ? 0d : 1d }
+                    def mx = x.sum() / x.size(); def ms = s.sum() / s.size()
+                    def cov = [x, s].transpose().collect { a, b -> (a - mx) * (b - ms) }.sum()
+                    Math.abs(cov / Math.sqrt(x.collect { a -> (a - mx) ** 2 }.sum() * s.collect { b -> (b - ms) ** 2 }.sum())) < 1e-4
+                } },
                 // every variable group is tested, including the phenotype columns
                 { assert rows.collect { row -> row.group }.unique().sort() == ['biological', 'control metrics', 'phenotype', 'technical'] },
                 { assert rows.collect { row -> row.variable }.contains('control: bisulfite_conversion_ii') },

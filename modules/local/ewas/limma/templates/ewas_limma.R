@@ -15,7 +15,11 @@
 #      (Zheng et al. 2018), beta ~ lineages + trait:lineages + the other
 #      covariates without an intercept, fitted for all CpGs at once with limma
 #      lmFit (the same estimates as CellDMC's per-CpG lm) and an ordinary t-test
-#      of each interaction; BH FDR within each lineage
+#      of each interaction; BH FDR within each lineage. A lineage is marked
+#      unreliable when its median fraction is below --min_cell_fraction (5%)
+#      or its genomic lambda is above --max_cell_lambda (1.3): with B cells at
+#      about 3%, the interaction gave about 48,000 hits at lambda 1.5 to 1.6
+#      for traits without a single hit in the main model (299-array run)
 # Token expansion: @cells = cc_CD4T, cc_CD8T, cc_B, cc_NK, cc_Mono (granulocytes
 # as reference); @ctrlpcs = the kept control-probe PCs (ctrlpc1..k); @technical =
 # plate, sentrix_row; @sex = predicted_sex; @smoking = dnam_smoking (McCartney et al. 2018);
@@ -33,7 +37,7 @@ ctrl_file <- "${ctrl_pcs}"
 ancestry_file <- "${ancestry_pcs}"
 scores_file <- "${dnam_scores}"
 
-defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000", cell_ewas = "true")
+defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000", cell_ewas = "true", min_cell_fraction = "0.05", max_cell_lambda = "1.3")
 parse_args <- function(x, defaults) {
     tokens <- strsplit(trimws(x), "[[:space:]]+")[[1]]
     tokens <- tokens[nzchar(tokens)]
@@ -159,7 +163,7 @@ report <- list(model = model[["name"]], trait = trait, trait_type = model[["trai
                 n_dropped = sum(!keep), covariates = covariate_names, block = block)
 characteristics <- data.table(variable = character(), level = character(), p_value = numeric())
 empty_cells <- data.table(cpg_id = character(), chr = character(), pos = integer(), gene = character(), contrast = character(), cell = character(),
-                          estimate = numeric(), se = numeric(), t = numeric(), p_value = numeric(), fdr = numeric())
+                          estimate = numeric(), se = numeric(), t = numeric(), p_value = numeric(), fdr = numeric(), lineage_status = character())
 # fwrite leaves a header-only .gz without its gzip trailer: write those through a connection
 write_gz <- function(table, file) {
     if (nrow(table) > 0) return(fwrite(table, file, sep = "\\t", na = ""))
@@ -425,16 +429,28 @@ if (!nzchar(cell_note)) {
             setorder(table, p_value)
             table
         }))
+        # lineages too small, or too inflated, to trust
+        median_fraction <- apply(fractions, 2, median)
+        lineage_status <- vapply(names(median_fraction), function(l) {
+            p <- cells_table[["p_value"]][cells_table[["cell"]] == l]
+            lambda <- genomic_lambda(p)
+            reasons <- c(if (median_fraction[[l]] < as.numeric(opts[["min_cell_fraction"]])) sprintf("median fraction %.1f%% below %.0f%%", 100 * median_fraction[[l]], 100 * as.numeric(opts[["min_cell_fraction"]])),
+                         if (is.finite(lambda) && lambda > as.numeric(opts[["max_cell_lambda"]])) sprintf("lambda %.2f above %s", lambda, opts[["max_cell_lambda"]]))
+            if (length(reasons)) paste0("unreliable: ", paste(reasons, collapse = "; ")) else "ok"
+        }, character(1))
+        cells_table[, lineage_status := lineage_status[cell]]
         cell_note <- "run"
     }
 }
 report[["cells"]] <- list(status = cell_note)
 if (nrow(cells_table) > 0) {
-    report[["cells"]][["lineages"]] <- lapply(split(cells_table, by = "cell", keep.by = FALSE), function(x) list(
+    report[["cells"]][["lineages"]] <- lapply(split(cells_table, by = "cell"), function(x) list(
         hits_fdr = sum(x[["fdr"]] < fdr_level, na.rm = TRUE),
         hits_higher = sum(x[["fdr"]] < fdr_level & x[["estimate"]] > 0, na.rm = TRUE),
         hits_lower = sum(x[["fdr"]] < fdr_level & x[["estimate"]] < 0, na.rm = TRUE),
         lambda = round(genomic_lambda(x[["p_value"]]), 4),
+        median_fraction = round(median_fraction[[x[["cell"]][1]]], 4),
+        status = x[["lineage_status"]][1],
         top_cpg = x[["cpg_id"]][1], top_p = x[["p_value"]][1], top_estimate = x[["estimate"]][1]))
 }
 write_outputs(rbindlist(stats), rbindlist(tops), design_check, "tested", cells_table)

@@ -6,7 +6,7 @@
                     {
                         "id": "minfi"
                     },
-                    "pca_ctrl_pcs.tsv:md5,1c4434415ef7374778930d76ef3ac785"
+                    "pca_ctrl_pcs.tsv:md5,79c4061f1d939f6350291eee677ac9ad"
                 ]
             ],
             [
@@ -22,14 +22,14 @@
                     {
                         "id": "minfi"
                     },
-                    "pca_associations.tsv:md5,9e0878c577145ab57f90337214f2f9e0"
+                    "pca_associations.tsv:md5,8e3eab81ac9995bb41337f7ea04e2d92"
                 ]
             ],
             [
                 "versions.yml:md5,c6fb72d768c0d6d22f0bd1603c0db3ad"
             ]
         ],
-        "timestamp": "2026-11-16T19:24:12.663730337",
+        "timestamp": "2026-11-20T13:11:52.255164959",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
@@ -51,7 +51,7 @@
                         {
                             "id": "minfi"
                         },
-                        "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94"
+                        "pca_ctrl_pca_variance.tsv:md5,fb934e0829671e227d54342cef0865d1"
                     ]
                 ],
                 "2": [
@@ -118,7 +118,7 @@
                         {
                             "id": "minfi"
                         },
-                        "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94"
+                        "pca_ctrl_pca_variance.tsv:md5,fb934e0829671e227d54342cef0865d1"
                     ]
                 ],
                 "multiqc": [
@@ -158,7 +158,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-15T18:34:38.974063596",
+        "timestamp": "2026-11-20T13:12:03.288393568",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

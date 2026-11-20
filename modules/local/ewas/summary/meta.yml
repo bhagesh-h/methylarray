@@ -48,7 +48,7 @@ output:
   cells:
     - "${prefix}_cells.tsv":
         type: file
-        description: Cell-type-specific hits per model and lineage (header only when no model ran the cell-type analysis)
+        description: Cell-type-specific hits per model and lineage, with the median fraction and status of the lineage (header only when no model ran the cell-type analysis)
         pattern: "*_cells.tsv"
         ontologies:
           - edam: http://edamontology.org/format_3475

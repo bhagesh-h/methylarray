@@ -265,7 +265,7 @@
                 "ancestry_pcs_summary.tsv:md5,b9f69004490c31ec97731e45592a03a1",
                 "ancestry_pcs_variance.tsv:md5,51b0e4e831c09953be63b0ecc7ba8340",
                 "pca_associations.tsv:md5,ad9be22e4e7a74c14b6bad99b7365e2b",
-                "pca_ctrl_pca_variance.tsv:md5,eafddf88f49c1cc3dd92982eb94ead94",
+                "pca_ctrl_pca_variance.tsv:md5,fb934e0829671e227d54342cef0865d1",
                 "pca_ctrl_pcs.tsv:md5,5177a58dc65c8a14dc90c69db3bf3dd2",
                 "pca_outliers.tsv:md5,9a7a9681db36858bd2bcd7ca0392825d",
                 "pca_scores.tsv:md5,fc4f6d4673bc687f89061fe547ffe151",
@@ -294,7 +294,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-19T23:05:27.776173417",
+        "timestamp": "2026-11-20T13:20:59.960412522",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

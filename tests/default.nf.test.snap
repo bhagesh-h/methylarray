@@ -225,9 +225,9 @@
                 "ancestry_pcs_associations.tsv:md5,26542c75c72d43e960aab98f33cfb9d8",
                 "ancestry_pcs_summary.tsv:md5,8de11af72fdcc2a15984b2f48056324c",
                 "ancestry_pcs_variance.tsv:md5,51b0e4e831c09953be63b0ecc7ba8340",
-                "pca_associations.tsv:md5,f701cf81c08473016c79a5d88ac58002",
-                "pca_ctrl_pca_variance.tsv:md5,07795144a3a8f98882c2f26b672f28c9",
-                "pca_ctrl_pcs.tsv:md5,1c4434415ef7374778930d76ef3ac785",
+                "pca_associations.tsv:md5,0a4d9a18013e597ef1864e0260042bce",
+                "pca_ctrl_pca_variance.tsv:md5,d1ac894e3ebcce0934c1ac26c9591c0d",
+                "pca_ctrl_pcs.tsv:md5,79c4061f1d939f6350291eee677ac9ad",
                 "pca_outliers.tsv:md5,3cf99426f79b10737876d7be6610492e",
                 "pca_scores.tsv:md5,7084aab22117aea6f2e4245d85c679c0",
                 "pca_variance.tsv:md5,2c57b123a2de3d52b7e184e46c2a581d",
@@ -241,7 +241,7 @@
                 "multiqc_dnam_score_values.txt:md5,741ccd1707aa4420333a27212afa2df0",
                 "multiqc_dnam_scores_coverage.txt:md5,89f2bee3f5f4ec6f2029d43f3bc3d067",
                 "multiqc_general_stats.txt:md5,4d2448c93dd797b6dcd62dd199ef2ad6",
-                "multiqc_pca_associations_plot.txt:md5,bc85ed355822ef131b402f46098ea947",
+                "multiqc_pca_associations_plot.txt:md5,0c8384b2ef95f72365f71c1f78c9321c",
                 "multiqc_pca_scatter_plot.txt:md5,08a9912e449550784c8fd3f3867a1378",
                 "multiqc_pca_scree_plot.txt:md5,79593d50ad670fd8761846410917a760",
                 "multiqc_probe_attrition_plot.txt:md5,0cafd1689ba4efd85f7715d0448dd4a3",
@@ -263,7 +263,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-19T23:10:44.771206593",
+        "timestamp": "2026-11-20T13:26:22.864942602",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
