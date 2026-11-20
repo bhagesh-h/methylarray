@@ -7,9 +7,9 @@
 #     explains at least 90% of the variance (at most 20). Predicted sex is
 #     removed from every control probe first (linear regression, when both
 #     sexes have at least two arrays): some normalisation controls (NORM_A, C,
-#     G, T) differ between women and men (|r| up to 0.85 in a 299-array run,
-#     likely X-chromosome cross-hybridisation), which gave a PC that followed
-#     sex (r = -0.92) and made @sex and @ctrlpcs collinear (VIF about 100)
+#     G, T) can differ between women and men (likely X-chromosome
+#     cross-hybridisation), which can give a PC that follows sex and makes
+#     @sex and @ctrlpcs collinear
 #   - PCA of the --n_variable_cpgs most variable CpGs on the M-value scale
 #     (missing values set to the CpG mean for the PCA only); --n_pcs, or with
 #     'auto' the random matrix theory estimate of isva::EstDimRMT (at most 20).

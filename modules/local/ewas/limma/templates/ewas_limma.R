@@ -17,9 +17,9 @@
 #      lmFit (the same estimates as CellDMC's per-CpG lm) and an ordinary t-test
 #      of each interaction; BH FDR within each lineage. A lineage is marked
 #      unreliable when its median fraction is below --min_cell_fraction (5%)
-#      or its genomic lambda is above --max_cell_lambda (1.3): with B cells at
-#      about 3%, the interaction gave about 48,000 hits at lambda 1.5 to 1.6
-#      for traits without a single hit in the main model (299-array run)
+#      or its genomic lambda is above --max_cell_lambda (1.3): with a small
+#      fraction, the interaction estimate is unstable and can give thousands of
+#      false hits, even for traits without a hit in the main model
 # Token expansion: @cells = cc_CD4T, cc_CD8T, cc_B, cc_NK, cc_Mono (granulocytes
 # as reference); @ctrlpcs = the kept control-probe PCs (ctrlpc1..k); @technical =
 # plate, sentrix_row; @sex = predicted_sex; @smoking = dnam_smoking (McCartney et al. 2018);
