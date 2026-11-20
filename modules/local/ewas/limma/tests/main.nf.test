@@ -49,7 +49,47 @@ nextflow_process {
                 { assert stats.hits_fdr >= 20 && stats.hits_fdr <= 22 },
                 { assert stats.lambda > 0.8 && stats.lambda < 1.3 },
                 { assert path(process.out.design_check[0][1]).text.contains('trait ~ plate') },
+                // every lineage of the fixture has a median fraction above 5% and no inflation
+                { assert summary.cells.status == 'run' && summary.cells.lineages.values().every { l -> l.status == 'ok' && l.median_fraction > 0.05 } },
                 { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+
+    test("cell lineages below the minimum fraction are unreliable") {
+
+        tag "fast"
+        config "./nextflow_cells.config"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'score' ],
+                    file("$moduleTestDir/model_score.json", checkIfExists: true),
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
+                    file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ancestry_pcs.tsv", checkIfExists: true),
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def lineages = new groovy.json.JsonSlurper().parse(path(process.out.summary[0][1]).toFile()).cells.lineages
+            def rows = path(process.out.cells[0][1]).linesGzip.drop(1).collect { line -> line.split('\t', -1) as List }
+            assertAll(
+                { assert process.success },
+                // median fractions: B 0.21, CD4T 0.17, CD8T 0.16, NK 0.15, Gran 0.15, Mono 0.14; only B reaches 0.2
+                { assert lineages.B.status == 'ok' },
+                { assert ['CD4T', 'CD8T', 'NK', 'Mono', 'Gran'].every { l -> lineages[l].status.startsWith('unreliable: median fraction') } },
+                // the per-CpG table carries the status of its lineage
+                { assert rows.findAll { r -> r[5] == 'NK' }.every { r -> r[-1].startsWith('unreliable') } }
             )
         }
     }

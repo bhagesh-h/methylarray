@@ -842,14 +842,16 @@ for (file in find("^ewas_.*_stats\\.tsv\\.gz$")) {
         cells_stats <- read(cells_file)
         if (nrow(cells_stats) > 0) {
             cat("\n\n### ", model, ": cell types\n\n", sep = "")
-            cat("Cell-type-specific association (the CellDMC design of EpiDISH, Zheng et al. 2018): beta values on the six blood cell lineages, the trait times each lineage and the other covariates of the model. Each interaction tests whether the trait changes methylation within one lineage; the estimate is the change in beta within that lineage per unit of the trait (or between the groups). FDR within each lineage. Lineages with small fractions (B, NK) have little power, and an estimate can only be as good as the cell fractions.\n\n")
+            cat("Cell-type-specific association (the CellDMC design of EpiDISH, Zheng et al. 2018): beta values on the six blood cell lineages, the trait times each lineage and the other covariates of the model. Each interaction tests whether the trait changes methylation within one lineage; the estimate is the change in beta within that lineage per unit of the trait (or between the groups). FDR within each lineage. Lineages with a median fraction below 5% or a genomic lambda above 1.3 are marked unreliable and get no plots or tables: with small fractions the interaction estimate is unstable and can give thousands of false hits. An estimate can only be as good as the cell fractions.\n\n")
             counts <- cells_stats[, .(`Hits (FDR < 0.05)` = sum(fdr < 0.05, na.rm = TRUE), Higher = sum(fdr < 0.05 & estimate > 0, na.rm = TRUE),
                                       Lower = sum(fdr < 0.05 & estimate < 0, na.rm = TRUE),
                                       Lambda = round(median(qchisq(p_value, 1, lower.tail = FALSE), na.rm = TRUE) / qchisq(0.5, 1), 3),
-                                      `Top CpG` = cpg_id[which.min(p_value)], `Top P` = min(p_value, na.rm = TRUE)), by = .(Lineage = cell)]
+                                      `Top CpG` = cpg_id[which.min(p_value)], `Top P` = min(p_value, na.rm = TRUE),
+                                      Status = if ("lineage_status" %in% names(cells_stats)) lineage_status[1] else "ok"), by = .(Lineage = cell)]
             print(kable(counts, caption = paste0(model, ": cell-type-specific hits per lineage")))
             for (lineage in unique(cells_stats[["cell"]])) {
                 part <- cells_stats[cell == lineage]
+                if ("lineage_status" %in% names(part) && part[["lineage_status"]][1] != "ok") next
                 points <- manhattan_points(part, "estimate")
                 if (nrow(points) > 0) {
                     show_plot(directional_genome(points, threshold_lines(part), paste0(model, ", ", lineage, " lineage: CpGs with higher and lower methylation within the lineage")),

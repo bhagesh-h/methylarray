@@ -89,7 +89,7 @@ output:
           description: Groovy Map with the model name as id
       - "${prefix}_cells.tsv.gz":
           type: file
-          description: Cell-type-specific statistics (CellDMC design) of every CpG and blood cell lineage, with annotation, estimate, SE, t, P and FDR within the lineage (header only when not run)
+          description: Cell-type-specific statistics (CellDMC design) of every CpG and blood cell lineage, with annotation, estimate, SE, t, P, FDR within the lineage and the lineage status (unreliable below a median fraction of 5% or above a lambda of 1.3; header only when not run)
           pattern: "*_cells.tsv.gz"
           ontologies:
             - edam: http://edamontology.org/format_3475

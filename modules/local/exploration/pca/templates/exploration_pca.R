@@ -4,7 +4,12 @@
 #   - control-probe PCs (Lehne et al. 2015): PCA of the log2, standardised
 #     intensities of the non-negative control probes in both channels; the
 #     number kept is --n_ctrl_pcs, or with 'auto' the smallest number that
-#     explains at least 90% of the variance (at most 20)
+#     explains at least 90% of the variance (at most 20). Predicted sex is
+#     removed from every control probe first (linear regression, when both
+#     sexes have at least two arrays): some normalisation controls (NORM_A, C,
+#     G, T) can differ between women and men (likely X-chromosome
+#     cross-hybridisation), which can give a PC that follows sex and makes
+#     @sex and @ctrlpcs collinear
 #   - PCA of the --n_variable_cpgs most variable CpGs on the M-value scale
 #     (missing values set to the CpG mean for the PCA only); --n_pcs, or with
 #     'auto' the random matrix theory estimate of isva::EstDimRMT (at most 20).
@@ -72,15 +77,28 @@ n <- length(arrays)
 if (n < 3) stop("PCA needs at least three arrays, found ", n)
 pc_limit <- min(max_pcs, n - 1)
 
+# Arrays' sample and QC tables (predicted sex for the control-probe PCs, and the
+# variables tested against the PCs)
+samples <- read_table(samples_file)[match(arrays, sample)]
+sample_qc <- read_table(sample_qc_file)[match(arrays, sample)]
+sex_column <- grep("^predicted_sex_", names(sample_qc), value = TRUE)[1]
+
 # Control-probe PCs
 ctrl_scores <- data.table(sample = arrays)
-ctrl_variance <- data.table(pc = character(), variance_explained = numeric(), cumulative = numeric())
+ctrl_variance <- data.table(pc = character(), variance_explained = numeric(), cumulative = numeric(), sex_removed = logical())
 if (nzchar(controls_file)) {
     controls <- read_table(controls_file)
     ctrl <- as.matrix(controls[group != "NEGATIVE", ..arrays])
     ctrl <- ctrl[complete.cases(ctrl), , drop = FALSE]
     ctrl <- log2(pmax(ctrl, 1))
     ctrl <- ctrl[apply(ctrl, 1, var) > 0, , drop = FALSE]
+    sex <- if (is.na(sex_column)) rep(NA_character_, n) else as.character(sample_qc[[sex_column]])
+    sex_removed <- !anyNA(sex) && length(unique(sex)) == 2 && min(table(sex)) >= 2
+    if (sex_removed) {
+        design <- model.matrix(~ factor(sex))
+        ctrl <- t(lm.fit(design, t(ctrl))[["residuals"]])
+        ctrl <- ctrl[apply(ctrl, 1, var) > 0, , drop = FALSE]
+    }
     pca_ctrl <- prcomp(t(ctrl), center = TRUE, scale. = TRUE)
     share <- pca_ctrl[["sdev"]]^2 / sum(pca_ctrl[["sdev"]]^2)
     k <- if (opts[["n_ctrl_pcs"]] == "auto") which(cumsum(share) >= 0.9)[1] else as.integer(opts[["n_ctrl_pcs"]])
@@ -89,7 +107,7 @@ if (nzchar(controls_file)) {
     setnames(ctrl_scores, 2:ncol(ctrl_scores), paste0("ctrl_PC", seq_len(k)))
     shown <- seq_len(min(length(share), max_pcs))
     ctrl_variance <- data.table(pc = paste0("ctrl_PC", shown), variance_explained = round(share[shown], 5),
-                                cumulative = round(cumsum(share)[shown], 5))
+                                cumulative = round(cumsum(share)[shown], 5), sex_removed = sex_removed)
 }
 fwrite(ctrl_scores, paste0(prefix, "_ctrl_pcs.tsv"), sep = "\\t")
 fwrite(ctrl_variance, paste0(prefix, "_ctrl_pca_variance.tsv"), sep = "\\t")
@@ -127,8 +145,6 @@ if (ncol(pca[["x"]]) >= 2 && length(arrays) >= 5) {
 fwrite(outliers, paste0(prefix, "_outliers.tsv"), sep = "\\t")
 
 # Variables to test, one row per array
-samples <- read_table(samples_file)[match(arrays, sample)]
-sample_qc <- read_table(sample_qc_file)[match(arrays, sample)]
 variables <- list()
 add <- function(name, values, group) variables[[name]] <<- list(values = values, group = group)
 for (column in c("plate", "batch", "sentrix_id", "sentrix_row")) {
@@ -139,7 +155,6 @@ for (column in setdiff(names(ctrl_scores), "sample")) add(column, ctrl_scores[[c
 # The Illumina BeadArray control metrics of ewastools (as ChAMP's champ.SVD does
 # with the internal controls)
 for (column in grep("^ctrl_", names(sample_qc), value = TRUE)) add(sub("^ctrl_", "control: ", column), suppressWarnings(as.numeric(sample_qc[[column]])), "control metrics")
-sex_column <- grep("^predicted_sex_", names(sample_qc), value = TRUE)[1]
 if (!is.na(sex_column)) add("predicted_sex", as.character(sample_qc[[sex_column]]), "biological")
 if ("reported_age" %in% names(samples)) add("age", suppressWarnings(as.numeric(samples[["reported_age"]])), "biological")
 if (nzchar(cells_file)) {

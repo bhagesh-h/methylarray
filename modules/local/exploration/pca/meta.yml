@@ -70,7 +70,7 @@ output:
           description: Groovy Map with the preprocessing method as id
       - "${prefix}_ctrl_pca_variance.tsv":
           type: file
-          description: Share of the control-probe variance per component
+          description: Share of the control-probe variance per component, and whether predicted sex was removed from the control probes (sex_removed)
           pattern: "*_ctrl_pca_variance.tsv"
           ontologies:
             - edam: http://edamontology.org/format_3475
