@@ -11,6 +11,14 @@ authors:
 version: 1.0.0
 date-released: "2026-11-16"
 license: MIT
+doi: 10.5281/zenodo.24399752
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.24399752
+    description: Concept DOI, all versions (resolves to the latest)
+  - type: doi
+    value: 10.5281/zenodo.24399753
+    description: Version 1.0.0
 repository-code: "https://github.com/bhagesh-h/methylarray"
 url: "https://github.com/bhagesh-h/methylarray"
 abstract: >-
