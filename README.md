@@ -11,6 +11,7 @@
 [![run with apptainer](https://img.shields.io/badge/run%20with-apptainer-1d355c.svg?labelColor=000000)](https://apptainer.org/)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.24399752.svg)](https://doi.org/10.5281/zenodo.24399752)
 
 Documentation website: [bhagesh-h.github.io/methylarray](https://bhagesh-h.github.io/methylarray/) (built from the files in this repository, for the released version on `main`).
 
@@ -229,7 +230,7 @@ Bug reports and feature requests are welcome through GitHub issues. Development 
 
 ## Citations
 
-To cite methylarray, use the citation in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
+To cite methylarray, use its Zenodo DOI, [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752), which always resolves to the latest version; version 1.0.0 is [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753). The full citation is in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
 
 ## License
 
