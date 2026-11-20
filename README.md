@@ -12,6 +12,8 @@
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
+Documentation website: [bhagesh-h.github.io/methylarray](https://bhagesh-h.github.io/methylarray/) (built from the files in this repository, for the released version on `main`).
+
 ## Introduction
 
 **methylarray** is a Nextflow pipeline for Illumina Infinium DNA methylation arrays. It starts from raw IDAT files and produces:
