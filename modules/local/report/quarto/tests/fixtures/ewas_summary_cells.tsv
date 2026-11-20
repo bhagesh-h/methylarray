@@ -1,0 +1,2 @@
+model	cell	hits_fdr	hits_higher	hits_lower	lambda	top_cpg	top_p	top_estimate
+score	Mono	15	8	7	1.01	cg00000001	1e-15	0.08

@@ -116,6 +116,7 @@ workflow METHYLARRAY {
         )
         ch_meqtl_cpgs = MEQTL_PREPARE.out.cpgs.map { _meta, f -> f }
         ch_report_files = ch_report_files.mix(MEQTL_PREPARE.out.summary.map { _meta, f -> f })
+        ch_multiqc_files = ch_multiqc_files.mix(MEQTL_PREPARE.out.multiqc.map { _meta, f -> f })
     }
 
     //
@@ -145,7 +146,8 @@ workflow METHYLARRAY {
         DNAM_SCORE(ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation)
         ch_dnam_scores = DNAM_SCORE.out.scores.map { _meta, scores -> scores }
         ch_multiqc_files = ch_multiqc_files.mix(DNAM_SCORE.out.multiqc.map { _meta, table -> table })
-        ch_report_files = ch_report_files.mix(DNAM_SCORE.out.coverage.map { _meta, f -> f }, DNAM_SCORE.out.weights.map { _meta, f -> f })
+        ch_report_files = ch_report_files.mix(DNAM_SCORE.out.scores.map { _meta, f -> f }, DNAM_SCORE.out.coverage.map { _meta, f -> f },
+            DNAM_SCORE.out.weights.map { _meta, f -> f })
     }
 
     //
@@ -154,7 +156,7 @@ workflow METHYLARRAY {
     EXPLORATION(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, SAMPLE_QC.out.controls, ch_cell_fractions, ch_phenotypes, params.skip_variance_partition)
     ch_multiqc_files = ch_multiqc_files.mix(EXPLORATION.out.multiqc)
     ch_report_files = ch_report_files.mix(EXPLORATION.out.variance.map { _meta, f -> f }, EXPLORATION.out.associations.map { _meta, f -> f },
-        EXPLORATION.out.outliers.map { _meta, f -> f }, EXPLORATION.out.variance_partition)
+        EXPLORATION.out.scores.map { _meta, f -> f }, EXPLORATION.out.outliers.map { _meta, f -> f }, EXPLORATION.out.variance_partition)
 
     //
     // MODULE: Genetic ancestry PCs from the SNP CpGs and rs probes (EpiAnceR+ approach)
@@ -209,7 +211,9 @@ workflow METHYLARRAY {
     EWAS(ch_models, ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.qc, ch_phenotypes, ch_cell_fractions,
         EXPLORATION.out.ctrl_pcs.map { _meta, ctrl_pcs -> ctrl_pcs }, ch_ancestry_pcs, ch_dnam_scores, ch_meqtl_cpgs)
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
-    ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f }, EWAS.out.meqtl)
+    ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f },
+        EWAS.out.design_check.map { _meta, f -> f }, EWAS.out.cells.map { _meta, f -> f }, EWAS.out.cells_summary, EWAS.out.meqtl,
+        EWAS.out.characteristics.map { _meta, f -> f }, EWAS.out.comparison)
 
     //
     // SUBWORKFLOW: Differentially methylated regions of every model
@@ -217,6 +221,7 @@ workflow METHYLARRAY {
     if (!params.skip_dmr) {
         DMR(EWAS.out.stats, EWAS.out.resolved, PROBE_FILTER.out.se, params.dmrff_source)
         ch_report_files = ch_report_files.mix(DMR.out.consensus.map { _meta, f -> f }, DMR.out.summary.map { _meta, f -> f })
+        ch_multiqc_files = ch_multiqc_files.mix(DMR.out.multiqc.map { _meta, f -> f })
     }
 
     //

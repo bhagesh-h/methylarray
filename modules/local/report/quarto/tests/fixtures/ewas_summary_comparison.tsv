@@ -1,0 +1,2 @@
+contrast_a	contrast_b	cpgs	hits_a	hits_b	shared	share_of_a	same_direction	odds_ratio	p_overlap	r_all	r_hits
+other | other	score | score	2000	20	21	18	0.9	1	2500	1e-30	0.55	0.97

@@ -30,6 +30,11 @@ output:
         pattern: "methylarray_report.html"
         ontologies:
           - edam: http://edamontology.org/format_2331
+  figures:
+    - figures:
+        type: directory
+        description: Every figure of the report as a 300 dpi PNG and a vector PDF, numbered as in the report
+        pattern: "figures"
   versions:
     - versions.yml:
         type: file

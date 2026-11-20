@@ -10,6 +10,12 @@
 #      beta values
 #   4. Inflation: genomic lambda, bacon bias and inflation with corrected P/FDR
 #   5. Thresholds: FDR < 0.05, P < 9e-8 (EPIC) and P < 1e-5
+#   6. Cell-type-specific associations (--cell_ewas true, binary or continuous
+#      trait, blood cell fractions available): the CellDMC design of EpiDISH
+#      (Zheng et al. 2018), beta ~ lineages + trait:lineages + the other
+#      covariates without an intercept, fitted for all CpGs at once with limma
+#      lmFit (the same estimates as CellDMC's per-CpG lm) and an ordinary t-test
+#      of each interaction; BH FDR within each lineage
 # Token expansion: @cells = cc_CD4T, cc_CD8T, cc_B, cc_NK, cc_Mono (granulocytes
 # as reference); @ctrlpcs = the kept control-probe PCs (ctrlpc1..k); @technical =
 # plate, sentrix_row; @sex = predicted_sex; @smoking = dnam_smoking (McCartney et al. 2018);
@@ -27,7 +33,7 @@ ctrl_file <- "${ctrl_pcs}"
 ancestry_file <- "${ancestry_pcs}"
 scores_file <- "${dnam_scores}"
 
-defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000")
+defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000", cell_ewas = "true")
 parse_args <- function(x, defaults) {
     tokens <- strsplit(trimws(x), "[[:space:]]+")[[1]]
     tokens <- tokens[nzchar(tokens)]
@@ -151,11 +157,23 @@ rownames(data) <- data[["sample"]]
 
 report <- list(model = model[["name"]], trait = trait, trait_type = model[["trait_type"]], n = n,
                 n_dropped = sum(!keep), covariates = covariate_names, block = block)
-write_outputs <- function(stats, top, design_check, status) {
+characteristics <- data.table(variable = character(), level = character(), p_value = numeric())
+empty_cells <- data.table(cpg_id = character(), chr = character(), pos = integer(), gene = character(), contrast = character(), cell = character(),
+                          estimate = numeric(), se = numeric(), t = numeric(), p_value = numeric(), fdr = numeric())
+# fwrite leaves a header-only .gz without its gzip trailer: write those through a connection
+write_gz <- function(table, file) {
+    if (nrow(table) > 0) return(fwrite(table, file, sep = "\\t", na = ""))
+    connection <- gzfile(file, "w")
+    if (ncol(table) > 0) writeLines(paste(names(table), collapse = "\\t"), connection)
+    close(connection)
+}
+write_outputs <- function(stats, top, design_check, status, cells = empty_cells) {
     report[["status"]] <<- status
-    fwrite(stats, paste0(prefix, "_stats.tsv.gz"), sep = "\\t", na = "")
+    write_gz(stats, paste0(prefix, "_stats.tsv.gz"))
+    write_gz(cells, paste0(prefix, "_cells.tsv.gz"))
     fwrite(top, paste0(prefix, "_top.tsv"), sep = "\\t", na = "")
     fwrite(design_check, paste0(prefix, "_design_check.tsv"), sep = "\\t", na = "")
+    fwrite(characteristics, paste0(prefix, "_characteristics.tsv"), sep = "\\t", na = "")
     write_json(list(model = model, covariates = covariate_names, n = n, dropped = dropped),
                paste0(prefix, "_resolved.json"), auto_unbox = TRUE, pretty = TRUE, null = "null")
     write_json(report, paste0(prefix, "_summary.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA, null = "null")
@@ -220,6 +238,59 @@ if (length(term_columns) > 1) {
     design_check <- rbind(design_check, data.table(check = paste0("VIF ", sub("^`|`\$", "", term_columns)), value = round(vif, 3),
                                                    p_value = NA_real_, flag = ifelse(vif > 10, "collinear", "")), fill = TRUE)
 }
+# Covariates that follow the trait (Uddin et al. 2022: adjusting for methylation
+# axes that the trait itself drives can mask its association). Every numeric
+# covariate is tested against the trait; methylation-derived axes (cell
+# fractions, control-probe and ancestry PCs, DNA methylation scores and other
+# PC-like columns) are flagged at P < 0.001.
+derived <- function(column) grepl("^(cc_|ctrlpc[0-9]|ancestry_pc[0-9]|dnam_|PC[0-9]|pc[0-9])", column)
+trait_checks <- rbindlist(lapply(used_covariates, function(column) {
+    values <- data[[column]]
+    if (!is.numeric(values)) return(NULL)
+    test <- if (model[["trait_type"]] == "continuous") suppressWarnings(cor.test(values, data[[trait]], method = "spearman"))
+            else kruskal.test(values, data[[trait]])
+    p_cov <- test[["p.value"]]
+    value <- if (model[["trait_type"]] == "continuous") unname(test[["estimate"]])
+             else summary(lm(values ~ data[[trait]]))[["r.squared"]]
+    data.table(check = paste0(column, " ~ trait"), value = round(value, 4), p_value = signif(p_cov, 4),
+               flag = if (p_cov < 0.001 && derived(column)) "follows the trait" else "")
+}))
+if (nrow(trait_checks) > 0) design_check <- rbind(design_check, trait_checks, fill = TRUE)
+flagged <- design_check[!is.na(flag) & nzchar(flag)]
+
+# Baseline characteristics of the model's arrays (Table 1 of Uddin et al. 2022
+# and Kirmani et al. 2025): by trait group for a binary or categorical trait,
+# overall for a continuous one. Aggregates only; any count from 1 to 4 is shown
+# as "<5", as are means of fewer than 5 arrays.
+describe_columns <- c(if (model[["trait_type"]] == "continuous") trait, used_covariates[!grepl("^(ctrlpc|ancestry_pc|PC|pc)[0-9]", used_covariates)])
+group <- if (model[["trait_type"]] == "continuous") rep("All arrays", n) else as.character(data[[trait]])
+group_levels <- if (model[["trait_type"]] == "continuous") "All arrays" else levels(data[[trait]])
+count_text <- function(k, total) if (k == 0) "0" else if (k < 5) "<5" else sprintf("%d (%.1f%%)", k, 100 * k / total)
+characteristics <- rbindlist(c(
+    list(as.data.table(c(list(variable = "Arrays", level = ""), setNames(lapply(group_levels, function(g) {
+        k <- sum(group == g)
+        if (k < 5) "<5" else as.character(k)
+    }), group_levels), list(p_value = NA_real_)))),
+    lapply(describe_columns, function(column) {
+        values <- data[[column]]
+        compare <- model[["trait_type"]] != "continuous" && column != trait
+        if (is.numeric(values)) {
+            cells <- setNames(lapply(group_levels, function(g) {
+                v <- values[group == g]
+                if (length(v) < 5) "<5" else sprintf("%.3g (%.3g)", mean(v), sd(v))
+            }), group_levels)
+            p_cell <- if (compare) kruskal.test(values, factor(group))[["p.value"]] else NA_real_
+            list(as.data.table(c(list(variable = column, level = "mean (SD)"), cells, list(p_value = signif(p_cell, 4)))))
+        } else {
+            values <- as.character(values)
+            p_cell <- if (compare && length(unique(values)) > 1) suppressWarnings(fisher.test(table(values, group), simulate.p.value = TRUE, B = 2000)[["p.value"]]) else NA_real_
+            lapply(sort(unique(values)), function(level) as.data.table(c(list(variable = column, level = level),
+                setNames(lapply(group_levels, function(g) count_text(sum(values == level & group == g), sum(group == g))), group_levels),
+                list(p_value = if (level == sort(unique(values))[1]) signif(p_cell, 4) else NA_real_))))
+        }
+    }) |> unlist(recursive = FALSE)
+), fill = TRUE)
+report[["design_flags"]] <- if (nrow(flagged) > 0) paste(paste0(flagged[["check"]], " (", flagged[["flag"]], ")"), collapse = "; ") else ""
 
 # limma on M-values, with the coefficients or contrasts of the trait
 mvalue <- as.matrix(assay(se, "mvalue")[, rownames(data), drop = FALSE])
@@ -307,6 +378,8 @@ for (k in seq_len(ncol(contrast_matrix))) {
         bacon_inflation = round(as.numeric(inflation(bc)), 4),
         bacon_bias = round(as.numeric(bias(bc)), 4),
         hits_fdr = sum(table[["fdr"]] < fdr_level, na.rm = TRUE),
+        hits_higher = sum(table[["fdr"]] < fdr_level & table[["delta_beta"]] > 0, na.rm = TRUE),
+        hits_lower = sum(table[["fdr"]] < fdr_level & table[["delta_beta"]] < 0, na.rm = TRUE),
         hits_epigenome_wide = sum(table[["p_value"]] < p_ewide, na.rm = TRUE),
         hits_suggestive = sum(table[["p_value"]] < p_suggestive, na.rm = TRUE),
         hits_fdr_bacon = sum(table[["fdr_bacon"]] < fdr_level, na.rm = TRUE),
@@ -316,4 +389,52 @@ for (k in seq_len(ncol(contrast_matrix))) {
         top_delta_beta = table[["delta_beta"]][1]
     )
 }
-write_outputs(rbindlist(stats), rbindlist(tops), design_check, "tested")
+# Cell-type-specific associations (CellDMC design)
+cells_table <- empty_cells
+lineage_columns <- grep("^cc_", names(data), value = TRUE)
+cell_note <- (if (opts[["cell_ewas"]] != "true") "skipped: --skip_cell_ewas"
+              else if (length(lineage_columns) < 2) "not run: no cell fractions"
+              else if (anyNA(data[, lineage_columns])) "not run: cell fractions missing for some arrays"
+              else if (ncol(contrast_matrix) != 1 || !model[["trait_type"]] %in% c("continuous", "binary")) "not run: needs a binary or continuous trait"
+              else "")
+if (!nzchar(cell_note)) {
+    fractions <- as.matrix(data[, lineage_columns])
+    colnames(fractions) <- sub("^cc_", "", lineage_columns)
+    pheno <- if (model[["trait_type"]] == "continuous") as.numeric(data[[trait]]) else as.numeric(data[[trait]] != as.character(model[["reference"]]))
+    cell_design <- model.matrix(~ fractions + pheno:fractions)[, -1, drop = FALSE]
+    others <- setdiff(used_covariates, lineage_columns)
+    if (length(others) > 0) {
+        cell_design <- cbind(cell_design, model.matrix(as.formula(paste("~", paste0("`", others, "`", collapse = " + "))), data = data)[, -1, drop = FALSE])
+    }
+    interaction_columns <- grep(":pheno\$", colnames(cell_design), value = TRUE)
+    if (qr(cell_design)[["rank"]] < ncol(cell_design)) {
+        cell_note <- "not run: the cell-type design is not of full rank (a lineage is constant or follows another)"
+    } else if (n - ncol(cell_design) < 10) {
+        cell_note <- sprintf("not run: %d arrays for %d design columns", n, ncol(cell_design))
+    } else {
+        fit_cells <- lmFit(beta, cell_design, block = if (is.null(block)) NULL else data[[block]], correlation = correlation)
+        cells_table <- rbindlist(lapply(interaction_columns, function(column) {
+            estimate <- fit_cells[["coefficients"]][, column]
+            se_cell <- fit_cells[["stdev.unscaled"]][, column] * fit_cells[["sigma"]]
+            t_cell <- estimate / se_cell
+            p_cell <- 2 * pt(-abs(t_cell), fit_cells[["df.residual"]])
+            table <- data.table(annotation[, .(cpg_id, chr, pos, gene)], contrast = colnames(contrast_matrix)[1],
+                                cell = sub("^fractions", "", sub(":pheno\$", "", column)),
+                                estimate = signif(estimate, 5), se = signif(se_cell, 5), t = signif(t_cell, 5),
+                                p_value = signif(p_cell, 5), fdr = signif(p.adjust(p_cell, "BH"), 5))
+            setorder(table, p_value)
+            table
+        }))
+        cell_note <- "run"
+    }
+}
+report[["cells"]] <- list(status = cell_note)
+if (nrow(cells_table) > 0) {
+    report[["cells"]][["lineages"]] <- lapply(split(cells_table, by = "cell", keep.by = FALSE), function(x) list(
+        hits_fdr = sum(x[["fdr"]] < fdr_level, na.rm = TRUE),
+        hits_higher = sum(x[["fdr"]] < fdr_level & x[["estimate"]] > 0, na.rm = TRUE),
+        hits_lower = sum(x[["fdr"]] < fdr_level & x[["estimate"]] < 0, na.rm = TRUE),
+        lambda = round(genomic_lambda(x[["p_value"]]), 4),
+        top_cpg = x[["cpg_id"]][1], top_p = x[["p_value"]][1], top_estimate = x[["estimate"]][1]))
+}
+write_outputs(rbindlist(stats), rbindlist(tops), design_check, "tested", cells_table)

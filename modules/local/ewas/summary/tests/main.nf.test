@@ -48,7 +48,10 @@ nextflow_process {
                 { assert rows.score.meff == rows.smoker.meff && (rows.smoker.meff as double) > 1 && (rows.smoker.meff as double) < 2 },
                 { assert (rows.smoker.p_study_wide as double) < 9e-8 && (rows.smoker.hits_study_wide as int) == 10 && rows.score.hits_study_wide == '0' },
                 { assert rows.small.meff == '' },
-                { assert path(process.out.multiqc[0]).text.contains("plot_type: 'table'") },
+                { assert path(process.out.multiqc.flatten().find { f -> f.toString().endsWith('ewas_summary_mqc.tsv') }).text.contains("plot_type: 'table'") },
+                // two tested contrasts (the third model has too few cases): one pair, with the correlation of the t statistics
+                { assert path(process.out.comparison[0]).readLines().size() == 2 && path(process.out.comparison[0]).readLines()[1].startsWith('score | score\tsmoker | yes-no') },
+                { assert path(process.out.multiqc.flatten().find { f -> f.toString().endsWith('ewas_summary_comparison_mqc.tsv') }).exists() },
                 // 8 of the smoker hits and 100 other CpGs have a cis-meQTL: the hits are enriched
                 { assert meqtl.smoker.hits_meqtl == '8' && meqtl.smoker.tested_meqtl == '108' && (meqtl.smoker.p_value as double) < 0.001 },
                 { assert snapshot(process.out).match() }

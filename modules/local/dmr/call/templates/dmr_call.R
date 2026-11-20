@@ -81,6 +81,25 @@ write_outputs <- function(dmrcate_table, dmrff_table, consensus, status) {
            else data.table()
     fwrite(bed, paste0(prefix, "_consensus.bed"), sep = "\\t", col.names = FALSE)
     write_json(report, paste0(prefix, "_summary.json"), auto_unbox = TRUE, pretty = TRUE, digits = NA, null = "null")
+    # MultiQC: one row per model and contrast; the files of all models share the
+    # section id, so MultiQC joins them into one table
+    rows <- if (length(report[["contrasts"]]) == 0) {
+        data.table(Model = report[["model"]], cpgs = NA_integer_, cpgs_fdr = NA_integer_, dmrcate = NA_integer_, dmrff = NA_integer_,
+                   consensus = NA_integer_, status = status)
+    } else {
+        rbindlist(lapply(names(report[["contrasts"]]), function(k) {
+            x <- report[["contrasts"]][[k]]
+            data.table(Model = paste0(report[["model"]], " (", k, ")"), cpgs = x[["cpgs"]], cpgs_fdr = x[["cpgs_fdr"]], dmrcate = x[["dmrcate"]],
+                       dmrff = x[["dmrff"]], consensus = x[["consensus"]], status = if (is.null(x[["note"]])) status else x[["note"]])
+        }))
+    }
+    writeLines(c(
+        "# id: 'dmr_summary'",
+        "# section_name: 'Differentially methylated regions'",
+        "# description: 'One row per model and contrast: CpGs tested, CpGs at FDR < 0.05, regions found by DMRcate and by dmrff, and the consensus regions found by both (same direction, overlapping by at least 1 bp).'",
+        "# plot_type: 'table'"
+    ), paste0(prefix, "_mqc.tsv"))
+    write.table(rows, paste0(prefix, "_mqc.tsv"), sep = "\\t", quote = FALSE, row.names = FALSE, append = TRUE, na = "")
 }
 
 stats <- fread(text = readLines(gzfile(stats_file)), na.strings = c("", "NA"))

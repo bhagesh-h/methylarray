@@ -13,6 +13,7 @@ process MEQTL_PREPARE {
     output:
     tuple val(meta), path("${prefix}.tsv")        , emit: cpgs
     tuple val(meta), path("${prefix}_summary.tsv"), emit: summary
+    tuple val(meta), path("${prefix}_mqc.tsv")    , emit: multiqc
     path "versions.yml", emit: versions, topic: versions
 
     script:
@@ -24,6 +25,7 @@ process MEQTL_PREPARE {
     """
     printf 'cpg_id\\tmeqtl_name\\tsnps\\ttop_snp\\ttop_p\\ttop_beta\\n' > ${prefix}.tsv
     printf 'metric\\tvalue\\n' > ${prefix}_summary.tsv
+    printf "# id: 'meqtl_summary'\\n# plot_type: 'table'\\nTable\\trows_read\\nmeQTL\\t0\\n" > ${prefix}_mqc.tsv
     printf '"%s":\\n    R: stub\\n    data.table: stub\\n' "${task.process}" > versions.yml
     """
 }

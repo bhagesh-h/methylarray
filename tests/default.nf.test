@@ -14,7 +14,7 @@ nextflow_pipeline {
 
         then {
             // stable_path: All files + folders in ${params.outdir}/ with a stable path (including file name)
-            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}'])
+            def stable_path = getAllFilesFromDir(params.outdir, relative: true, includeDir: true, ignore: ['pipeline_info/*.{html,json,txt}', 'report/figures/*'])
             // stable_content: All files in ${params.outdir}/ with stable content
             def stable_content = getAllFilesFromDir(params.outdir, ignoreFile: 'tests/.nftignore')
             def qc = path("$outputDir/qc/sample_qc.tsv").readLines().collect { line -> line.split('\t', -1) as List }
@@ -23,6 +23,9 @@ nextflow_pipeline {
                 def f = line.split('\t'); [ f[0], f[2] as int ]
             }
             assert workflow.success
+            // every report figure is saved as a PNG and a PDF (names follow the report, so only the pairs are checked)
+            def figures = file("$outputDir/report/figures").list().toList()
+            assert figures.size() > 0 && figures.count { name -> name.endsWith('.png') } == figures.count { name -> name.endsWith('.pdf') }
             assertAll(
                 // probe filtering on the six test arrays: every EPIC v2 probe of the minfi route in, 858,273 kept
                 { assert attrition.start == 936990 },

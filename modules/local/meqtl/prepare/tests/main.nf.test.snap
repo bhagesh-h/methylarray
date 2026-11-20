@@ -19,6 +19,14 @@
                     ]
                 ],
                 "2": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_mqc.tsv:md5,aa3197809c0d3bb5ab041d0cddbeb11d"
+                    ]
+                ],
+                "3": [
                     "versions.yml:md5,74e86890ac6d4bd9baa8d3022dfe01c2"
                 ],
                 "cpgs": [
@@ -27,6 +35,14 @@
                             "id": "meqtl"
                         },
                         "meqtl_cpgs.tsv:md5,8058712afd083963edaf7af7e965427e"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_mqc.tsv:md5,aa3197809c0d3bb5ab041d0cddbeb11d"
                     ]
                 ],
                 "summary": [
@@ -42,7 +58,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-16T14:51:51.911836339",
+        "timestamp": "2026-11-19T22:24:47.458635629",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
@@ -68,6 +84,14 @@
                     ]
                 ],
                 "2": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_mqc.tsv:md5,cbd167b3bf62e58f0968382c457ee054"
+                    ]
+                ],
+                "3": [
                     "versions.yml:md5,b38d86b4da0a13e859293c1b9c251e3f"
                 ],
                 "cpgs": [
@@ -76,6 +100,14 @@
                             "id": "meqtl"
                         },
                         "meqtl_cpgs.tsv:md5,7bc300b5b14b7bcd469913553bf39276"
+                    ]
+                ],
+                "multiqc": [
+                    [
+                        {
+                            "id": "meqtl"
+                        },
+                        "meqtl_cpgs_mqc.tsv:md5,cbd167b3bf62e58f0968382c457ee054"
                     ]
                 ],
                 "summary": [
@@ -91,7 +123,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-16T14:51:48.229949534",
+        "timestamp": "2026-11-19T22:24:43.767896887",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
