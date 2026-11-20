@@ -1,6 +1,6 @@
 # bhagesh-h/methylarray: Documentation
 
-The bhagesh-h/methylarray documentation is split into the following pages:
+The bhagesh-h/methylarray documentation is also published as a website: [bhagesh-h.github.io/methylarray](https://bhagesh-h.github.io/methylarray/). It is split into the following pages:
 
 - [Usage](usage.md)
   - An overview of how the pipeline works, how to run it and a description of all of the different command-line flags.

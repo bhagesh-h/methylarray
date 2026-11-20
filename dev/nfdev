@@ -38,6 +38,8 @@ Commands:
   lint               Lint an export of the staged tree (\$NFDEV_OUT_ROOT/tests/lint/<time>) with
                      nf-core pipelines lint and nextflow lint, then run prek in the repository
   metro              Render docs/images/metro_map.svg and a 1000 px preview PNG
+  docs [serve]       Build the documentation website (mkdocs.yml) into .site/html in a
+                     python container; with serve, preview it at http://localhost:8000
   image <module> <name:tag>
                      Build a module's Docker image from its environment.yml with
                      containers/conda.Dockerfile (when Wave cannot build it), then print
@@ -271,6 +273,17 @@ case "${COMMAND}" in
         run_in_devkit "${REPO}" bash -c "nf-metro render assets/metro_map.mmd -o docs/images/metro_map.svg --embed-font --validate \
             && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_light_1000px.png' --mode light --raster-width 1000 \
             && nf-metro render assets/metro_map.mmd -o '${NFDEV_OUT_ROOT}/tests/metro/metro_map_preview_dark_1000px.png' --mode dark --raster-width 1000"
+        ;;
+    docs)
+        # The same steps as .github/workflows/docs.yml, in a throwaway python container
+        mkdocs_command="mkdocs build"
+        port_args=()
+        if [[ "${1:-}" == "serve" ]]; then
+            mkdocs_command="mkdocs serve --dev-addr 0.0.0.0:8000"
+            port_args=(-it -p 8000:8000)
+        fi
+        docker run --rm "${port_args[@]}" -u "$(id -u):$(id -g)" -e HOME=/tmp -e NO_MKDOCS_2_WARNING=1 -e PIP_DISABLE_PIP_VERSION_CHECK=1 -v "${REPO}:${REPO}" -w "${REPO}" python:3.13-slim \
+            bash -c "pip install --quiet --user --no-warn-script-location -r dev/docs/requirements.txt && python3 dev/docs/build_site.py && /tmp/.local/bin/${mkdocs_command}"
         ;;
     dind-stop)
         docker rm --force "${DIND_NAME}" >/dev/null 2>&1 || true

@@ -29,3 +29,6 @@ null/
 *.xls
 inputs/
 .env
+
+# Documentation website build (dev/docs/build_site.py, mkdocs.yml)
+.site/
