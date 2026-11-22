@@ -412,14 +412,26 @@ def toolCitationText() {
     def dmr = params.models && !params.skip_dmr ? "Differentially methylated regions were called with DMRcate (Peters et al. 2015; lambda ${params.dmr_lambda}, C ${params.dmr_c}) and dmrff (Suderman et al. 2018) from the same model statistics, and regions found by both methods in the same direction were reported as consensus regions." : ''
     def enrichment = params.models && !params.skip_enrichment ? "Gene set enrichment of the CpGs at FDR < 0.05 against all tested CpGs was tested with missMethyl (Maksimovic et al. 2021), which accounts for the number of CpGs per gene, for Gene Ontology and KEGG terms and the MSigDB gene set collections." : ''
     def scores = params.skip_dnam_scores ? '' : "DNA methylation scores for smoking, alcohol and BMI (McCartney et al. 2018) and IL-6 (Stevenson et al. 2021) were computed as weighted sums of the published CpG sets."
-    return [ preprocessing[params.preprocessing] ?: '', sample_qc, probe_filter, cells, clocks, scores, exploration, ewas, cell_ewas, dmr, enrichment, "Results were summarised with MultiQC (Ewels et al. 2016)." ].join(' ').trim()
+    // One point per step, so that the methods read as a list rather than one long paragraph
+    def steps = [
+        'Preprocessing': preprocessing[params.preprocessing] ?: '', 'Sample quality control': sample_qc, 'Probe filtering': probe_filter,
+        'Cell composition': cells, 'Epigenetic clocks': clocks, 'DNA methylation scores': scores, 'Exploration': exploration,
+        'Association models': ewas, 'Cell-type-specific associations': cell_ewas, 'Regions': dmr, 'Enrichment': enrichment,
+        'Reporting': "Results were summarised with MultiQC (Ewels et al. 2016) and a Quarto report."
+    ].findAll { _name, text -> text }
+    return "<ul>" + steps.collect { name, text -> "<li><strong>${name}.</strong> ${text}</li>" }.join('') + "</ul>"
 }
 
 //
 // One reference as an HTML list item for the MultiQC methods description
 //
 def referenceHtml(authors, year, title, journal, doi) {
-    return "<li>${authors} (${year}). ${title}. ${journal}. doi: <a href=\"https://doi.org/${doi}\">${doi}</a></li>"
+    // APA style, shortened: one or two authors in full, the first author and "et al." for more
+    def names = authors.split(/(?<=\.),\s+(?:&\s+)?/)
+    def shown = names.size() <= 2 ? authors : "${names[0]}, et al."
+    def journal_parts = journal.split(', ', 2)
+    def source = journal_parts.size() == 2 ? "<em>${journal_parts[0]}</em>, ${journal_parts[1]}" : "<em>${journal}</em>"
+    return "<li>${shown} (${year}). ${title}. ${source}. <a href=\"https://doi.org/${doi}\">https://doi.org/${doi}</a></li>"
 }
 
 def toolBibliographyText() {
@@ -489,6 +501,8 @@ def methodsDescriptionText(mqc_methods_yaml) {
         meta["doi_text"] = temp_doi_ref.substring(0, temp_doi_ref.length() - 2)
     } else meta["doi_text"] = ""
     meta["nodoi_text"] = meta.manifest_map.doi ? "" : "<li>If available, make sure to update the text to include the Zenodo DOI of version of the pipeline used. </li>"
+    // The command with one option per line, so that it wraps in the reports
+    meta["command_text"] = workflow.commandLine.replaceAll(/ (--?[A-Za-z])/, ' \\\\\n    $1')
 
     // Tool references
     meta["tool_citations"] = toolCitationText()

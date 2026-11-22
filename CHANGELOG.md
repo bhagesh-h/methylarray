@@ -3,6 +3,25 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.1 - [2026-11-22]
+
+Report readability release: no change to any result.
+
+### `Added`
+
+- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
+- Zenodo DOI in the reports: the pipeline manifest carries the concept DOI, so the methods text of the MultiQC and the HTML report cites it, and the HTML report names it with the pipeline version.
+- HTML report: a search box above the contents that highlights every match, steps through them and opens the tables that hold one.
+- HTML report: a template of a gene and its CpG island (island, shore, shelf, open sea; TSS1500, TSS200, 5' and 3' UTR, first and other exons, introns, intergenic) before the first genomic context figure, to read those figures by.
+
+### `Changed`
+
+- HTML report: the contents are on the left and the report uses the rest of the page width.
+- HTML report: every table is a numbered toggle with its name in bold, closed until clicked; this includes the software versions.
+- HTML report: figures are embedded as vector graphics (SVG), or as the 300 dpi PNG when they hold more than 5,000 points, so they stay sharp when zoomed; they were 110 dpi images before.
+- HTML report: the quartile-group figure has the trend stars in their own column inside each panel and the colour legend below the panels; the PCA association heatmap has vertical PC labels and grows with the number of variables; the methylation level figure of the hits is horizontal so its group labels do not overlap.
+- Methods text (MultiQC and HTML report): one point per analysis step instead of one paragraph, the command line with one option per line and wrapped, and the references in a short APA style (first author and "et al." for three or more authors, DOI as a link).
+
 ## v1.0.0 - [2026-11-16]
 
 Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-co.re/) template.
@@ -48,7 +67,6 @@ Initial release of bhagesh-h/methylarray, created with the [nf-core](https://nf-
 - Interpretation of association results, after Uddin et al. (2022) and Kirmani et al. (2025): hits split by direction with a binomial test of the balance (`hits_higher`, `hits_lower`), volcano plots, the CpG island context and gene features of the hits by direction (Fisher's odds ratios), the methylation level of the hits, the characteristics of each model's arrays by trait group (`ewas_<model>_characteristics.tsv`, aggregates only), the overlap and t-statistic correlation of every pair of model contrasts (`ewas/ewas_summary_comparison.tsv` and MultiQC), and a design check that flags methylation-derived covariates that follow the trait.
 - The task directories of a run and its cache of downloaded remote inputs are deleted once it has finished successfully (Nextflow `cleanup`); `--skip_cleanup` keeps them for `-resume`. The pipeline stops at the start when cleanup would break symlinked results (`--publish_dir_mode symlink` or `rellink`).
 - Documentation website ([bhagesh-h.github.io/methylarray](https://bhagesh-h.github.io/methylarray/)), built with MkDocs Material from the README, `docs/`, `CITATIONS.md` and `CHANGELOG.md` (`mkdocs.yml`, `dev/docs/build_site.py`). Pull requests build it with broken-link checks; GitHub Pages publishes it only from `main`. Preview it locally with `dev/nfdev docs serve`.
-- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
 
 ### `Changed`
 
