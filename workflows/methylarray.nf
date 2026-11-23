@@ -291,7 +291,7 @@ workflow METHYLARRAY {
     // MODULE: HTML report (Quarto) from the result tables, versions, methods and parameters
     //
     if (!params.skip_report) {
-        def ch_params_json = channel.value(groovy.json.JsonOutput.toJson(params.collectEntries { name, value -> [ name, value?.toString() ] })).collectFile(name: 'params.json')
+        def ch_params_json = channel.value(groovy.json.JsonOutput.toJson((params.collectEntries { name, value -> [ name, value?.toString() ] }) + [ pipeline_version: workflow.manifest.version ])).collectFile(name: 'params.json')
         REPORT_QUARTO(
             file("${projectDir}/assets/report/methylarray_report.qmd", checkIfExists: true),
             ch_report_files

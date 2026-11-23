@@ -70,18 +70,33 @@ jobs:
         with:
           path: ${{ runner.temp }}/geo-idats
           key: geo-idats-${{ hashFiles('tests/data/samplesheet_test.csv') }}
+          restore-keys: geo-idats-
 
+      # NCBI sometimes answers the HTTPS file server with 403 for a whole runner,
+      # so each file is tried from three NCBI routes (HTTPS, FTP and the GEO
+      # download page), in up to three rounds a minute apart
       - name: Download the GEO test IDATs
         if: ${{ steps.set-shards.outputs.total_shards != '0' }}
         run: |
           prefix="https://ftp.ncbi.nlm.nih.gov/geo/samples/"
           grep -hoE 'https://ftp\.ncbi\.nlm\.nih\.gov/geo/samples/[^ ,"]+\.idat\.gz' tests/data/samplesheet_test.csv | sort -u > geo-urls.txt
+          fetch() { curl -fsSL --retry 2 --retry-all-errors --retry-delay 10 --connect-timeout 30 --max-time 300 -o "$2" "$1" && gzip -t "$2"; }
           while read -r url; do
-            dest="${RUNNER_TEMP}/geo-idats/${url#"$prefix"}"
+            path="${url#"$prefix"}"
+            dest="${RUNNER_TEMP}/geo-idats/${path}"
             if [ -s "$dest" ] && gzip -t "$dest"; then continue; fi
             mkdir -p "$(dirname "$dest")"
-            curl -fsSL --retry 8 --retry-all-errors --retry-delay 20 --connect-timeout 30 --max-time 300 -o "$dest" "$url"
-            gzip -t "$dest"
+            file="$(basename "$path")"
+            sources=("$url" "ftp://ftp.ncbi.nlm.nih.gov/geo/samples/${path}" "https://www.ncbi.nlm.nih.gov/geo/download/?acc=${file%%_*}&format=file&file=${file}")
+            done_file=""
+            for round in 1 2 3; do
+              for source in "${sources[@]}"; do
+                if fetch "$source" "$dest"; then done_file=1; break 2; fi
+                echo "::warning::Round ${round}: download failed from ${source%%\?*}"
+              done
+              sleep 60
+            done
+            if [ -z "$done_file" ]; then echo "::error::Could not download ${file} from NCBI"; exit 1; fi
           done < geo-urls.txt
           echo "$(wc -l < geo-urls.txt) GEO IDAT files ready"
 
