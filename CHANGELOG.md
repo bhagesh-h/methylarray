@@ -9,7 +9,7 @@ Report readability release: no change to any result.
 
 ### `Added`
 
-- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
+- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.1: [10.5281/zenodo.24458958](https://doi.org/10.5281/zenodo.24458958); 1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
 - Zenodo DOI in the reports: the pipeline manifest carries the concept DOI, so the methods text of the MultiQC and the HTML report cites it, and the HTML report names it with the pipeline version.
 - HTML report: a search box above the contents that highlights every match, steps through them and opens the tables that hold one.
 - HTML report: a template of a gene and its CpG island (island, shore, shelf, open sea; TSS1500, TSS200, 5' and 3' UTR, first and other exons, introns, intergenic) before the first genomic context figure, to read those figures by.
