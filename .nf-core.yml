@@ -34,7 +34,7 @@ template:
   name: methylarray
   description: Quality control, preprocessing and association analysis of Illumina Infinium DNA methylation arrays (EPIC v2)
   author: bhagesh-h
-  version: 1.0.1
+  version: 1.0.2
   force: true
   outdir: .
   skip_features:

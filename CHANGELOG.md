@@ -3,13 +3,21 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.0.2 - [2026-11-24]
+
+Fixes the bacon-corrected P values of the association models; no other result changes.
+
+### `Fixed`
+
+- EWAS: the bacon-corrected P value of a CpG with a very large positive t statistic (P below about 1e-16) was far too small, because the z value was computed through a probability that rounds to 1. It is now computed on the log scale, the same for both signs. Other bacon-corrected values can shift slightly, because the bacon sampler reacts to changes in the last decimals of its input.
+
 ## v1.0.1 - [2026-11-22]
 
 Report readability release: no change to any result.
 
 ### `Added`
 
-- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
+- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.1: [10.5281/zenodo.24458958](https://doi.org/10.5281/zenodo.24458958); 1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
 - Zenodo DOI in the reports: the pipeline manifest carries the concept DOI, so the methods text of the MultiQC and the HTML report cites it, and the HTML report names it with the pipeline version.
 - HTML report: a search box above the contents that highlights every match, steps through them and opens the tables that hold one.
 - HTML report: a template of a gene and its CpG island (island, shore, shelf, open sea; TSS1500, TSS200, 5' and 3' UTR, first and other exons, introns, intergenic) before the first genomic context figure, to read those figures by.

@@ -354,8 +354,8 @@ for (k in seq_len(ncol(contrast_matrix))) {
     t_stat <- fit_m[["t"]][, k]
     p <- fit_m[["p.value"]][, k]
     df <- fit_m[["df.total"]]
-    z <- qnorm(pt(t_stat, df))
-    z[!is.finite(z)] <- sign(t_stat[!is.finite(z)]) * 37
+    # log-scale lower tail of both signs: pt() of a large positive t rounds to 1 and its z to infinity
+    z <- -sign(t_stat) * qnorm(pt(-abs(t_stat), df, log.p = TRUE), log.p = TRUE)
     bc <- bacon(teststatistics = z, na.exclude = TRUE)
     p_bacon <- as.numeric(pval(bc))
     table <- data.table(

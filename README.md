@@ -33,7 +33,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
 ![methylarray workflow](docs/images/metro_map.svg)
 
-> **Status:** version 1.0.0, the first release. [CHANGELOG.md](CHANGELOG.md) lists what it contains.
+> **Status:** released, the latest version is 1.0.2. [CHANGELOG.md](CHANGELOG.md) lists what each version contains.
 
 ## Pipeline summary
 
@@ -230,7 +230,7 @@ Bug reports and feature requests are welcome through GitHub issues. Development 
 
 ## Citations
 
-To cite methylarray, use its Zenodo DOI, [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752), which always resolves to the latest version; version 1.0.0 is [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753). The full citation is in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
+To cite methylarray, use its Zenodo DOI, [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752), which always resolves to the latest version; version 1.0.1 is [10.5281/zenodo.24458958](https://doi.org/10.5281/zenodo.24458958) and version 1.0.0 is [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753). The full citation is in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
 
 ## License
 
