@@ -173,6 +173,9 @@ plot_rows <- function(plot) {
 show_plot <- function(plot, width = NULL, height = NULL, description = NULL) {
     width <- if (is.null(width)) knitr::opts_current$get("fig.width") else width
     height <- if (is.null(height)) knitr::opts_current$get("fig.height") else height
+    # ggsave refuses figures above 50 inches: cap the size instead of stopping the report
+    width <- min(width, 49)
+    height <- min(height, 49)
     figure_number <<- figure_number + 1
     title <- plot[["labels"]][["title"]]
     subtitle <- plot[["labels"]][["subtitle"]]
@@ -712,7 +715,8 @@ if (has("^biomarkers_cells_phenotypes\\.tsv$")) {
         scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.8, 0.8), oob = scales::squish) +
         theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
         labs(x = NULL, y = "Cell lineage", fill = "Effect (SD)", title = "Blood cell fractions against age, sex and the phenotypes",
-             subtitle = "SD of the fraction per SD of a continuous trait, or with a binary one; age and sex held. Stars: q < 0.05, 0.01, 0.001"))
+             subtitle = "SD of the fraction per SD of a continuous trait, or with a binary one; age and sex held. Stars: q < 0.05, 0.01, 0.001"),
+        max(11, 2.5 + 0.45 * uniqueN(cp[["trait"]])))
 }
 if (has("^biomarkers_batch\\.tsv$")) {
     batch <- read(find("^biomarkers_batch\\.tsv$"))
@@ -730,7 +734,8 @@ if (nrow(pt) > 0) {
     show_plot(ggplot(pt[version == "plain"], aes(trait, measure, fill = estimate)) + geom_tile(colour = "white") +
         geom_text(aes(label = paste0(sprintf("%.2f", estimate), stars(q))), size = 2.4) +
         scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.6, 0.6), oob = scales::squish) +
-        theme(axis.text.x = element_text(angle = 40, hjust = 1)) + labs(x = NULL, y = NULL, fill = "Estimate", title = "Every acceleration and score against the phenotypes", subtitle = "Continuous phenotypes: Spearman rho; binary phenotypes: difference between the groups in SD. Stars: q < 0.05, 0.01, 0.001."))
+        theme(axis.text.x = element_text(angle = 40, hjust = 1)) + labs(x = NULL, y = NULL, fill = "Estimate", title = "Every acceleration and score against the phenotypes", subtitle = "Continuous phenotypes: Spearman rho; binary phenotypes: difference between the groups in SD. Stars: q < 0.05, 0.01, 0.001."),
+        max(12, 4 + 0.45 * uniqueN(pt[["trait"]])))
     for (t in unique(pt[type == "binary", trait])) {
         show_plot(ggplot(pt[trait == t], aes(estimate, measure, colour = version, shape = q < 0.05)) + geom_vline(xintercept = 0, colour = "grey60") +
             geom_point(size = 2.6, position = position_dodge(width = 0.6)) +
@@ -798,18 +803,26 @@ if (nrow(qt) > 0) {
     lab <- unique(qt[, .(measure, trait, star = stars(q))])
     lab[, group := factor("trend", levels = groups)]
     n_measures <- uniqueN(qt[["measure"]])
-    n_traits <- uniqueN(qt[["trait"]])
     columns <- min(4, n_measures)
-    show_plot(ggplot(qt, aes(group, trait)) + geom_tile(aes(fill = mean_z), colour = "white") + geom_text(aes(label = signif(value, 3)), size = 2.4) +
-        geom_text(data = lab, aes(x = group, y = trait, label = star), colour = "#b2182b", size = 3.4, fontface = "bold") +
-        scale_x_discrete(drop = FALSE) + facet_wrap(~ measure, ncol = columns) +
-        scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.8, 0.8), oob = scales::squish) +
-        theme(panel.spacing.x = unit(1.5, "lines"), panel.spacing.y = unit(1, "lines"), panel.grid = element_blank(),
-              legend.position = "bottom", legend.key.width = unit(2.5, "cm"), legend.title = element_text(vjust = 0.8),
-              legend.margin = margin(t = 10)) +
-        labs(x = NULL, y = NULL, fill = "Mean z of the trait in the group", title = "Characteristics by quartile group of acceleration",
-             subtitle = "Columns: low (bottom quarter), mid (middle half) and high (top quarter) of the acceleration; trend: stars for the trend across the groups (Kendall's tau), q < 0.05, 0.01, 0.001."),
-        4 * columns, 1.5 + ceiling(n_measures / columns) * (0.8 + 0.26 * n_traits))
+    # many phenotypes are split over several figures, each at most about 30 inches high
+    rows <- ceiling(n_measures / columns)
+    per_part <- min(24, max(5, floor((30 / rows - 0.8) / 0.26)))
+    traits <- unique(qt[["trait"]])
+    parts <- split(traits, ceiling(seq_along(traits) / per_part))
+    for (i in seq_along(parts)) {
+        part <- qt[trait %in% parts[[i]]]
+        show_plot(ggplot(part, aes(group, trait)) + geom_tile(aes(fill = mean_z), colour = "white") + geom_text(aes(label = signif(value, 3)), size = 2.4) +
+            geom_text(data = lab[trait %in% parts[[i]]], aes(x = group, y = trait, label = star), colour = "#b2182b", size = 3.4, fontface = "bold") +
+            scale_x_discrete(drop = FALSE) + facet_wrap(~ measure, ncol = columns) +
+            scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.8, 0.8), oob = scales::squish) +
+            theme(panel.spacing.x = unit(1.5, "lines"), panel.spacing.y = unit(1, "lines"), panel.grid = element_blank(),
+                  legend.position = "bottom", legend.key.width = unit(2.5, "cm"), legend.title = element_text(vjust = 0.8),
+                  legend.margin = margin(t = 10)) +
+            labs(x = NULL, y = NULL, fill = "Mean z of the trait in the group",
+                 title = paste0("Characteristics by quartile group of acceleration", if (length(parts) > 1) sprintf(" (part %d of %d)", i, length(parts))),
+                 subtitle = "Columns: low (bottom quarter), mid (middle half) and high (top quarter) of the acceleration; trend: stars for the trend across the groups (Kendall's tau), q < 0.05, 0.01, 0.001."),
+            4 * columns, 1.5 + rows * (0.8 + 0.26 * length(parts[[i]])))
+    }
 }
 ```
 

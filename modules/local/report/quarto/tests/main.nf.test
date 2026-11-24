@@ -50,6 +50,49 @@ nextflow_process {
         }
     }
 
+    // 15 measures and 60 phenotypes: the figures grow with the phenotypes, and
+    // ggsave refuses figures above 50 inches
+    test("many phenotypes") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                def tables = ['biomarkers_quartiles.tsv', 'biomarkers_phenotypes.tsv', 'biomarkers_cells_phenotypes.tsv']
+                def measures = (1..15).collect { i -> 'Clock' + i + ' acceleration' }
+                def traits = (1..60).collect { i -> 'trait' + i }
+                def quartiles = ['measure,trait,type,group,value,mean_z,p_trend,q']
+                def phenotypes = ['measure,trait,type,version,estimate,p,n,q']
+                def lineages = ['cell,trait,type,estimate,p,n,q']
+                measures.each { m -> traits.each { t ->
+                    ['decelerated', 'normal', 'accelerated'].each { g -> quartiles << [m, t, 'continuous', g, 1.5, 0.1, 0.5, 0.5].join(',') }
+                    phenotypes << [m, t, 'continuous', 'plain', 0.1, 0.5, 78, 0.5].join(',')
+                } }
+                ['B', 'NK'].each { c -> traits.each { t -> lineages << [c, t, 'continuous', 0.1, 0.5, 78, 0.5].join(',') } }
+                def made = [quartiles, phenotypes, lineages].withIndex().collect { lines, i ->
+                    def table = file("$outputDir/many/" + tables[i])
+                    table.parent.mkdirs()
+                    table.text = lines.collect { line -> line.replace(',', '\\t') }.join('\\n') + '\\n'
+                    table
+                }
+                input[0] = file("$projectDir/assets/report/methylarray_report.qmd", checkIfExists: true)
+                input[1] = files("$moduleTestDir/fixtures/*").findAll { f -> !(f.name in tables) } + made
+                """
+            }
+        }
+
+        then {
+            def html = path(process.out.report[0]).text
+            assertAll(
+                { assert process.success },
+                // four rows of clocks and at most 24 traits per figure
+                { assert html.contains('Characteristics by quartile group of acceleration (part 1 of 3)') && html.contains('(part 3 of 3)') },
+                { assert !html.contains('Error in') }
+            )
+        }
+    }
+
     test("every section - stub") {
 
         tag "fast"
