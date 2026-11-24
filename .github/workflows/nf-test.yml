@@ -22,6 +22,9 @@ env:
   # input validation); the real-data tests run for main, releases and manual runs
   NFT_TAGS: ${{ (github.event_name == 'pull_request' && github.base_ref != 'main' && github.base_ref != 'master') && 'fast' || '' }}
   NFT_VER: "0.9.4"
+  # The full pipeline test takes about 15 minutes, so it runs in a job of its own
+  # and does not push the module tests of its shard over the time limit
+  NFT_OWN_SHARD: "tests/default.nf.test"
   NFT_WORKDIR: "~"
   NXF_ANSI_LOG: false
   # A remote input file that stops sending data fails after five minutes
@@ -55,6 +58,7 @@ jobs:
         with:
           max_shards: 10
           tags: ${{ env.NFT_TAGS }}
+          own_shard: ${{ env.NFT_OWN_SHARD }}
 
       - name: debug
         run: |
@@ -173,6 +177,7 @@ jobs:
           shard: ${{ matrix.shard }}
           total_shards: ${{ env.TOTAL_SHARDS }}
           tags: ${{ env.NFT_TAGS }}
+          own_shard: ${{ env.NFT_OWN_SHARD }}
 
       - name: Report test status
         if: ${{ always() }}
