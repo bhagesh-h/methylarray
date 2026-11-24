@@ -33,7 +33,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
 ![methylarray workflow](docs/images/metro_map.svg)
 
-> **Status:** version 1.0.0, the first release. [CHANGELOG.md](CHANGELOG.md) lists what it contains.
+> **Status:** released, the latest version is 1.0.2. [CHANGELOG.md](CHANGELOG.md) lists what each version contains.
 
 ## Pipeline summary
 

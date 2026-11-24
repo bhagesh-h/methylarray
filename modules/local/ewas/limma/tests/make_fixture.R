@@ -1,7 +1,7 @@
 # Builds the simulated test fixture in this folder: 40 arrays x 2,000 CpGs with a
 # planted association of the first 20 CpGs with 'score' (continuous) and of CpGs
-# 21-40 with 'smoker' (binary), plus the covariate tables a model can use. The
-# values are random; they do not describe any study.
+# 21-40 with 'smoker' (binary), plus the covariate tables a model can use. 'strong'
+# follows the most variable of CpGs 1-20 (P below 1e-16, positive t). The values are random; they do not describe any study.
 #   Rscript make_fixture.R <this folder>
 suppressPackageStartupMessages({ library(SummarizedExperiment); library(HDF5Array) })
 out <- commandArgs(TRUE)[1]
@@ -34,6 +34,8 @@ write.table(data.frame(sample = samples, status = "PASS", predicted_sex_minfi = 
             file.path(out, "sample_qc.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)
 pheno <- data.frame(sample = samples, score = round(score, 4), age = age, smoker = smoker)
 pheno$score[c(3, 17)] <- NA
+complete <- which(rowSums(is.na(mvalue[1:20, ])) == 0)
+pheno$strong <- round(mvalue[complete[which.max(apply(mvalue[complete, ], 1, sd))], ], 4)
 write.table(pheno, file.path(out, "phenotypes.tsv"), sep = "\t", quote = FALSE, row.names = FALSE, na = "")
 write.table(data.frame(sample = samples, setNames(as.data.frame(round(cells, 5)), paste0("lineage_", colnames(cells)))),
             file.path(out, "cell_fractions.tsv"), sep = "\t", quote = FALSE, row.names = FALSE)

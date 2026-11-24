@@ -59,7 +59,7 @@
                     "variancePartition": "1.40.2"
                 },
                 "Workflow": {
-                    "bhagesh-h/methylarray": "v1.0.1"
+                    "bhagesh-h/methylarray": "v1.0.2"
                 }
             },
             [
