@@ -10,6 +10,9 @@ inputs:
   tags:
     description: "Tags to pass as argument for nf-test --tag parameter"
     required: false
+  own_shard:
+    description: "Test file that runs in a shard of its own, named pipeline"
+    required: false
 outputs:
   shard:
     description: "Array of shard numbers"
@@ -28,13 +31,22 @@ runs:
       id: shards
       shell: bash
       run: |
-        # Run nf-test with dynamic parameter
-        nftest_output=$(nf-test test \
-          --profile +docker \
-          $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \
-          --dry-run \
-          --ci \
-          --changed-since HEAD^) || {
+        # Run nf-test with dynamic parameter; NFT_IGNORE leaves files out (nf-test.config)
+        dry_run() {
+          nf-test test \
+            --profile +docker \
+            $(if [ -n "${{ inputs.tags }}" ]; then echo "--tag ${{ inputs.tags }}"; fi) \
+            --dry-run \
+            --ci \
+            --changed-since HEAD^
+        }
+        count_tests() { sed -n 's|.*Executed \([0-9]*\) tests.*|\1|p' <<< "$1"; }
+        all_output=$(dry_run) || {
+            echo "nf-test command failed with exit code $?"
+            echo "Full output: $all_output"
+            exit 1
+        }
+        nftest_output=$(NFT_IGNORE="${{ inputs.own_shard }}" dry_run) || {
             echo "nf-test command failed with exit code $?"
             echo "Full output: $nftest_output"
             exit 1
@@ -50,7 +62,7 @@ runs:
           echo "No related tests found."
         else
           # Extract the number of related tests
-          number_of_shards=$(echo "$nftest_output" | sed -n 's|.*Executed \([0-9]*\) tests.*|\1|p')
+          number_of_shards=$(count_tests "$nftest_output")
           if [[ -n "$number_of_shards" && "$number_of_shards" -gt 0 ]]; then
             shards_to_run=$(( $number_of_shards < ${{ inputs.max_shards }} ? $number_of_shards : ${{ inputs.max_shards }} ))
             shard=$(seq 1 "$shards_to_run" | jq -R . | jq -c -s .)
@@ -58,6 +70,14 @@ runs:
           else
             echo "Unexpected output format. Falling back to default values."
           fi
+        fi
+
+        # The slow pipeline test gets a shard of its own when it is among the selected tests
+        all_tests=$(count_tests "$all_output")
+        shared_tests=$(count_tests "$nftest_output")
+        if [ "${all_tests:-0}" -gt "${shared_tests:-0}" ]; then
+          shard=$(jq -c '. + ["pipeline"]' <<< "$shard")
+          if [ "$total_shards" -eq 0 ]; then total_shards=1; fi
         fi
 
         # Write to GitHub Actions outputs
