@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### `Fixed`
+
+- EWAS: the bacon-corrected P value of a CpG with a very large positive t statistic (P below about 1e-16) was far too small, because the z value was computed through a probability that rounds to 1. It is now computed on the log scale, the same for both signs.
+
 ## v1.0.1 - [2026-11-22]
 
 Report readability release: no change to any result.

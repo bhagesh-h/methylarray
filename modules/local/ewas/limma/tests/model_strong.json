@@ -1,0 +1,10 @@
+{
+    "name": "strong",
+    "trait": "strong",
+    "trait_type": "continuous",
+    "transform": "none",
+    "covariates": ["age"],
+    "min_n": 20,
+    "skip_dmr": false,
+    "skip_enrichment": false
+}

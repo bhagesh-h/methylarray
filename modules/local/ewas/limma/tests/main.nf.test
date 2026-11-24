@@ -163,6 +163,45 @@ nextflow_process {
         }
     }
 
+    test("bacon P value of a very strong positive association") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id: 'strong' ],
+                    file("$moduleTestDir/model_strong.json", checkIfExists: true),
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
+                    [],
+                    [],
+                    [],
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def lines = path(process.out.top[0][1]).readLines()
+            def header = lines[0].split('\t') as List
+            def row = lines[1].split('\t') as List
+            def value = { name -> row[header.indexOf(name)].toDouble() }
+            assertAll(
+                { assert process.success },
+                // 1 - P rounds to 1 in double precision, where the z value used to become infinite
+                { assert value('t') > 0 && value('p_value') < 1e-16 },
+                // bacon rescales z a little; the corrected P value stays on the scale of the uncorrected one
+                { assert value('p_bacon') > 0 && Math.log10(value('p_bacon')) / Math.log10(value('p_value')) < 1.5 },
+                { assert Math.log10(value('p_bacon')) / Math.log10(value('p_value')) > 0.5 }
+            )
+        }
+    }
+
     test("fewer complete cases than min_n") {
 
         tag "fast"
