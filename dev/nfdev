@@ -10,6 +10,7 @@
 #   NFDEV_OUT_ROOT   absolute path that receives every output, work directory,
 #                    test result, cache and log (required)
 #   NFDEV_DATA_DIRS  colon-separated absolute paths mounted read-only (optional)
+#   NFDEV_RUN_DIRS   colon-separated absolute paths of further output folders (optional)
 #   NFDEV_IMAGE      devkit image tag (default: methylarray-devkit:dev)
 #   NFDEV_APPTAINER_IMAGE  Apptainer devkit image tag (default: methylarray-apptainer-kit:dev)
 #   NFDEV_JAVA_OPTS  JVM options for Nextflow (default: -Xms512m -Xmx4g)
@@ -72,6 +73,7 @@ source "${ENV_FILE}"
 
 : "${NFDEV_OUT_ROOT:?NFDEV_OUT_ROOT must be set in ${ENV_FILE}}"
 NFDEV_DATA_DIRS="${NFDEV_DATA_DIRS:-}"
+NFDEV_RUN_DIRS="${NFDEV_RUN_DIRS:-}"
 NFDEV_IMAGE="${NFDEV_IMAGE:-methylarray-devkit:dev}"
 NFDEV_APPTAINER_IMAGE="${NFDEV_APPTAINER_IMAGE:-methylarray-apptainer-kit:dev}"
 NFDEV_JAVA_OPTS="${NFDEV_JAVA_OPTS:--Xms512m -Xmx4g}"
@@ -157,6 +159,13 @@ if [[ -n "${NFDEV_DATA_DIRS}" ]]; then
     for d in "${data_dirs[@]}"; do
         [[ "${d}" = /* && -d "${d}" ]] || die "data directory must be an existing absolute path: ${d}"
         mounts+=( -v "${d}:${d}:ro" )
+    done
+fi
+if [[ -n "${NFDEV_RUN_DIRS}" ]]; then
+    IFS=':' read -r -a run_dirs <<< "${NFDEV_RUN_DIRS}"
+    for d in "${run_dirs[@]}"; do
+        [[ "${d}" = /* && -d "${d}" ]] || die "run directory must be an existing absolute path: ${d}"
+        mounts+=( -v "${d}:${d}" )
     done
 fi
 

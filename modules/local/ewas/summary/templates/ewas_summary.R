@@ -153,7 +153,7 @@ meqtl <- data.table(model = character(), contrast = character(), tested = intege
 if (nzchar(meqtl_file) && length(tests) > 0) {
     meqtl_cpgs <- fread(meqtl_file, colClasses = list(character = "cpg_id"))[["cpg_id"]]
     meqtl <- stats[, {
-        has <- cpg_id %in% meqtl_cpgs
+        has <- sub("_[TB][CO][0-9]+\$", "", cpg_id) %in% meqtl_cpgs
         hit <- !is.na(fdr) & fdr < 0.05
         test <- if (sum(hit) > 0 && sum(has) > 0) fisher.test(table(factor(hit, c(TRUE, FALSE)), factor(has, c(TRUE, FALSE)))) else NULL
         .(tested = .N, tested_meqtl = sum(has), hits_fdr = sum(hit), hits_meqtl = sum(hit & has),

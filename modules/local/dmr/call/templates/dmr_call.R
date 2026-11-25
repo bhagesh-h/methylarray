@@ -126,6 +126,9 @@ consensus_tables <- list()
 for (k in unique(stats[["contrast"]])) {
     s <- stats[stats[["contrast"]] == k & !is.na(stats[["p_value"]]) & !is.na(stats[["chr"]]) & !is.na(stats[["pos"]])]
     setorder(s, chr, pos)
+    # One row per probe (--replicate_probe_strategy none): the first probe of each position, so that
+    # replicate probes of one CpG do not make a region
+    if (any(grepl("_[TB][CO][0-9]+\$", s[["cpg_id"]]))) s <- unique(s, by = c("chr", "pos"))
 
     # DMRcate kernel on the model statistics
     ranges <- GRanges(s[["chr"]], IRanges(s[["pos"]], s[["pos"]]), stat = s[["t"]], diff = s[["delta_beta"]],

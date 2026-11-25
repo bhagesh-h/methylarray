@@ -212,19 +212,29 @@ ewastools is not available from conda or CRAN. The QC task installs it from its 
 
 The arrays with QC status `PASS` or `FLAG` go on to probe filtering. Every removed probe is listed with its reasons in `probe_filter/` (see [docs/output.md](output.md#probe-filtering)).
 
-| Parameter                    | Default      | Meaning                                                                                                     |
-| ---------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------- |
-| `--probe_fail_fraction`      | `0.1`        | Remove probes with a detection p-value above `--detection_pval` in more than this fraction of arrays        |
-| `--bead_fail_fraction`       | `0.05`       | Remove probes masked for another reason (bead count, quality mask) in more than this fraction of arrays     |
-| `--snp_mask`                 | `common_1pt` | SNP mask: `common_1pt`, `common_5pt`, `afr`, `amr`, `eas`, `eur`, `sas` or `none`                           |
-| `--crosshyb_filter`          | `wgbs`       | Cross-hybridising probes to remove: `wgbs` (WGBS evidence), `blat` (any predicted off-target hit) or `none` |
-| `--illumina_filter`          | `false`      | Remove the probes of the two Illumina lists (see below) instead of only counting them                       |
-| `--exclude_probes`           |              | List of probe IDs or CpG names to remove (URL or path; first column of a text, CSV or TSV file)             |
-| `--keep_sex_chr`             | `false`      | Keep chrX and chrY probes                                                                                   |
-| `--replicate_probe_strategy` | `mean`       | `mean`: one row per CpG, the mean of its replicate probes; `none`: one row per probe                        |
-| `--probe_annotation`         |              | Saved `probe_annotation.tsv.gz`, used instead of building it                                                |
+| Parameter                    | Default      | Meaning                                                                                                         |
+| ---------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------- |
+| `--probe_fail_fraction`      | `0.1`        | Remove probes with a detection p-value above `--detection_pval` in more than this fraction of arrays            |
+| `--bead_fail_fraction`       | `0.05`       | Remove probes masked for another reason (bead count, quality mask) in more than this fraction of arrays         |
+| `--snp_mask`                 | `common_1pt` | SNP mask: `common_1pt`, `common_5pt`, `afr`, `amr`, `eas`, `eur`, `sas` or `none`                               |
+| `--crosshyb_filter`          | `wgbs`       | Cross-hybridising probes to remove: `wgbs` (WGBS evidence), `blat` (any predicted off-target hit) or `none`     |
+| `--illumina_filter`          | `false`      | Remove the probes of the two Illumina lists (see below) instead of only counting them                           |
+| `--exclude_probes`           |              | List of probe IDs or CpG names to remove (URL or path; first column of a text, CSV or TSV file)                 |
+| `--keep_sex_chr`             | `false`      | Keep chrX and chrY probes                                                                                       |
+| `--replicate_probe_strategy` | `mean`       | `mean`: one row per CpG, the mean of its replicate probes; `best`: one probe per CpG; `none`: one row per probe |
+| `--probe_filters`            | `all`        | Filter steps to apply: `all`, `none` or a comma-separated list (see below)                                      |
+| `--probe_annotation`         |              | Saved `probe_annotation.tsv.gz`, used instead of building it                                                    |
 
 The probe annotation comes from two pinned sources: the Peters et al. 2024 extended EPIC v2 manifest (`--probe_manifest_source`, about 300 MB) and the Zhou lab InfiniumAnnotation mask (`--probe_mask_source`). Choose the SNP population that matches the study: the `common_*` masks use global allele frequencies. Values that failed detection or the bead count in only a few arrays stay in the data as `NA`.
+
+`--probe_filters` takes the steps `non_cg`, `no_position`, `sex_chromosome`, `detection`, `bead_or_quality_mask`, `snp`, `zhou_general_mask` and `cross_hybridisation`; probes of the steps left out are kept and counted as `report_only_*` rows. Genotyping, somatic variant and control probes are always removed. Two examples:
+
+```bash
+--probe_filters sex_chromosome --replicate_probe_strategy none  # remove only chrX and chrY
+--probe_filters none --replicate_probe_strategy best            # remove only duplicate probes
+```
+
+`--replicate_probe_strategy best` keeps the replicate that Peters et al. 2024 call superior, best in precision or best in sensitivity, then the one detected in most arrays. With `none`, rows are probe IDs: cell fractions then use the mean of the replicate probes, gene sets count a CpG as a hit when one of its probes is, and regions use one probe per position.
 
 Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are report-only: they are annotated and counted in the attrition table (`report_only_*` rows), never removed.
 
