@@ -45,6 +45,7 @@ workflow PROBE_FILTER {
     se             = PROBES_FILTER.out.se             // channel: [ meta, filtered SummarizedExperiment, collapsed to CpGs ]
     se_uncollapsed = PROBES_FILTER.out.se_uncollapsed // channel: [ meta, filtered SummarizedExperiment, one row per probe ]
     attrition      = PROBES_FILTER.out.attrition      // channel: [ meta, probe attrition table ]
+    exclusions     = PROBES_FILTER.out.exclusions     // channel: [ meta, removed probes with their reasons ]
     annotation     = ch_annotation                    // channel: probe annotation table
     multiqc        = PROBES_FILTER.out.multiqc        // channel: [ meta, MultiQC custom content ]
 }

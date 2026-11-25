@@ -169,6 +169,16 @@ round_table <- function(table) {
 }
 empty <- function(columns) as.data.frame(setNames(replicate(length(columns), character(), simplify = FALSE), columns))
 
+# Aggregate of the missing phenotypes: arrays per combination of missing phenotypes (empty: none missing)
+missing_table <- empty(c("missing", "arrays"))
+if (length(phenotype_columns) > 0 && nrow(data) > 0) {
+    patterns <- apply(is.na(data[, phenotype_columns, drop = FALSE]), 1, function(row) paste(phenotype_columns[row], collapse = ";"))
+    counts <- table(patterns)
+    missing_table <- data.frame(missing = names(counts), arrays = as.integer(counts))
+    missing_table <- missing_table[order(-missing_table[["arrays"]], missing_table[["missing"]]), ]
+}
+write_tsv(missing_table, paste0(prefix, "_missing.tsv"))
+
 # Agreement between the ageing measures
 agreement <- empty(c("measure1", "measure2", "rho", "p", "n"))
 if (length(measures) > 1) {

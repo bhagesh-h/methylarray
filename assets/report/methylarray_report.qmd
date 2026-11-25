@@ -195,6 +195,70 @@ show_plot <- function(plot, width = NULL, height = NULL, description = NULL) {
     cat("\n\n![**Figure ", figure_number, ".** ", gsub("\n", " ", caption), "](", shown, "){.report-figure style=\"max-width: ",
         round(120 * width), "px\"}\n\n", sep = "")
 }
+# UpSet plot (Lex et al. 2014) of which items are in several sets at once. members:
+# one row per item and set. Bars on top count the items of each combination (an
+# item is in exactly one), filled dots below name its sets, bars on the left give
+# the whole sets. Combinations of fewer than min_sets sets are left out.
+upset_plot <- function(members, title, unit, subtitle = NULL, top = 25, min_sets = 1) {
+    members <- unique(members[, .(item = as.character(item), set = as.character(set))])
+    if (nrow(members) == 0) return(NULL)
+    setorder(members, item, set)
+    sizes <- members[, .(size = .N), by = set][order(-size, set)][, y := -seq_len(.N)]
+    combinations <- members[, .(pattern = paste(set, collapse = "\t"), sets = .N), by = item][, .(n = .N), by = .(pattern, sets)]
+    combinations <- combinations[sets >= min_sets][order(-n, sets, pattern)]
+    if (nrow(combinations) == 0) return(NULL)
+    shown <- head(combinations, top)[, x := seq_len(.N)]
+    hidden <- combinations[-seq_len(nrow(shown))]
+    used <- sizes
+    dots <- shown[, .(set = strsplit(pattern, "\t", fixed = TRUE)[[1]]), by = .(x, sets)]
+    dots <- merge(dots, used[, .(set, y)], by = "set")
+    columns <- c("size", "combination")
+    panel <- function(d, column, row) copy(d)[, `:=`(column = factor(column, columns), row = factor(row, c("bars", "sets")))]
+    n_text <- function(n) format(n, big.mark = ",", trim = TRUE)
+    steep <- nrow(shown) > 12 && max(shown[["n"]]) >= 1000
+    stripes <- panel(used, "combination", "sets")[y %% 2 == 0]
+    label <- data.table(x = 0, y = max(shown[["n"]]) / 2, text = paste0(unit, "\nin the\ncombination"))
+    ggplot() +
+        geom_rect(data = stripes, aes(xmin = 0.4, xmax = nrow(shown) + 0.6, ymin = y - 0.5, ymax = y + 0.5), fill = "grey95") +
+        geom_col(data = panel(shown, "combination", "bars"), aes(x, n, fill = sets > 1), width = 0.65) +
+        geom_text(data = panel(shown, "combination", "bars"), aes(x, n, label = n_text(n)), angle = if (steep) 90 else 0,
+                  hjust = if (steep) -0.15 else 0.5, vjust = if (steep) 0.5 else -0.4, size = 2.8) +
+        geom_blank(data = panel(shown, "combination", "bars"), aes(x, (if (steep) 1.28 else 1.12) * max(n))) +
+        geom_point(data = panel(CJ(x = shown[["x"]], y = used[["y"]]), "combination", "sets"), aes(x, y), colour = "grey82", size = 1.8) +
+        geom_segment(data = panel(dots[, .(low = min(y), high = max(y)), by = x], "combination", "sets"), aes(x = x, xend = x, y = low, yend = high), linewidth = 0.7, colour = "grey20") +
+        geom_point(data = panel(dots, "combination", "sets"), aes(x, y, colour = sets > 1), size = 2.4) +
+        geom_col(data = panel(used, "size", "sets"), aes(-size, y), orientation = "y", width = 0.6, fill = "#dd8452") +
+        geom_text(data = panel(used, "size", "sets"), aes(-size, y, label = n_text(size)), hjust = 1.15, size = 2.8) +
+        geom_blank(data = panel(used, "size", "sets"), aes(-1.5 * max(size), y)) +
+        geom_text(data = panel(label, "size", "bars"), aes(x, y, label = text), hjust = 1, size = 3, lineheight = 0.95) +
+        scale_fill_manual(values = c(`FALSE` = "grey60", `TRUE` = "#4c72b0"), guide = "none") +
+        scale_colour_manual(values = c(`FALSE` = "grey20", `TRUE` = "grey20"), guide = "none") +
+        scale_x_continuous(breaks = NULL, expand = expansion(mult = 0, add = 0)) +
+        scale_y_continuous(breaks = function(l) if (max(l) <= 0) used[["y"]] else pretty(c(0, l), 4),
+                           labels = function(b) if (length(b) > 0 && all(b < 0, na.rm = TRUE)) used[["set"]][match(b, used[["y"]])] else n_text(b),
+                           expand = expansion(mult = 0, add = 0)) +
+        facet_grid(row ~ column, scales = "free") +
+        theme(strip.text = element_blank(), strip.background = element_blank(), panel.grid = element_blank(), panel.border = element_blank(),
+              axis.ticks = element_blank(), panel.spacing = unit(0.3, "lines"), axis.title.x = element_text(hjust = 0, size = 8.5),
+              panel.widths = unit(c(1, 3.4), "null"), panel.heights = unit(c(2.2, 0.32 * nrow(used)), "null")) +
+        labs(x = paste(unit, "in the whole set"), y = NULL, title = title,
+             subtitle = paste(c(subtitle, "Each bar on top counts the", tolower(unit), "in exactly the sets with a filled dot below it (blue: more than one set).",
+                                if (nrow(hidden) > 0) sprintf("The %d smaller combinations (%s in all) are not drawn.", nrow(hidden), n_text(sum(hidden[["n"]])))), collapse = " "))
+}
+upset_height <- function(plot) if (is.null(plot)) 4 else 2.9 + 0.3 * length(unique(unlist(lapply(plot[["layers"]], function(layer) if ("set" %in% names(layer[["data"]])) layer[["data"]][["set"]]))))
+# Plain names of the probe filter steps
+step_names <- c(probe_type = "Not a CpG probe (rs, nv, control)", non_cg = "Non-CG (ch) probe", no_position = "No hg38 position", sex_chromosome = "Sex chromosome",
+                detection = "Detection", bead_or_quality_mask = "Beads or quality mask", snp = "SNP", zhou_general_mask = "Zhou general mask",
+                cross_hybridisation = "Cross-hybridisation", illumina_flagged = "Flagged by Illumina", illumina_mapping_inaccuracy = "Illumina mapping inaccuracy",
+                exclusion_list = "Exclusion list", mismatch_pos = "Manifest position mismatch", zhou_uncorr_titration = "Poor titration (Zhou)")
+step_label <- function(step) ifelse(step %in% names(step_names), unname(step_names[step]), step)
+# Combinations of missing values (missing: names separated by semicolons) as items of sets
+missing_members <- function(table) {
+    table <- table[!is.na(missing) & nzchar(missing)]
+    if (nrow(table) == 0) return(data.table(item = character(), set = character()))
+    table[, .(set = strsplit(missing, ";", fixed = TRUE)[[1]], arrays = arrays), by = .(row = seq_len(nrow(table)))][
+        , .(item = paste(row, seq_len(arrays))), by = .(row, set, arrays)][, .(item, set)]
+}
 # Directional Manhattan plots (as in Uddin et al. 2022, Fig. 1a): -log10 P
 # times the sign of the effect, so CpGs with higher methylation point up and
 # those with lower methylation point down. Every CpG with P < 0.01 is drawn, and
@@ -528,14 +592,24 @@ if ("note" %in% names(av)) {
 ```{r attrition, results = "asis", eval = has("_filtered_attrition\\.tsv$")}
 attrition <- read(find("_filtered_attrition\\.tsv$")[1])
 steps <- attrition[step != "start" & !startsWith(step, "report_only_")]
-steps[, step := factor(step, levels = rev(step))]
+steps[, step := factor(step_label(step), levels = rev(step_label(step)))]
 cat(sprintf("%s probes at the start, %s kept after filtering.\n\n", format(attrition[step == "start", remaining], big.mark = ","),
             format(tail(steps[["remaining"]], 1), big.mark = ",")))
 show_plot(ggplot(steps, aes(removed, step)) + geom_col(fill = "#4c72b0") +
     scale_x_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
     labs(x = "Probes removed", y = "Filter step", title = "Probes removed at each filter step",
          subtitle = "Steps in the order they are applied, from top to bottom; a probe is counted at the first step that removes it."), 8, 4.5)
-print(kable(attrition[startsWith(step, "report_only_"), .(Flag = sub("report_only_", "", step), `Kept probes with the flag` = n_with_reason)], caption = "Report-only flags: probes kept although flagged"))
+print(kable(attrition[startsWith(step, "report_only_"), .(Flag = step_label(sub("report_only_", "", step)), `Kept probes with the flag` = n_with_reason)], caption = "Report-only flags: probes kept although flagged"))
+if (has("_filtered_exclusions\\.tsv\\.gz$")) {
+    exclusions <- read(find("_filtered_exclusions\\.tsv\\.gz$")[1])
+    if (nrow(exclusions) > 0) {
+        several <- sum(grepl(";", exclusions[["reasons"]], fixed = TRUE))
+        cat(sprintf("%s of the %s removed probes fail more than one step.\n\n", format(several, big.mark = ","), format(nrow(exclusions), big.mark = ",")))
+        upset <- upset_plot(exclusions[, .(set = step_label(strsplit(reasons, ";", fixed = TRUE)[[1]])), by = .(item = probe_id)],
+                            "Reasons for removing probes", "Probes", "Every reason of every removed probe, not only the first one.")
+        show_plot(upset, 10, upset_height(upset))
+    }
+}
 ```
 
 ```{r cells, results = "asis", eval = has("^cell_fractions\\.tsv$")}
@@ -634,6 +708,42 @@ if (nrow(weights) > 0) {
         scale_fill_manual(values = c(`TRUE` = "#c44e52", `FALSE` = "#4c72b0"), guide = "none") +
         facet_wrap(~ set, scales = "free", ncol = 3) + theme(axis.text.y = element_text(size = 6)) +
         labs(x = "Standardised weight (clock units per SD of beta)", y = NULL, title = "The 12 largest standardised weights of each clock and score"))
+}
+if (nrow(weights) > 0 && uniqueN(weights[["set"]]) > 1) {
+    shared <- unique(weights[, .(item = cpg, set)])
+    in_several <- shared[, .N, by = item][N > 1]
+    cat(sprintf("\n\n%s of the %s CpGs are in more than one clock or score, at most in %d.\n\n", format(nrow(in_several), big.mark = ","),
+                format(uniqueN(shared[["item"]]), big.mark = ","), if (nrow(in_several) > 0) max(in_several[["N"]]) else 1L))
+    upset <- upset_plot(shared, "CpGs shared between the clocks and scores", "CpGs", min_sets = 2)
+    if (!is.null(upset)) show_plot(upset, 11, upset_height(upset))
+}
+if (has("^clocks_weights\\.tsv$")) {
+    clock_cpgs <- read(find("^clocks_weights\\.tsv$"))
+    clock_cpgs <- unique(clock_cpgs[, .(clock, cpg, snp = snp %in% TRUE, meqtl = if ("meqtl" %in% names(clock_cpgs)) meqtl %in% TRUE else FALSE)])
+    tests <- rbindlist(lapply(find("^ewas_.*_stats\\.tsv\\.gz$"), function(file) {
+        x <- read(file)
+        if (nrow(x) == 0) return(NULL)
+        x[, .(model = model_of(file, "ewas_", "_stats\\.tsv\\.gz"), cpg = sub("_.*", "", cpg_id), hit = !is.na(fdr) & fdr < 0.05)]
+    }))
+    removed_cpgs <- if (has("_filtered_exclusions\\.tsv\\.gz$")) unique(sub("_.*", "", read(find("_filtered_exclusions\\.tsv\\.gz$")[1])[["probe_id"]])) else character()
+    if (nrow(tests) > 0) removed_cpgs <- setdiff(removed_cpgs, unique(tests[["cpg"]]))
+    flags <- rbind(clock_cpgs[snp == TRUE, .(clock, item = cpg, set = "Common SNP")],
+                   clock_cpgs[meqtl == TRUE, .(clock, item = cpg, set = "cis-meQTL")],
+                   clock_cpgs[cpg %in% removed_cpgs, .(clock, item = cpg, set = "Removed by the probe filter")],
+                   if (nrow(tests) > 0) unique(merge(clock_cpgs[, .(clock, item = cpg)], tests[hit == TRUE, .(item = cpg, set = paste("Hit of model", model))],
+                                                     by = "item", allow.cartesian = TRUE))[, .(clock, item, set)])
+    if (nrow(flags) > 0) {
+        cat(sprintf("\n\n%s of the %s clock CpGs carry a common SNP, are removed by the probe filter or are a hit of an association model (FDR < 0.05). The clocks are computed before the probe filter, so removed CpGs still count in them.\n\n",
+                    format(uniqueN(flags[["item"]]), big.mark = ","), format(uniqueN(clock_cpgs[["cpg"]]), big.mark = ",")))
+        # a plot only when a CpG has several flags; the table below gives the single ones
+        if (any(unique(flags[, .(item, set)])[, .N, by = item][["N"]] > 1)) {
+            upset <- upset_plot(flags, "Clock CpGs with a SNP, removed by the probe filter or associated", "CpGs", "Every clock CpG counts once, whichever clocks use it.")
+            show_plot(upset, 9, upset_height(upset))
+        }
+        per_clock <- dcast(unique(flags), clock ~ set, value.var = "item", fun.aggregate = length)
+        print(kable(merge(clock_cpgs[, .(CpGs = uniqueN(cpg)), by = clock], per_clock, by = "clock", all.x = TRUE)[, lapply(.SD, function(v) if (is.integer(v)) fifelse(is.na(v), 0L, v) else v)],
+                    caption = "Clock CpGs with each flag"))
+    }
 }
 if (has("^clocks_coverage\\.tsv$")) {
     coverage <- read(find("^clocks_coverage\\.tsv$"))
@@ -743,6 +853,17 @@ if (nrow(pt) > 0) {
             scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `ancestry held` = "#8172b3", `genotype-robust` = "#937860", `low contamination` = "#55a868")) +
             labs(x = "Difference between the groups (SD)", y = NULL, colour = "Adjustment", shape = "Significance", title = paste0(t, ": every acceleration and score"), subtitle = "Each point is one acceleration or score in one version of the test; filled points are significant at q < 0.05."))
     }
+}
+```
+
+```{r missing-phenotypes, results = "asis", eval = has("^biomarkers_missing\\.tsv$")}
+absent <- read(find("^biomarkers_missing\\.tsv$"))
+if (nrow(absent) > 0) {
+    heading("Missing phenotypes")
+    complete <- sum(absent[is.na(missing) | missing == "", arrays])
+    cat(sprintf("%d of %d arrays have every phenotype. A test uses the arrays that have its own phenotype.\n\n", complete, sum(absent[["arrays"]])))
+    upset <- upset_plot(missing_members(absent), "Arrays with missing phenotypes", "Arrays", "Only phenotypes with a missing value are listed.", top = 20)
+    if (!is.null(upset)) show_plot(upset, 9, upset_height(upset))
 }
 ```
 
@@ -934,6 +1055,11 @@ if (has("^ewas_summary_comparison\\.tsv$")) {
             if (nrow(x) == 0) return(NULL)
             x[, .(key = paste(model_of(f, "ewas_", "_stats\\.tsv\\.gz"), contrast, sep = " | "), cpg_id, t, hit = !is.na(fdr) & fdr < 0.05)]
         }))
+        hits <- unique(all_stats[hit == TRUE, .(item = cpg_id, set = key)])
+        if (uniqueN(hits[["set"]]) > 1) {
+            upset <- upset_plot(hits, "Hits shared between the model contrasts", "CpGs", "Hits at FDR < 0.05.")
+            show_plot(upset, 9, upset_height(upset))
+        }
         scatter <- rbindlist(lapply(seq_len(nrow(pairs)), function(i) {
             a <- all_stats[key == pairs[["contrast_a"]][i], .(cpg_id, t_a = t, hit_a = hit)]
             b <- all_stats[key == pairs[["contrast_b"]][i], .(cpg_id, t_b = t, hit_b = hit)]
@@ -969,6 +1095,18 @@ for (file in find("^ewas_.*_stats\\.tsv\\.gz$")) {
         if (nrow(characteristics) > 0) {
             setnames(characteristics, c("variable", "level", "p_value"), c("Variable", "Level", "P"), skip_absent = TRUE)
             print(kable(characteristics, caption = paste0(model, ": characteristics of the arrays in the model (aggregates; counts below 5 shown as <5; P: Kruskal-Wallis or Fisher's exact test between the groups)")))
+        }
+    }
+    missing_file <- sub("_stats\\.tsv\\.gz$", "_missing.tsv", file)
+    if (file.exists(missing_file) && file.info(missing_file)[["size"]] > 0) {
+        absent <- read(missing_file)
+        if (nrow(absent) > 0) {
+            lost <- sum(absent[!is.na(missing) & missing != "", arrays])
+            if (lost > 0) {
+                cat(sprintf("\n\n%d of %d arrays are left out because a variable of the model is missing.\n\n", lost, sum(absent[["arrays"]])))
+                upset <- upset_plot(missing_members(absent), paste0(model, ": arrays left out, by missing variable"), "Arrays", top = 20)
+                show_plot(upset, 8, upset_height(upset))
+            }
         }
     }
     for (k in unique(stats[["contrast"]])) {

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--exclude_probes`: a list of probes or CpGs to remove, counted as its own step of the probe attrition.
 - `--illumina_filter`: remove the probes of the Illumina lists (`--illumina_flagged_probes`, `--illumina_mapping_inaccuracy`) instead of only counting them.
 - `--ewas_outlier_iqr`: set extreme M-values of a CpG to missing before the association tests (off by default).
+- HTML report: UpSet plots of the reasons probes are removed for, the CpGs that clocks and scores share, the clock CpGs with a SNP, a cis-meQTL, a removed probe or an association, the missing phenotypes and model variables, and the hits that model contrasts share.
+- `biomarkers_missing.tsv` and `ewas_<model>_missing.tsv`: the arrays per combination of missing phenotypes and of missing model variables.
 - `--ewas_cells idol`: the IDOL cell fractions as the cell covariates of the association models.
 
 ### `Fixed`

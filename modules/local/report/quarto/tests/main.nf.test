@@ -41,6 +41,10 @@ nextflow_process {
                           'score: cell types', 'cell-type-specific hits per lineage', 'with higher methylation and the smallest P', 'with lower methylation and the smallest P',
                           'Figure 1.', 'CpGs with higher and lower methylation', 'volcano plot', 'genomic context of the hits', 'binomial test asks',
                           'characteristics of the arrays', 'Overlap and agreement of every pair', 'follows the trait'].every { section -> html.contains(section) } },
+                // UpSet plots: filter reasons, shared clock CpGs, flagged clock CpGs, missing phenotypes and model variables, shared hits
+                { assert ['Reasons for removing probes.', 'CpGs shared between the clocks and scores.', 'Clock CpGs with a SNP, removed by the probe filter or associated.',
+                          'Arrays with missing phenotypes.', 'score: arrays left out, by missing variable.', 'Hits shared between the model contrasts.',
+                          '17 of the 44 removed probes fail more than one step', '3 of 41 arrays are left out'].every { section -> html.contains(section) } },
                 { assert html.contains('overflow-x: auto') && html.contains('id="TOC"') },
                 { assert !html.contains('Error in') && !html.contains('report_figures/') },
                 // every numbered figure of the report is saved as PNG and PDF

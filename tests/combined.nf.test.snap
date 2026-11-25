@@ -116,6 +116,7 @@
                 "biomarkers/biomarkers_cells_measures.tsv",
                 "biomarkers/biomarkers_cells_phenotypes.tsv",
                 "biomarkers/biomarkers_contamination.tsv",
+                "biomarkers/biomarkers_missing.tsv",
                 "biomarkers/biomarkers_phenotypes.tsv",
                 "biomarkers/biomarkers_quartiles.tsv",
                 "biomarkers/biomarkers_robust.tsv",
@@ -150,6 +151,7 @@
                 "ewas/age/ewas_age_cells.tsv.gz",
                 "ewas/age/ewas_age_characteristics.tsv",
                 "ewas/age/ewas_age_design_check.tsv",
+                "ewas/age/ewas_age_missing.tsv",
                 "ewas/age/ewas_age_resolved.json",
                 "ewas/age/ewas_age_stats.tsv.gz",
                 "ewas/age/ewas_age_summary.json",
@@ -227,6 +229,7 @@
                 "biomarkers_cells_measures.tsv:md5,5171816fe4fa28ee0f5b42234ecb96ab",
                 "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c",
                 "biomarkers_contamination.tsv:md5,bd80f2be4ca00d182a917b4b01789fb6",
+                "biomarkers_missing.tsv:md5,8639884b251d1309904de6f626fcdb29",
                 "biomarkers_phenotypes.tsv:md5,f8639e17b0b8d6cfba0d2689a8717e28",
                 "biomarkers_quartiles.tsv:md5,fe324338b369730600fb20b791bf02e5",
                 "biomarkers_robust.tsv:md5,3b34aabf5098dc5fa37f978c8b6c1b65",
@@ -252,6 +255,7 @@
                 "ewas_age_cells.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_age_characteristics.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_age_design_check.tsv:md5,d41d8cd98f00b204e9800998ecf8427e",
+                "ewas_age_missing.tsv:md5,8639884b251d1309904de6f626fcdb29",
                 "ewas_age_resolved.json:md5,8a80554c91d9fca8acb82f023de02f11",
                 "ewas_age_stats.tsv.gz:md5,d41d8cd98f00b204e9800998ecf8427e",
                 "ewas_age_summary.json:md5,1efa4c01d4f1030dbcfb61796ef447dc",
@@ -294,7 +298,7 @@
                 "sesame_qc.tsv:md5,b3186e23893264cb8b0715bcdb2da4ef"
             ]
         ],
-        "timestamp": "2026-11-20T13:20:59.960412522",
+        "timestamp": "2026-11-25T14:06:41.708904391",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

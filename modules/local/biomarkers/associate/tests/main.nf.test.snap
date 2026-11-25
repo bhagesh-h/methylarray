@@ -103,6 +103,9 @@
                     ]
                 ],
                 "10": [
+                    
+                ],
+                "11": [
                     "versions.yml:md5,2637a135f7af8c831915758762c98dd1"
                 ],
                 "2": [
@@ -162,7 +165,12 @@
                     ]
                 ],
                 "9": [
-                    
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_missing.tsv:md5,8639884b251d1309904de6f626fcdb29"
+                    ]
                 ],
                 "agreement": [
                     [
@@ -212,6 +220,14 @@
                         "biomarkers_contamination.tsv:md5,bd80f2be4ca00d182a917b4b01789fb6"
                     ]
                 ],
+                "missing": [
+                    [
+                        {
+                            "id": "biomarkers"
+                        },
+                        "biomarkers_missing.tsv:md5,8639884b251d1309904de6f626fcdb29"
+                    ]
+                ],
                 "multiqc": [
                     
                 ],
@@ -244,7 +260,7 @@
                 ]
             }
         ],
-        "timestamp": "2026-11-16T14:55:23.709412165",
+        "timestamp": "2026-11-25T14:02:26.055762511",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"
