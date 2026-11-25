@@ -53,6 +53,7 @@ workflow EWAS {
     top     = EWAS_LIMMA.out.top      // channel: [ meta, top CpGs per model ]
     design_check = EWAS_LIMMA.out.design_check // channel: [ meta, design checks per model ]
     characteristics = EWAS_LIMMA.out.characteristics // channel: [ meta, baseline characteristics per model ]
+    missing  = EWAS_LIMMA.out.missing  // channel: [ meta, arrays per combination of missing model variables ]
     cells    = EWAS_LIMMA.out.cells    // channel: [ meta, cell-type-specific statistics per model ]
     summary = EWAS_SUMMARY.out.summary // channel: summary table across models
     multiqc = EWAS_SUMMARY.out.multiqc // channel: MultiQC table

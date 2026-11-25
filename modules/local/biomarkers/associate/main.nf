@@ -19,6 +19,7 @@ process BIOMARKERS_ASSOCIATE {
     tuple val(meta), path("${prefix}_contamination.tsv")   , emit: contamination
     tuple val(meta), path("${prefix}_ancestry.tsv")        , emit: ancestry
     tuple val(meta), path("${prefix}_robust.tsv")          , emit: robust
+    tuple val(meta), path("${prefix}_missing.tsv")         , emit: missing
     tuple val(meta), path("${prefix}_*_mqc.{json,tsv}")    , emit: multiqc, optional: true
     path "versions.yml", emit: versions, topic: versions
 
@@ -38,6 +39,7 @@ process BIOMARKERS_ASSOCIATE {
     printf 'measure\\trho\\tp\\tn\\tq\\tcutoff\\tarrays_above_cutoff\\n' > ${prefix}_contamination.tsv
     printf 'measure\\tpc\\trho\\tp\\tn\\tq\\n' > ${prefix}_ancestry.tsv
     printf 'measure\\trho\\tn\\n' > ${prefix}_robust.tsv
+    printf 'missing\\tarrays\\n' > ${prefix}_missing.tsv
     printf '"%s":\\n    R: stub\\n    jsonlite: stub\\n' "${task.process}" > versions.yml
     """
 }

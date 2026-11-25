@@ -44,6 +44,7 @@ nextflow_process {
                 // two arrays have no score; the tokens expand to sex, five cell lineages, two control PCs and two ancestry PCs
                 { assert summary.n == 38 && summary.status == 'tested' },
                 { assert summary.covariates == ['age', 'predicted_sex', 'cc_CD4T', 'cc_CD8T', 'cc_B', 'cc_NK', 'cc_Mono', 'ctrlpc1', 'ctrlpc2', 'ancestry_pc1', 'ancestry_pc2', 'plate'] },
+                { assert path(process.out.missing[0][1]).readLines() == ['missing\tarrays', '\t38', 'score\t2'] },
                 // the 20 planted CpGs are the top 20 and pass FDR < 0.05, with at most two false positives
                 { assert top.sort() == (1..20).collect { i -> String.format('cg%08d', i) } },
                 { assert stats.hits_fdr >= 20 && stats.hits_fdr <= 22 },

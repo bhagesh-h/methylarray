@@ -36,6 +36,10 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Huber W, Carey VJ, Gentleman R, et al. Orchestrating high-throughput genomic analysis with Bioconductor. Nat Methods. 2015;12(2):115-121.
 
+- [UpSet](https://doi.org/10.1109/TVCG.2014.2346248)
+
+  > Lex A, Gehlenborg N, Strobelt H, Vuillemot R, Pfister H. UpSet: visualization of intersecting sets. IEEE Trans Vis Comput Graph. 2014;20(12):1983-1992.
+
 - [Quarto](https://quarto.org)
 
   > Open-source scientific and technical publishing system. Renders the HTML analysis report from `assets/report/methylarray_report.qmd`.

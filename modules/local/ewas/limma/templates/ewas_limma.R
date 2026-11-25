@@ -156,6 +156,11 @@ if (!is.null(model[["subset"]])) {
     dropped <- rbind(dropped, data.table(sample = arrays[outside], reason = paste0("subset: ", column, " not in ", paste(allowed, collapse = ", "))))
     keep <- keep & !outside
 }
+# Aggregate of the missing values: arrays per combination of missing variables (empty: none missing)
+missing_values <- is.na(as.matrix(covariates[, needed, with = FALSE]))[keep, , drop = FALSE]
+missing_patterns <- apply(missing_values, 1, function(row) paste(needed[row], collapse = ";"))
+missing_patterns <- as.data.table(table(missing = factor(missing_patterns)))[order(-N, missing)]
+fwrite(setnames(missing_patterns, "N", "arrays"), paste0(prefix, "_missing.tsv"), sep = "\\t", quote = FALSE)
 for (column in needed) {
     missing <- keep & is.na(covariates[[column]])
     if (any(missing)) dropped <- rbind(dropped, data.table(sample = arrays[missing], reason = paste0("missing ", column)))
