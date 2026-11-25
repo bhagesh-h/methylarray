@@ -8,14 +8,17 @@ authors:
     orcid: "https://orcid.org/0000-0002-5957-8005"
     alias: bhagesh-h
     website: "https://github.com/bhagesh-h"
-version: 1.0.2
-date-released: "2026-11-24"
+version: 1.1.0
+date-released: "2026-11-25"
 license: MIT
 doi: 10.5281/zenodo.24399752
 identifiers:
   - type: doi
     value: 10.5281/zenodo.24399752
     description: Concept DOI, all versions (resolves to the latest)
+  - type: doi
+    value: 10.5281/zenodo.24516701
+    description: Version 1.0.2
   - type: doi
     value: 10.5281/zenodo.24458958
     description: Version 1.0.1

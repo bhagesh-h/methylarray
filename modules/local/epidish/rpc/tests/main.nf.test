@@ -56,6 +56,33 @@ nextflow_process {
         }
     }
 
+    // Reference CpGs on a sex chromosome are in the data (--keep_sex_chr): they are left out
+    test("whole blood - sex chromosome CpGs in the data") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                input[0] = [ [ id: 'minfi' ], file("$moduleTestDir/test_se", checkIfExists: true), file("$moduleTestDir/annotation_chrx.tsv.gz", checkIfExists: true), [] ]
+                """
+            }
+        }
+
+        then {
+            def cov = path(process.out.coverage[0][1]).readLines().collect { line -> line.split('\t', -1) as List }
+            def coverage = cov.drop(1).collect { values -> [cov[0], values].transpose().collectEntries() }.collectEntries { row -> [row.reference, row] }
+            assertAll(
+                { assert process.success },
+                // 569 found and 7 on chrX in the first test; two more are on chrX here
+                { assert coverage.cent12CT.found == '567' && coverage.cent12CT.sex_chromosome == '9' },
+                // 7-type reference: one of its CpGs is on chrX here
+                { assert (coverage.centDHSbloodDMC.sex_chromosome as int) == 7 },
+                { assert coverage.values().every { row -> (row.found as int) + (row.sex_chromosome as int) + (row.not_on_array as int) + (row.removed_by_filter as int) == (row.reference_cpgs as int) } }
+            )
+        }
+    }
+
     test("whole blood - stub") {
 
         tag "fast"

@@ -44,6 +44,7 @@ nextflow_process {
                 // two arrays have no score; the tokens expand to sex, five cell lineages, two control PCs and two ancestry PCs
                 { assert summary.n == 38 && summary.status == 'tested' },
                 { assert summary.covariates == ['age', 'predicted_sex', 'cc_CD4T', 'cc_CD8T', 'cc_B', 'cc_NK', 'cc_Mono', 'ctrlpc1', 'ctrlpc2', 'ancestry_pc1', 'ancestry_pc2', 'plate'] },
+                { assert path(process.out.missing[0][1]).readLines() == ['missing\tarrays', '\t38', 'score\t2'] },
                 // the 20 planted CpGs are the top 20 and pass FDR < 0.05, with at most two false positives
                 { assert top.sort() == (1..20).collect { i -> String.format('cg%08d', i) } },
                 { assert stats.hits_fdr >= 20 && stats.hits_fdr <= 22 },
@@ -90,6 +91,51 @@ nextflow_process {
                 { assert ['CD4T', 'CD8T', 'NK', 'Mono', 'Gran'].every { l -> lineages[l].status.startsWith('unreliable: median fraction') } },
                 // the per-CpG table carries the status of its lineage
                 { assert rows.findAll { r -> r[5] == 'NK' }.every { r -> r[-1].startsWith('unreliable') } }
+            )
+        }
+    }
+
+    test("IDOL cell fractions and outliers set to missing") {
+
+        tag "fast"
+        config "./nextflow_qi.config"
+
+        when {
+            process {
+                """
+                def fractions = file("$moduleTestDir/cell_fractions.tsv", checkIfExists: true)
+                def idol = file("$outputDir/idol/cell_fractions.tsv")
+                idol.parent.mkdirs()
+                idol.text = fractions.text.replace('lineage_Gran', 'idol_Neu').replace('lineage_B', 'idol_Bcell').replace('lineage_', 'idol_')
+                input[0] = [
+                    [ id: 'score' ],
+                    file("$moduleTestDir/model_score.json", checkIfExists: true),
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/samples.tsv", checkIfExists: true),
+                    file("$moduleTestDir/sample_qc.tsv", checkIfExists: true),
+                    file("$moduleTestDir/phenotypes.tsv", checkIfExists: true),
+                    idol,
+                    file("$moduleTestDir/ctrl_pcs.tsv", checkIfExists: true),
+                    file("$moduleTestDir/ancestry_pcs.tsv", checkIfExists: true),
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def summary = new groovy.json.JsonSlurper().parse(path(process.out.summary[0][1]).toFile())
+            def rows = path(process.out.stats[0][1]).linesGzip
+            def column = rows[0].split('\t').toList().indexOf('n')
+            def tested = rows.drop(1).collect { line -> line.split('\t', -1)[column] as int }
+            assertAll(
+                { assert process.success },
+                // the IDOL fractions take the place of the lineages
+                { assert ['cc_CD4T', 'cc_CD8T', 'cc_B', 'cc_NK', 'cc_Mono'].every { c -> c in summary.covariates } },
+                // fences at one interquartile range: values are set to missing, at most 38 arrays remain per CpG
+                { assert summary.outlier_values > 1000 && summary.outlier_cpgs > 500 },
+                { assert tested.max() <= 38 && tested.count { n -> n < 37 } > 200 },
+                { assert summary.contrasts.score.hits_fdr >= 15 }
             )
         }
     }

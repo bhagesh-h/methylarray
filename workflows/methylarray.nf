@@ -90,9 +90,9 @@ workflow METHYLARRAY {
     // SUBWORKFLOW: Probe annotation and filtering
     //
     PROBE_FILTER(ch_route_se, SAMPLE_QC.out.retained, params.probe_annotation, params.probe_manifest_source, params.probe_mask_source, params.platform,
-        params.illumina_flagged_probes, params.illumina_mapping_inaccuracy)
+        params.illumina_flagged_probes, params.illumina_mapping_inaccuracy, params.exclude_probes)
     ch_multiqc_files = ch_multiqc_files.mix(PROBE_FILTER.out.multiqc.map { _meta, table -> table })
-    ch_report_files = ch_report_files.mix(PROBE_FILTER.out.attrition.map { _meta, table -> table })
+    ch_report_files = ch_report_files.mix(PROBE_FILTER.out.attrition.map { _meta, table -> table }, PROBE_FILTER.out.exclusions.map { _meta, table -> table })
 
     //
     // SUBWORKFLOW: Blood cell-type composition
@@ -200,7 +200,7 @@ workflow METHYLARRAY {
         def ch_biomarker_tables = BIOMARKERS_ASSOCIATE.out.agreement
             .mix(BIOMARKERS_ASSOCIATE.out.cells_measures, BIOMARKERS_ASSOCIATE.out.cells_phenotypes, BIOMARKERS_ASSOCIATE.out.batch,
                 BIOMARKERS_ASSOCIATE.out.phenotypes, BIOMARKERS_ASSOCIATE.out.quartiles, BIOMARKERS_ASSOCIATE.out.contamination,
-                BIOMARKERS_ASSOCIATE.out.ancestry, BIOMARKERS_ASSOCIATE.out.robust)
+                BIOMARKERS_ASSOCIATE.out.ancestry, BIOMARKERS_ASSOCIATE.out.robust, BIOMARKERS_ASSOCIATE.out.missing)
             .map { _meta, f -> f }
         ch_report_files = ch_report_files.mix(ch_biomarker_tables)
     }
@@ -213,7 +213,7 @@ workflow METHYLARRAY {
     ch_multiqc_files = ch_multiqc_files.mix(EWAS.out.multiqc)
     ch_report_files = ch_report_files.mix(EWAS.out.summary, EWAS.out.stats.map { _meta, f -> f }, EWAS.out.top.map { _meta, f -> f },
         EWAS.out.design_check.map { _meta, f -> f }, EWAS.out.cells.map { _meta, f -> f }, EWAS.out.cells_summary, EWAS.out.meqtl,
-        EWAS.out.characteristics.map { _meta, f -> f }, EWAS.out.comparison)
+        EWAS.out.characteristics.map { _meta, f -> f }, EWAS.out.missing.map { _meta, f -> f }, EWAS.out.comparison)
 
     //
     // SUBWORKFLOW: Differentially methylated regions of every model

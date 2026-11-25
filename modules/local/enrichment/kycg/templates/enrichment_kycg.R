@@ -91,9 +91,9 @@ if (length(titles) == 0) stop("No KnowYourCG knowledgebase for ", opts[["platfor
 databases <- getDBs(titles, silent = TRUE)
 group_name <- function(g) sub("[.][0-9]{8}\$", "", sub("^KYCG[.][^.]+[.]", "", g))
 
-# CpG to probe IDs
+# CpG to probe IDs (probe IDs, with --replicate_probe_strategy none, stay as they are)
 anno <- fread(text = readLines(gzfile(annotation_file)), select = c("probe_id", "cpg_id"))
-probes_of <- function(cpgs) anno[["probe_id"]][anno[["cpg_id"]] %in% cpgs]
+probes_of <- function(cpgs) anno[["probe_id"]][anno[["cpg_id"]] %in% cpgs | anno[["probe_id"]] %in% cpgs]
 
 tables <- list()
 for (k in unique(stats[["contrast"]])) {

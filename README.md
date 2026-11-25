@@ -33,7 +33,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
 
 ![methylarray workflow](docs/images/metro_map.svg)
 
-> **Status:** released, the latest version is 1.0.2. [CHANGELOG.md](CHANGELOG.md) lists what each version contains.
+> **Status:** released, the latest version is 1.1.0. [CHANGELOG.md](CHANGELOG.md) lists what each version contains.
 
 ## Pipeline summary
 
@@ -54,7 +54,7 @@ The pipeline is built for the **Infinium MethylationEPIC v2.0 BeadChip** and han
    - probes failing detection or the bead count in too many arrays
    - SNP-affected probes (global or population-specific masks), the Zhou general mask and cross-hybridising probes
 
-   Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`), poorly titrating probes (Zhou) and, from user-supplied lists, Illumina's flagged and mapping-inaccuracy probes are annotated and counted, never removed. EPIC v2 replicate probes are then averaged per CpG. An attrition table documents each step.
+   Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and poorly titrating probes (Zhou) are annotated and counted, never removed. Illumina's flagged and mapping-inaccuracy probes, from user-supplied lists, are counted unless `--illumina_filter` removes them, and `--exclude_probes` removes a list of your own. `--probe_filters` applies only the steps you name. EPIC v2 replicate probes are then averaged per CpG, reduced to the best one or kept apart (`--replicate_probe_strategy`). An attrition table documents each step, and `-profile qi` sets the rules of Qi et al. (2025).
 
 5. Estimate leukocyte fractions with [EpiDISH](https://bioconductor.org/packages/EpiDISH/) (12-type `cent12CT` reference, with the 7-type `centDHSbloodDMC` reference for comparison).
 6. Compute epigenetic clocks with [dnaMethyAge](https://github.com/yiluyucheng/dnaMethyAge) (Horvath, Hannum, PhenoAge, skin and blood, PC clocks, DNAmTL, epiTOC2 and others) and [DunedinPACE](https://github.com/danbelsky/DunedinPACE), with age acceleration and the probe coverage of every clock.
@@ -230,7 +230,7 @@ Bug reports and feature requests are welcome through GitHub issues. Development 
 
 ## Citations
 
-To cite methylarray, use its Zenodo DOI, [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752), which always resolves to the latest version; version 1.0.1 is [10.5281/zenodo.24458958](https://doi.org/10.5281/zenodo.24458958) and version 1.0.0 is [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753). The full citation is in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
+To cite methylarray, use its Zenodo DOI, [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752), which always resolves to the latest version; version 1.0.2 is [10.5281/zenodo.24516701](https://doi.org/10.5281/zenodo.24516701), version 1.0.1 is [10.5281/zenodo.24458958](https://doi.org/10.5281/zenodo.24458958) and version 1.0.0 is [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753). The full citation is in [CITATION.cff](CITATION.cff), also shown by the "Cite this repository" button on the GitHub page. Please also cite the tools, methods, reference data and frameworks the pipeline uses, listed in [CITATIONS.md](CITATIONS.md).
 
 ## License
 

@@ -30,22 +30,75 @@ nextflow_process {
             def html = path(process.out.report[0]).text
             assertAll(
                 { assert process.success },
-                { assert ['Run summary', 'Sample QC', 'Probe filtering', 'Cell composition', 'Epigenetic clocks and DNA methylation scores',
-                          'Exploratory analysis', 'Association models', 'Differentially methylated regions', 'Gene set enrichment',
-                          'Methods', 'Limitations'].every { section -> html.contains(section) } },
+                // the parts, each written once
+                { assert ['Summary', 'Samples', 'Probes', 'Cell composition', 'Clocks and scores', 'Clocks, cells and phenotypes',
+                          'Sources of variation', 'Association models', 'Methods'].every { part ->
+                    (html =~ /<h1[^>]*>\s*<span class="header-section-number">\d+<\/span> \Q${part}\E<\/h1>/).size() == 1 } },
+                { assert ['QC status', 'Filter steps', 'Agreement with the reported age', 'Principal components', 'Differentially methylated regions',
+                          'Gene set enrichment', 'Limitations'].every { section -> html.contains(section) } },
+                // every link of the summary has its section, and figures that belong together are tabs
+                { assert (html =~ /<td[^>]*><a href="#([^"]+)"/).collect { match -> match[1] }.every { id -> html.contains("id=\"${id}\"") } },
+                { assert html.contains('href="#model-score"') && html.contains('panel-tabset') && !html.contains(':::') },
                 { assert html.contains('minfi') && html.contains('PLANTED') },
                 { assert html.contains('reported, not removed') && html.contains('S3') },
-                { assert ['SNP genotypes', 'Relatedness', 'below the threshold', 'Clock and score CpGs', 'Clocks, scores and cell fractions', 'Clocks and scores against the phenotypes',
+                { assert ['SNP genotypes', 'Relatedness', 'below the threshold', 'Clock and score CpGs', 'Agreement of the clocks and scores', 'Clocks and scores against the phenotypes',
                           'Quartile groups of acceleration', 'Contamination and the ageing measures', 'Genetic ancestry', 'Ancestry and the ageing measures', 'Genomic context enrichment', 'Genetic influence on the clocks', 'Association hits with a cis-meQTL', 'Variance partition', 'Agreement of the lineages with IDOL',
                           'Reference CpGs found in the data', 'Flagged design checks', 'VIF cc_Gran', 'regions per method', 'consensus regions of DMRcate and dmrff, by dmrff P',
-                          'score: cell types', 'cell-type-specific hits per lineage', 'with higher methylation and the smallest P', 'with lower methylation and the smallest P',
-                          'Figure 1.', 'CpGs with higher and lower methylation', 'volcano plot', 'genomic context of the hits', 'binomial test asks',
+                          'Cell types', 'cell-type-specific hits per lineage', 'with higher methylation and the smallest P', 'with lower methylation and the smallest P',
+                          'Figure 1.', 'CpGs with higher and lower methylation', 'volcano plot', 'genomic context of the hits', 'binomial test of the balance',
                           'characteristics of the arrays', 'Overlap and agreement of every pair', 'follows the trait'].every { section -> html.contains(section) } },
+                // UpSet plots: filter reasons, shared clock CpGs, flagged clock CpGs, missing phenotypes and model variables, shared hits
+                { assert ['Reasons for removing probes.', 'CpGs shared between the clocks and scores.', 'Clock CpGs with a SNP, removed by the probe filter or associated.',
+                          'Arrays with missing phenotypes.', 'score: arrays left out, by missing variable.', 'Hits shared between the model contrasts.',
+                          '17 of the 44 removed probes fail more than one step', '3 of 41 arrays are left out'].every { section -> html.contains(section) } },
                 { assert html.contains('overflow-x: auto') && html.contains('id="TOC"') },
                 { assert !html.contains('Error in') && !html.contains('report_figures/') },
                 // every numbered figure of the report is saved as PNG and PDF
                 { assert path(process.out.figures[0]).list().size() == 2 * (html =~ /Figure ([0-9]+)\./).collect { match -> match[1] }.unique().size() },
                 { assert snapshot(process.out.versions).match() }
+            )
+        }
+    }
+
+    // 15 measures and 60 phenotypes: the figures grow with the phenotypes, and
+    // ggsave refuses figures above 50 inches
+    test("many phenotypes") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                def tables = ['biomarkers_quartiles.tsv', 'biomarkers_phenotypes.tsv', 'biomarkers_cells_phenotypes.tsv']
+                def measures = (1..15).collect { i -> 'Clock' + i + ' acceleration' }
+                def traits = (1..60).collect { i -> 'trait' + i }
+                def quartiles = ['measure,trait,type,group,value,mean_z,p_trend,q']
+                def phenotypes = ['measure,trait,type,version,estimate,p,n,q']
+                def lineages = ['cell,trait,type,estimate,p,n,q']
+                measures.each { m -> traits.each { t ->
+                    ['decelerated', 'normal', 'accelerated'].each { g -> quartiles << [m, t, 'continuous', g, 1.5, 0.1, 0.5, 0.5].join(',') }
+                    phenotypes << [m, t, 'continuous', 'plain', 0.1, 0.5, 78, 0.5].join(',')
+                } }
+                ['B', 'NK'].each { c -> traits.each { t -> lineages << [c, t, 'continuous', 0.1, 0.5, 78, 0.5].join(',') } }
+                def made = [quartiles, phenotypes, lineages].withIndex().collect { lines, i ->
+                    def table = file("$outputDir/many/" + tables[i])
+                    table.parent.mkdirs()
+                    table.text = lines.collect { line -> line.replace(',', '\\t') }.join('\\n') + '\\n'
+                    table
+                }
+                input[0] = file("$projectDir/assets/report/methylarray_report.qmd", checkIfExists: true)
+                input[1] = files("$moduleTestDir/fixtures/*").findAll { f -> !(f.name in tables) } + made
+                """
+            }
+        }
+
+        then {
+            def html = path(process.out.report[0]).text
+            assertAll(
+                { assert process.success },
+                // four rows of clocks and at most 24 traits per figure
+                { assert html.contains('Characteristics by quartile group of acceleration (part 1 of 3)') && html.contains('(part 3 of 3)') },
+                { assert !html.contains('Error in') }
             )
         }
     }

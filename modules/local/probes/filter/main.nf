@@ -8,7 +8,7 @@ process PROBES_FILTER {
         'community.wave.seqera.io/library/bioconductor-hdf5array_bioconductor-summarizedexperiment_procps-ng_r-base_r-data.table:460ab90a75a0c805' }"
 
     input:
-    tuple val(meta), path(se), path(retained), path(annotation)
+    tuple val(meta), path(se), path(retained), path(annotation), path(exclude_probes)
 
     output:
     tuple val(meta), path("${prefix}_se")               , emit: se

@@ -7,6 +7,9 @@
 # annotation.tsv.gz holds the rows of probe_annotation.tsv.gz whose cpg_id,
 # epicv1_id or hm450_id is a reference CpG (columns probe_id, cpg_id, chr, pos,
 # epicv1_id, hm450_id).
+# annotation_chrx.tsv.gz is the same table with cg21782213 and cg10168351 (cent12CT)
+# and cg01024458 (centDHSbloodDMC) placed on chrX, to test that reference CpGs on a
+# sex chromosome are left out when they are in the data.
 suppressPackageStartupMessages({ library(SummarizedExperiment); library(HDF5Array) })
 args <- commandArgs(TRUE)
 se <- loadHDF5SummarizedExperiment(args[1])

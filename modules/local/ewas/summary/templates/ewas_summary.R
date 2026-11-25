@@ -78,12 +78,13 @@ if (nrow(cell_rows) > 0) {
 
 # Meff and the study-wide threshold over the tested model contrasts
 tests <- list()
-for (file in stats_files) {
+# sorted, so that the comparison does not depend on the order in which the models finished
+for (file in sort(stats_files)) {
     model <- sub("_stats[.]tsv[.]gz\$", "", basename(file))
     s <- fread(text = readLines(gzfile(file)))
+    if (nrow(s) == 0) next   # a model with too few arrays has an empty file
     if (!"fdr" %in% names(s)) s[, fdr := p.adjust(p_value, "BH"), by = contrast]
-    s <- s[, c("cpg_id", "contrast", "t", "p_value", "fdr"), with = FALSE]
-    if (nrow(s) > 0) tests[[model]] <- s
+    tests[[model]] <- s[, c("cpg_id", "contrast", "t", "p_value", "fdr"), with = FALSE]
 }
 if (length(tests) > 0) {
     stats <- rbindlist(lapply(names(tests), function(prefix_model) {
@@ -152,7 +153,7 @@ meqtl <- data.table(model = character(), contrast = character(), tested = intege
 if (nzchar(meqtl_file) && length(tests) > 0) {
     meqtl_cpgs <- fread(meqtl_file, colClasses = list(character = "cpg_id"))[["cpg_id"]]
     meqtl <- stats[, {
-        has <- cpg_id %in% meqtl_cpgs
+        has <- sub("_[TB][CO][0-9]+\$", "", cpg_id) %in% meqtl_cpgs
         hit <- !is.na(fdr) & fdr < 0.05
         test <- if (sum(hit) > 0 && sum(has) > 0) fisher.test(table(factor(hit, c(TRUE, FALSE)), factor(has, c(TRUE, FALSE)))) else NULL
         .(tested = .N, tested_meqtl = sum(has), hits_fdr = sum(hit), hits_meqtl = sum(hit & has),

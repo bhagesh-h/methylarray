@@ -1,0 +1,97 @@
+{
+    "-profile test,qi - stub": {
+        "content": [
+            {
+                "ANCESTRY_PCS": {
+                    "HDF5Array": "stub",
+                    "R": "stub",
+                    "SummarizedExperiment": "stub"
+                },
+                "BIOMARKERS_ASSOCIATE": {
+                    "R": "stub",
+                    "jsonlite": "stub"
+                },
+                "CLOCKS_COMPUTE": {
+                    "DunedinPACE": "stub",
+                    "RPMM": "stub",
+                    "dnaMethyAge": "stub",
+                    "impute": "stub",
+                    "preprocessCore": "stub"
+                },
+                "DMR_CALL": {
+                    "DMRcate": "stub",
+                    "dmrff": "stub"
+                },
+                "DNAM_SCORES": {
+                    "SummarizedExperiment": "stub",
+                    "data.table": "stub"
+                },
+                "ENRICHMENT_KYCG": {
+                    "ExperimentHub": "stub",
+                    "knowYourCG": "stub"
+                },
+                "ENRICHMENT_MISSMETHYL": {
+                    "GO.db": "stub",
+                    "missMethyl": "stub",
+                    "org.Hs.eg.db": "stub"
+                },
+                "EPIDISH_RPC": {
+                    "EpiDISH": "stub",
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub"
+                },
+                "EWASTOOLS_QC": {
+                    "ewastools": "stub",
+                    "illuminaio": "stub"
+                },
+                "EWAS_LIMMA": {
+                    "SummarizedExperiment": "stub",
+                    "bacon": "stub",
+                    "limma": "stub"
+                },
+                "EWAS_SUMMARY": {
+                    "jsonlite": "stub"
+                },
+                "EXPLORATION_PCA": {
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "isva": "stub"
+                },
+                "KYCG_CACHE": {
+                    "ExperimentHub": "stub",
+                    "knowYourCG": "stub"
+                },
+                "MINFI_PREPROCESS": {
+                    "ENmix": "stub",
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "minfi": "stub"
+                },
+                "PROBES_ANNOTATE": {
+                    "data.table": "stub"
+                },
+                "PROBES_FILTER": {
+                    "HDF5Array": "stub",
+                    "SummarizedExperiment": "stub",
+                    "data.table": "stub"
+                },
+                "SAMPLEQC_SUMMARY": {
+                    "R": "stub"
+                },
+                "VARIANCE_PARTITION": {
+                    "HDF5Array": "stub",
+                    "lme4": "stub",
+                    "variancePartition": "stub"
+                },
+                "Workflow": {
+                    "bhagesh-h/methylarray": "v1.1.0"
+                }
+            }
+        ],
+        "timestamp": "2026-11-25T10:58:40.064394374",
+        "meta": {
+            "nf-test": "0.9.5",
+            "nextflow": "26.10.6"
+        }
+    }
+}

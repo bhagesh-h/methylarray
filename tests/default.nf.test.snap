@@ -59,7 +59,7 @@
                     "variancePartition": "1.40.2"
                 },
                 "Workflow": {
-                    "bhagesh-h/methylarray": "v1.0.2"
+                    "bhagesh-h/methylarray": "v1.1.0"
                 }
             },
             [
@@ -70,6 +70,7 @@
                 "biomarkers/biomarkers_cells_measures.tsv",
                 "biomarkers/biomarkers_cells_phenotypes.tsv",
                 "biomarkers/biomarkers_contamination.tsv",
+                "biomarkers/biomarkers_missing.tsv",
                 "biomarkers/biomarkers_phenotypes.tsv",
                 "biomarkers/biomarkers_quartiles.tsv",
                 "biomarkers/biomarkers_robust.tsv",
@@ -209,6 +210,7 @@
                 "biomarkers_cells_measures.tsv:md5,5171816fe4fa28ee0f5b42234ecb96ab",
                 "biomarkers_cells_phenotypes.tsv:md5,3d669de7cc5da60259c93a5cf93f179c",
                 "biomarkers_contamination.tsv:md5,bd80f2be4ca00d182a917b4b01789fb6",
+                "biomarkers_missing.tsv:md5,8639884b251d1309904de6f626fcdb29",
                 "biomarkers_phenotypes.tsv:md5,f8639e17b0b8d6cfba0d2689a8717e28",
                 "biomarkers_quartiles.tsv:md5,fe324338b369730600fb20b791bf02e5",
                 "biomarkers_robust.tsv:md5,3b34aabf5098dc5fa37f978c8b6c1b65",
@@ -263,7 +265,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-20T13:26:22.864942602",
+        "timestamp": "2026-11-25T14:12:13.673394963",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

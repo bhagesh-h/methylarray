@@ -4,9 +4,13 @@ format:
   html:
     embed-resources: true
     toc: true
-    toc-depth: 2
-    # Contents on the left, the rest of the page for the report itself
+    toc-depth: 3
+    # Contents on the left, the rest of the page for the report itself; the
+    # subsections open for the section being read
+    toc-expand: 1
     toc-location: left
+    number-sections: true
+    number-depth: 3
     toc-title: Contents
     page-layout: full
     theme: cosmo
@@ -29,6 +33,10 @@ format:
         .report-search input { width: 100%; padding: 0.3rem 0.5rem; border: 1px solid #ced4da; border-radius: 4px; font-size: 0.9rem; }
         .report-search-bar { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.3rem; font-size: 0.8rem; color: #555; }
         .report-search-bar button { border: 1px solid #ced4da; background: #f8f9fa; border-radius: 3px; padding: 0 0.45rem; line-height: 1.4; }
+        .report-tables { margin-top: 0.3rem; font-size: 0.8rem; }
+        .report-tables button { border: 1px solid #ced4da; background: #f8f9fa; border-radius: 3px; padding: 0 0.45rem; line-height: 1.5; }
+        main.content section.level1 > h1 { border-top: 2px solid #dee2e6; padding-top: 1rem; margin-top: 2.5rem; }
+        main.content h3 { margin-top: 1.8rem; }
         mark.report-hit { background: #ffe58a; padding: 0; }
         mark.report-hit.report-hit-current { background: #ff9f43; }
         </style>
@@ -36,7 +44,7 @@ format:
       text: |
         <script>
         // Search the whole report: every match is highlighted, Enter or the arrows
-        // jump between matches, and a closed table opens when a match is inside it
+        // jump between matches, and a closed table or tab opens when a match is inside it
         (function () {
           function ready(f) { if (document.readyState !== "loading") f(); else document.addEventListener("DOMContentLoaded", f); }
           ready(function () {
@@ -46,7 +54,8 @@ format:
             box.className = "report-search";
             box.innerHTML = '<input type="search" placeholder="Search the report" aria-label="Search the report">' +
               '<div class="report-search-bar"><button type="button" data-step="-1" aria-label="Previous match">&#8593;</button>' +
-              '<button type="button" data-step="1" aria-label="Next match">&#8595;</button><span class="report-search-count"></span></div>';
+              '<button type="button" data-step="1" aria-label="Next match">&#8595;</button><span class="report-search-count"></span></div>' +
+              '<div class="report-tables"><button type="button" data-open="1">Open all tables</button> <button type="button" data-open="">Close all</button></div>';
             if (toc && toc.parentNode) toc.parentNode.insertBefore(box, toc); else main.insertBefore(box, main.firstChild);
             var input = box.querySelector("input"), count = box.querySelector(".report-search-count");
             var hits = [], current = -1, timer = null;
@@ -64,6 +73,10 @@ format:
               current = (current + step + hits.length) % hits.length;
               var hit = hits[current];
               for (var d = hit.closest("details"); d; d = d.parentElement ? d.parentElement.closest("details") : null) d.open = true;
+              for (var pane = hit.closest(".tab-pane"); pane; pane = pane.parentElement ? pane.parentElement.closest(".tab-pane") : null) {
+                var tab = document.querySelector('[data-bs-target="#' + pane.id + '"], [href="#' + pane.id + '"][role="tab"]');
+                if (tab && !tab.classList.contains("active")) tab.click();
+              }
               hit.classList.add("report-hit-current");
               hit.scrollIntoView({ block: "center" });
               count.textContent = (current + 1) + " of " + hits.length;
@@ -98,7 +111,10 @@ format:
             }
             input.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(function () { search(input.value.trim()); }, 250); });
             input.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(e.shiftKey ? -1 : 1); } });
-            box.querySelectorAll("button").forEach(function (b) { b.addEventListener("click", function () { go(parseInt(b.getAttribute("data-step"), 10)); }); });
+            box.querySelectorAll(".report-tables button").forEach(function (b) { b.addEventListener("click", function () {
+              main.querySelectorAll("details.report-table").forEach(function (d) { d.open = b.getAttribute("data-open") === "1"; });
+            }); });
+            box.querySelectorAll("button[data-step]").forEach(function (b) { b.addEventListener("click", function () { go(parseInt(b.getAttribute("data-step"), 10)); }); });
           });
         })();
         </script>
@@ -132,7 +148,44 @@ theme_set(theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank(), s
 options(knitr.kable.NA = "")
 params_run <- if (has("^params\\.json$")) fromJSON(find("^params\\.json$")) else list()
 param <- function(name) { v <- params_run[[name]]; if (is.null(v)) "" else as.character(v) }
-heading <- function(text) cat("\n\n#", text, "\n\n")
+# Headings: a part (level 1, written once, before the first result in it), its
+# sections (level 2) and the subsections of a model (level 3)
+shown_parts <- character()
+part <- function(text) {
+    if (!text %in% shown_parts) cat("\n\n#", text, "\n\n")
+    shown_parts <<- c(shown_parts, text)
+}
+heading <- function(text) cat("\n\n##", text, "\n\n")
+subheading <- function(text) cat("\n\n###", text, "\n\n")
+bullets <- function(lines) cat("\n\n", paste0("- ", lines, "\n"), "\n\n", sep = "")
+# Figures side by side as tabs; panels: named list of functions that print one tab each
+tabs <- function(panels) {
+    if (length(panels) == 0) return(invisible(NULL))
+    if (length(panels) == 1) return(invisible(panels[[1]]()))
+    cat("\n\n::: {.panel-tabset}\n\n")
+    for (name in names(panels)) {
+        cat("\n\n##### ", name, " {.unnumbered .unlisted}\n\n", sep = "")
+        panels[[name]]()
+    }
+    cat("\n\n:::\n\n")
+}
+big <- function(n) format(n, big.mark = ",", trim = TRUE, scientific = FALSE)
+model_id <- function(model) paste0("model-", gsub("[^a-z0-9]+", "-", tolower(model)))
+# Clock codes of dnaMethyAge with the names they are known by
+clock_names <- c(HorvathS2013 = "Horvath 2013", HannumG2013 = "Hannum 2013", LevineM2018 = "PhenoAge", HorvathS2018 = "Skin and blood 2018", ZhangQ2019 = "Zhang Q 2019",
+                 LuA2019 = "DNAmTL", ZhangY2017 = "Zhang Y 2017 (mortality)", PCGrimAge = "PCGrimAge", PCPhenoAge = "PCPhenoAge", PCHorvathS2013 = "PCHorvath 2013",
+                 PCHannumG2013 = "PCHannum 2013", PCHorvathS2018 = "PCSkin and blood 2018", FuentealbaM2025 = "Fuentealba 2025", DunedinPACE = "DunedinPACE", epiTOC2 = "epiTOC2")
+clock_name <- function(code) {
+    code <- as.character(code)
+    ifelse(code %in% names(clock_names), unname(clock_names[code]), code)
+}
+# A measure: a clock or its acceleration, or a score
+measure_name <- function(measure) {
+    measure <- as.character(measure)
+    accelerated <- endsWith(measure, " acceleration")
+    name <- clock_name(sub(" acceleration$", "", measure))
+    paste0(ifelse(startsWith(name, "dnam_"), paste(sub("^dnam_", "", name), "score"), name), ifelse(accelerated, " acceleration", ""))
+}
 # knitr::kable rounds every number to 7 decimals, which prints small P-values
 # as 0: format numbers to 4 significant digits instead (scientific below 0.001)
 format_number <- function(v) vapply(v, function(z) {
@@ -173,6 +226,9 @@ plot_rows <- function(plot) {
 show_plot <- function(plot, width = NULL, height = NULL, description = NULL) {
     width <- if (is.null(width)) knitr::opts_current$get("fig.width") else width
     height <- if (is.null(height)) knitr::opts_current$get("fig.height") else height
+    # ggsave refuses figures above 50 inches: cap the size instead of stopping the report
+    width <- min(width, 49)
+    height <- min(height, 49)
     figure_number <<- figure_number + 1
     title <- plot[["labels"]][["title"]]
     subtitle <- plot[["labels"]][["subtitle"]]
@@ -191,6 +247,70 @@ show_plot <- function(plot, width = NULL, height = NULL, description = NULL) {
     }
     cat("\n\n![**Figure ", figure_number, ".** ", gsub("\n", " ", caption), "](", shown, "){.report-figure style=\"max-width: ",
         round(120 * width), "px\"}\n\n", sep = "")
+}
+# UpSet plot (Lex et al. 2014) of which items are in several sets at once. members:
+# one row per item and set. Bars on top count the items of each combination (an
+# item is in exactly one), filled dots below name its sets, bars on the left give
+# the whole sets. Combinations of fewer than min_sets sets are left out.
+upset_plot <- function(members, title, unit, subtitle = NULL, top = 25, min_sets = 1) {
+    members <- unique(members[, .(item = as.character(item), set = as.character(set))])
+    if (nrow(members) == 0) return(NULL)
+    setorder(members, item, set)
+    sizes <- members[, .(size = .N), by = set][order(-size, set)][, y := -seq_len(.N)]
+    combinations <- members[, .(pattern = paste(set, collapse = "\t"), sets = .N), by = item][, .(n = .N), by = .(pattern, sets)]
+    combinations <- combinations[sets >= min_sets][order(-n, sets, pattern)]
+    if (nrow(combinations) == 0) return(NULL)
+    shown <- head(combinations, top)[, x := seq_len(.N)]
+    hidden <- combinations[-seq_len(nrow(shown))]
+    used <- sizes
+    dots <- shown[, .(set = strsplit(pattern, "\t", fixed = TRUE)[[1]]), by = .(x, sets)]
+    dots <- merge(dots, used[, .(set, y)], by = "set")
+    columns <- c("size", "combination")
+    panel <- function(d, column, row) copy(d)[, `:=`(column = factor(column, columns), row = factor(row, c("bars", "sets")))]
+    n_text <- function(n) format(n, big.mark = ",", trim = TRUE)
+    steep <- nrow(shown) > 12 && max(shown[["n"]]) >= 1000
+    stripes <- panel(used, "combination", "sets")[y %% 2 == 0]
+    label <- data.table(x = 0, y = max(shown[["n"]]) / 2, text = paste0(unit, "\nin the\ncombination"))
+    ggplot() +
+        geom_rect(data = stripes, aes(xmin = 0.4, xmax = nrow(shown) + 0.6, ymin = y - 0.5, ymax = y + 0.5), fill = "grey95") +
+        geom_col(data = panel(shown, "combination", "bars"), aes(x, n, fill = sets > 1), width = 0.65) +
+        geom_text(data = panel(shown, "combination", "bars"), aes(x, n, label = n_text(n)), angle = if (steep) 90 else 0,
+                  hjust = if (steep) -0.15 else 0.5, vjust = if (steep) 0.5 else -0.4, size = 2.8) +
+        geom_blank(data = panel(shown, "combination", "bars"), aes(x, (if (steep) 1.28 else 1.12) * max(n))) +
+        geom_point(data = panel(CJ(x = shown[["x"]], y = used[["y"]]), "combination", "sets"), aes(x, y), colour = "grey82", size = 1.8) +
+        geom_segment(data = panel(dots[, .(low = min(y), high = max(y)), by = x], "combination", "sets"), aes(x = x, xend = x, y = low, yend = high), linewidth = 0.7, colour = "grey20") +
+        geom_point(data = panel(dots, "combination", "sets"), aes(x, y, colour = sets > 1), size = 2.4) +
+        geom_col(data = panel(used, "size", "sets"), aes(-size, y), orientation = "y", width = 0.6, fill = "#dd8452") +
+        geom_text(data = panel(used, "size", "sets"), aes(-size, y, label = n_text(size)), hjust = 1.15, size = 2.8) +
+        geom_blank(data = panel(used, "size", "sets"), aes(-1.5 * max(size), y)) +
+        geom_text(data = panel(label, "size", "bars"), aes(x, y, label = text), hjust = 1, size = 3, lineheight = 0.95) +
+        scale_fill_manual(values = c(`FALSE` = "grey60", `TRUE` = "#4c72b0"), guide = "none") +
+        scale_colour_manual(values = c(`FALSE` = "grey20", `TRUE` = "grey20"), guide = "none") +
+        scale_x_continuous(breaks = NULL, expand = expansion(mult = 0, add = 0)) +
+        scale_y_continuous(breaks = function(l) if (max(l) <= 0) used[["y"]] else pretty(c(0, l), 4),
+                           labels = function(b) if (length(b) > 0 && all(b < 0, na.rm = TRUE)) used[["set"]][match(b, used[["y"]])] else n_text(b),
+                           expand = expansion(mult = 0, add = 0)) +
+        facet_grid(row ~ column, scales = "free") +
+        theme(strip.text = element_blank(), strip.background = element_blank(), panel.grid = element_blank(), panel.border = element_blank(),
+              axis.ticks = element_blank(), panel.spacing = unit(0.3, "lines"), axis.title.x = element_text(hjust = 0, size = 8.5),
+              panel.widths = unit(c(1, 3.4), "null"), panel.heights = unit(c(2.2, 0.32 * nrow(used)), "null")) +
+        labs(x = paste(unit, "in the whole set"), y = NULL, title = title,
+             subtitle = paste(c(subtitle, "Bars on top:", if (unit == "CpGs") unit else tolower(unit), "in exactly the sets with a filled dot (blue: more than one set).",
+                                if (nrow(hidden) > 0) sprintf("%d smaller combinations (%s in all) are not drawn.", nrow(hidden), n_text(sum(hidden[["n"]])))), collapse = " "))
+}
+upset_height <- function(plot) if (is.null(plot)) 4 else 2.9 + 0.3 * length(unique(unlist(lapply(plot[["layers"]], function(layer) if ("set" %in% names(layer[["data"]])) layer[["data"]][["set"]]))))
+# Plain names of the probe filter steps
+step_names <- c(probe_type = "Not a CpG probe (rs, nv, control)", non_cg = "Non-CG (ch) probe", no_position = "No hg38 position", sex_chromosome = "Sex chromosome",
+                detection = "Detection", bead_or_quality_mask = "Beads or quality mask", snp = "SNP", zhou_general_mask = "Zhou general mask",
+                cross_hybridisation = "Cross-hybridisation", illumina_flagged = "Flagged by Illumina", illumina_mapping_inaccuracy = "Illumina mapping inaccuracy",
+                exclusion_list = "Exclusion list", replicate_probe = "Replicate probe", mismatch_pos = "Manifest position mismatch", zhou_uncorr_titration = "Poor titration (Zhou)")
+step_label <- function(step) ifelse(step %in% names(step_names), unname(step_names[step]), step)
+# Combinations of missing values (missing: names separated by semicolons) as items of sets
+missing_members <- function(table) {
+    table <- table[!is.na(missing) & nzchar(missing)]
+    if (nrow(table) == 0) return(data.table(item = character(), set = character()))
+    table[, .(set = strsplit(missing, ";", fixed = TRUE)[[1]], arrays = arrays), by = .(row = seq_len(nrow(table)))][
+        , .(item = paste(row, seq_len(arrays))), by = .(row, set, arrays)][, .(item, set)]
 }
 # Directional Manhattan plots (as in Uddin et al. 2022, Fig. 1a): -log10 P
 # times the sign of the effect, so CpGs with higher methylation point up and
@@ -237,7 +357,7 @@ directional_genome <- function(d, lines, title) {
         guides(colour = guide_legend(override.aes = list(size = 2.5))) +
         theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(size = 8), legend.position = "bottom", legend.box = "vertical") +
         labs(x = "Chromosome", y = expression(-log[10](italic(P)) ~ "(up: higher, down: lower)"), colour = NULL, linetype = NULL, title = title,
-             subtitle = "Directional Manhattan plot: each point is a CpG at its genomic position; the height is -log10 P, drawn upwards for higher and downwards for lower methylation. Grey points alternate by chromosome; CpGs with P >= 0.01 are thinned to every 20th.")
+             subtitle = "Upwards: higher methylation; downwards: lower. Of the CpGs with P >= 0.01, every 20th is drawn.")
 }
 # Top CpGs with higher and with lower methylation, as two tables
 top_by_direction <- function(d, effect, columns, caption, n = 20) {
@@ -269,7 +389,7 @@ volcano_plot <- function(d, effect, effect_label, title) {
         guides(colour = guide_legend(override.aes = list(size = 2.5))) +
         theme(legend.position = "bottom", legend.box = "vertical") +
         labs(x = effect_label, y = expression(-log[10](italic(P))), colour = NULL, linetype = NULL, title = title,
-             subtitle = "Volcano plot: effect size against significance for every CpG; CpGs with P >= 0.01 that are not significant are thinned to every 10th.")
+             subtitle = "Of the CpGs with P >= 0.01, every 10th is drawn.")
 }
 # I3: hits by direction, with a binomial test of the balance
 direction_summary <- function(d, effect) {
@@ -327,7 +447,7 @@ context_plot <- function(table, title) {
         scale_x_log10() + scale_colour_manual(values = c(`All hits` = "grey25", `Higher methylation` = "#b2182b", `Lower methylation` = "#2166ac")) +
         facet_grid(group ~ ., scales = "free_y", space = "free_y") + theme(legend.position = "bottom", strip.text.y = element_text(angle = 0)) +
         labs(x = "Odds ratio against all tested CpGs (log scale)", y = NULL, colour = NULL, title = title,
-             subtitle = "Two-sided Fisher's exact test of the hits (FDR < 0.05) in each CpG island context and gene feature; bars show 95% confidence intervals. An odds ratio above 1 means the hits are over-represented there.")
+             subtitle = "Fisher's exact test; bars: 95% confidence intervals. Above 1: more hits than expected.")
 }
 # I5: methylation level of the hits
 level_plot <- function(d, effect, title) {
@@ -346,7 +466,7 @@ level_plot <- function(d, effect, title) {
         scale_fill_manual(values = c(`All tested CpGs` = "grey60", `Higher methylation (FDR < 0.05)` = "#b2182b", `Lower methylation (FDR < 0.05)` = "#2166ac"), guide = "none") +
         scale_x_continuous(limits = c(0, 1)) + theme(axis.text.y = element_text(size = 10)) +
         labs(x = "Mean beta value over the arrays", y = NULL, title = title,
-             subtitle = "Methylation level of the hits against all tested CpGs (every 10th shown). Hits at intermediate levels are typical of CpGs that differ between blood cell types.")
+             subtitle = "Hits at intermediate levels are typical of CpGs that differ between blood cell types.")
 }
 # Template of a gene and its CpG island, with every genomic context category
 # that the context figures use, to read them by (not to scale)
@@ -387,34 +507,72 @@ context_schematic <- function() {
         scale_x_continuous(expand = expansion(mult = 0.005)) +
         theme_void() + theme(axis.text.y = element_text(size = 10, hjust = 1, margin = margin(r = 6)), plot.margin = margin(5, 5, 5, 5)) +
         labs(title = "How to read the genomic context: a gene and its CpG island",
-             subtitle = paste("A template, not to scale, with every category of the context figures. CpG island context: the island itself, shores up to 2 kb from it,",
-                              "shelves 2 to 4 kb from it, open sea farther away. Gene features: TSS1500 and TSS200 lie 200 to 1,500 and up to 200 bp upstream of the",
-                              "transcription start site (TSS); the 5' and 3' untranslated regions (thin boxes) are parts of the first and last exons; CpGs in no annotated",
-                              "gene are intergenic. A CpG can carry several features when the transcripts of a gene differ; in the context figures it counts in each."))
+             subtitle = paste("Not to scale. Shores: up to 2 kb from the island; shelves: 2 to 4 kb; open sea: farther away. TSS200 and TSS1500: up to 200 and 200 to 1,500 bp",
+                              "upstream of the transcription start site (TSS). A CpG with several features, from different transcripts, counts in each."))
 }
 ```
 
-This report summarises one run of the [methylarray](https://github.com/bhagesh-h/methylarray) pipeline (Zenodo DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752)`r if (nzchar(param("pipeline_version"))) paste0(", version ", param("pipeline_version")) else ""`). It shows aggregate results and plots; individual phenotype values are not printed. The full tables are in the pipeline's output folders, described in the pipeline's output documentation.
+One run of the [methylarray](https://github.com/bhagesh-h/methylarray) pipeline`r if (nzchar(param("pipeline_version"))) paste0(", version ", param("pipeline_version")) else ""` (DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752)). It shows aggregates only. Click a table's name to open it. All figures are also saved as PNG and PDF in `report/figures/`.
 
-Use the search box above the contents to find any word in the report; tables are closed until their name is clicked, and a search opens the tables that hold a match. Figures are vector graphics, or 300 dpi images where they hold many points, so they stay sharp when zoomed; the same figures are saved as PNG and PDF files in `report/figures/`.
+# Summary
 
-# Run summary
-
-```{r summary}
+```{r summary, results = "asis"}
 qc <- if (has("^sample_qc\\.tsv$")) read(find("^sample_qc\\.tsv$")) else NULL
-rows <- data.table(
-    Item = c("Preprocessing", "Platform", "Arrays in the samplesheet", "Arrays retained for analysis", "Arrays failed", "Arrays excluded in the samplesheet", "Association models"),
-    Value = c(param("preprocessing"), param("platform"),
-              if (is.null(qc)) NA else nrow(qc),
-              if (is.null(qc)) NA else sum(qc[["status"]] %in% c("PASS", "FLAG")),
-              if (is.null(qc)) NA else sum(qc[["status"]] == "FAIL"),
-              if (is.null(qc)) NA else sum(qc[["status"]] == "EXCLUDED"),
-              length(find("^ewas_.*_top\\.tsv$")))
-)
-kable(rows, caption = "Run summary")
+ewas <- if (has("^ewas_summary\\.tsv$")) read(find("^ewas_summary\\.tsv$")) else NULL
+key <- list()
+add_key <- function(topic, result, section) key[[length(key) + 1]] <<- data.table(Topic = topic, Result = result, Section = section)
+if (!is.null(qc)) {
+    kept <- sum(qc[["status"]] %in% c("PASS", "FLAG"))
+    add_key("Arrays", sprintf("%d of %d kept; %d flagged, %d failed, %d excluded in the samplesheet", kept, nrow(qc), sum(qc[["status"]] == "FLAG"),
+                              sum(qc[["status"]] == "FAIL"), sum(qc[["status"]] == "EXCLUDED")), "[Samples](#samples)")
+}
+if (has("_filtered_attrition\\.tsv$")) {
+    attrition <- read(find("_filtered_attrition\\.tsv$")[1])
+    add_key("Probes", sprintf("%s of %s kept", big(tail(attrition[!startsWith(step, "report_only_"), remaining], 1)), big(attrition[step == "start", remaining])), "[Probes](#probes)")
+}
+if (has("^cell_fractions_reference_coverage\\.tsv$")) {
+    rc <- read(find("^cell_fractions_reference_coverage\\.tsv$"))
+    add_key("Cell composition", paste(sprintf("%.1f%% of the %s reference CpGs found", 100 * rc[["coverage"]][1], rc[["reference"]][1])), "[Cell composition](#cell-composition)")
+}
+clocks <- if (has("^clocks\\.tsv$")) read(find("^clocks\\.tsv$")) else NULL
+clock_values <- if (is.null(clocks)) character() else setdiff(names(clocks), c("sample", "age", grep("^i?eaa_", names(clocks), value = TRUE)))
+age_agreement <- data.table()
+if (!is.null(clocks) && sum(!is.na(clocks[["age"]])) >= 3) {
+    age_agreement <- rbindlist(lapply(clock_values, function(clock) {
+        ok <- !is.na(clocks[[clock]]) & !is.na(clocks[["age"]])
+        if (sum(ok) < 3) return(NULL)
+        data.table(Clock = clock, Name = clock_name(clock), Arrays = sum(ok), `Pearson r with age` = round(cor(clocks[[clock]][ok], clocks[["age"]][ok]), 3))
+    }))
+}
+if (!is.null(clocks)) {
+    best <- age_agreement[order(-`Pearson r with age`)][1]
+    add_key("Clocks", paste0(length(clock_values), " clocks", if (nrow(age_agreement) > 0) sprintf("; closest to the reported age: %s (r = %.2f)", best[["Name"]], best[["Pearson r with age"]])),
+            "[Clocks and scores](#clocks-and-scores)")
+}
+if (has("^biomarkers_phenotypes\\.tsv$")) {
+    tested <- read(find("^biomarkers_phenotypes\\.tsv$"))[version == "plain" & !trait %in% c("Age", "Men")]
+    if (nrow(tested) > 0) add_key("Phenotypes", sprintf("%d of %d tests of a clock or score against a phenotype at q < 0.05", sum(tested[["q"]] < 0.05, na.rm = TRUE), nrow(tested)),
+                                  "[Phenotypes](#phenotypes)")
+}
+if (!is.null(ewas)) {
+    for (i in seq_len(nrow(ewas))) {
+        row <- ewas[i]
+        add_key(paste("Model", row[["model"]]), if (row[["status"]] != "tested") row[["status"]] else
+                sprintf("%s: %s CpGs at FDR < 0.05, lambda %.2f, %d arrays", row[["contrast"]], big(row[["hits_fdr"]]), row[["lambda"]], row[["n"]]),
+                sprintf("[Model %s](#%s)", row[["model"]], model_id(row[["model"]])))
+    }
+}
+if (length(key) > 0) cat("\n\n", paste(knitr::kable(rbindlist(key), format = "pipe"), collapse = "\n"), "\n\n", sep = "")
+settings <- c(preprocessing = "Preprocessing", minfi_norm = "Normalisation (minfi)", platform = "Platform", detection_pval = "Detection P", min_beads = "Beads per value (minimum)",
+              probe_filters = "Probe filters", crosshyb_filter = "Cross-hybridisation filter", snp_mask = "SNP mask", keep_sex_chr = "Sex chromosomes kept", illumina_filter = "Illumina lists removed",
+              replicate_probe_strategy = "Replicate probes", ewas_cells = "Cell fractions of the models", ewas_outlier_iqr = "Outlier fence (IQR, 0 = none)")
+settings <- settings[vapply(names(settings), function(name) nzchar(param(name)), logical(1))]
+if (length(settings) > 0) print(kable(data.table(Setting = unname(settings), Value = vapply(names(settings), param, character(1))), caption = "Main settings of the run"))
 ```
 
-# Sample QC
+# Samples
+
+## QC status
 
 ```{r sample-qc, eval = !is.null(qc)}
 counts <- qc[, .N, by = status][order(match(status, c("PASS", "FLAG", "FAIL", "EXCLUDED")))]
@@ -424,11 +582,12 @@ if (nrow(flagged) > 0) kable(flagged, caption = "Arrays flagged or failed, with 
 ```
 
 ```{r sex-plot, results = "asis", eval = !is.null(qc) && "sex_x" %in% names(qc) && any(!is.na(qc[["sex_x"]]))}
+heading("Sex check")
 show_plot(ggplot(qc[!is.na(sex_x)], aes(sex_x, sex_y, colour = status)) +
     geom_point(size = 2) +
     labs(x = "Normalised chrX intensity", y = "Normalised chrY intensity", colour = "QC status",
-         title = "Sex check: chrX and chrY intensities of every array",
-         subtitle = "Intensities from ewastools; arrays from women cluster at high chrX and low chrY intensity, arrays from men at the opposite corner."), 7, 4.5)
+         title = "Sex chromosome intensities of every array",
+         subtitle = "Women lie at high X and low Y, men at low X and high Y."), 7, 4.5)
 ```
 
 ```{r snp, results = "asis", fig.width = 11, fig.height = 7, eval = has("^ewastools_snp_summary\\.tsv$")}
@@ -436,23 +595,26 @@ heading("SNP genotypes")
 snp <- read(find("^ewastools_snp_summary\\.tsv$"))
 hist_snp <- if (has("^ewastools_snp_histograms\\.tsv$")) read(find("^ewastools_snp_histograms\\.tsv$")) else NULL
 threshold <- suppressWarnings(as.numeric(param("snp_outlier_threshold")))
-cat(sprintf("The SNP probes of the array give genotypes at %d autosomal SNPs; %d SNPs behave as X-chromosome SNPs (men almost never heterozygous). Highest agreement between two arrays: %.2f (median of each array's highest: %.2f); %d arrays share more than 90%% of their genotypes with another array. SNP outlier score above %s (possible contamination): %d arrays.\n\n",
-            max(snp[["snps_autosomal"]], na.rm = TRUE), max(snp[["snps_x_like"]], na.rm = TRUE),
-            max(snp[["max_agreement"]], na.rm = TRUE), median(snp[["max_agreement"]], na.rm = TRUE), sum(snp[["max_agreement"]] > 0.9, na.rm = TRUE),
-            param("snp_outlier_threshold"), sum(snp[["snp_outlier"]] > threshold, na.rm = TRUE)))
+points <- c(sprintf("%d autosomal SNPs genotyped; %d more behave as X-chromosome SNPs.", max(snp[["snps_autosomal"]], na.rm = TRUE), max(snp[["snps_x_like"]], na.rm = TRUE)),
+            sprintf("%d arrays share more than 90%% of their genotypes with another array (highest agreement %.2f, median of the highest %.2f).",
+                    sum(snp[["max_agreement"]] > 0.9, na.rm = TRUE), max(snp[["max_agreement"]], na.rm = TRUE), median(snp[["max_agreement"]], na.rm = TRUE)),
+            sprintf("%d arrays above the SNP outlier threshold of %s (possible contamination).", sum(snp[["snp_outlier"]] > threshold, na.rm = TRUE), param("snp_outlier_threshold")))
+bullets(points)
+panels <- list()
 if (!is.null(hist_snp) && nrow(hist_snp) > 0) {
-    show_plot(ggplot(hist_snp[histogram == "snp_beta"], aes((bin_start + bin_end) / 2, count)) + geom_col(fill = "#4c72b0", width = 0.02) +
-        geom_vline(xintercept = c(0.2, 0.8), linetype = 2, colour = "#c44e52") + labs(x = "Beta value of the autosomal SNP probes", y = "Genotype calls", title = "Beta values of the autosomal SNP probes", subtitle = "Three peaks are expected: both alleles of one kind, one of each, both of the other kind. Dashed lines at 0.2 and 0.8 separate the genotype calls."))
-    show_plot(ggplot(hist_snp[histogram == "pair_agreement"], aes((bin_start + bin_end) / 2, count)) + geom_col(fill = "#55a868", width = 0.02) +
-        geom_vline(xintercept = 0.9, linetype = 2, colour = "#c44e52") + labs(x = "Share of identical genotypes", y = "Pairs of arrays", title = "Genotype agreement of every pair of arrays", subtitle = "Pairs above the dashed line at 0.9 are most likely from the same person."))
+    panels[["Beta values"]] <- function() show_plot(ggplot(hist_snp[histogram == "snp_beta"], aes((bin_start + bin_end) / 2, count)) + geom_col(fill = "#4c72b0", width = 0.02) +
+        geom_vline(xintercept = c(0.2, 0.8), linetype = 2, colour = "#c44e52") + labs(x = "Beta value of the autosomal SNP probes", y = "Genotype calls", title = "Beta values of the autosomal SNP probes", subtitle = "Three peaks are expected, one per genotype. Dashed lines: limits of the genotype calls."))
+    panels[["Agreement"]] <- function() show_plot(ggplot(hist_snp[histogram == "pair_agreement"], aes((bin_start + bin_end) / 2, count)) + geom_col(fill = "#55a868", width = 0.02) +
+        geom_vline(xintercept = 0.9, linetype = 2, colour = "#c44e52") + labs(x = "Share of identical genotypes", y = "Pairs of arrays", title = "Genotype agreement of every pair of arrays", subtitle = "Pairs above the dashed line are most likely the same person."))
 }
 if (any(!is.na(snp[["het_share_x"]]))) {
-    show_plot(ggplot(snp[!is.na(het_share_x) & sex_used %in% c("M", "F")], aes(ifelse(sex_used == "M", "Men", "Women"), het_share_x)) +
-        geom_jitter(width = 0.2, height = 0, alpha = 0.5, colour = "#8172b3") + labs(x = "Sex used for the check", y = "Share of heterozygous X-chromosome SNPs", title = "Heterozygosity at the X-chromosome SNPs by sex", subtitle = "Men have one X chromosome and are almost never heterozygous; a man with many heterozygous calls suggests contamination or a sample swap."))
+    panels[["X heterozygosity"]] <- function() show_plot(ggplot(snp[!is.na(het_share_x) & sex_used %in% c("M", "F")], aes(ifelse(sex_used == "M", "Men", "Women"), het_share_x)) +
+        geom_jitter(width = 0.2, height = 0, alpha = 0.5, colour = "#8172b3") + labs(x = "Sex used for the check", y = "Share of heterozygous X-chromosome SNPs", title = "Heterozygosity at the X-chromosome SNPs by sex", subtitle = "A man with many heterozygous calls suggests contamination or a swap."))
 }
-show_plot(ggplot(snp, aes(snp_outlier)) + geom_histogram(bins = 40, fill = "#dd8452") +
+panels[["Outlier score"]] <- function() show_plot(ggplot(snp, aes(snp_outlier)) + geom_histogram(bins = 40, fill = "#dd8452") +
     geom_vline(xintercept = threshold, linetype = 2, colour = "#c44e52") +
-    labs(x = "SNP outlier score (higher: more likely contaminated)", y = "Arrays", title = "SNP outlier score of every array", subtitle = "ewastools score of how far the SNP probe betas lie from the three genotype peaks; arrays above the dashed line fail QC."))
+    labs(x = "SNP outlier score (higher: more likely contaminated)", y = "Arrays", title = "SNP outlier score of every array", subtitle = "Arrays above the dashed line fail QC."))
+tabs(panels)
 ```
 
 ```{r relatedness, results = "asis", fig.width = 9, fig.height = 6, eval = has("^ewastools_relatedness\\.tsv\\.gz$") && has("^ewastools_relatedness_summary\\.tsv$")}
@@ -460,13 +622,13 @@ heading("Relatedness")
 rs <- read(find("^ewastools_relatedness_summary\\.tsv$"))
 rv <- setNames(rs[["value"]], rs[["metric"]])
 pairs <- read(find("^ewastools_relatedness\\.tsv\\.gz$"))
-cat(sprintf("Every pair of the %s arrays below the SNP outlier threshold, from %s autosomal SNPs: %s pairs. A pair is related when its log10 likelihood ratio against unrelated exceeds %s (at most a 5%% chance of any false call). Identical pairs: %s, of them %s from different expected donors; first-degree pairs: %s; replicate pairs that are not identical: %s.\n\n",
-            rv[["arrays"]], rv[["snps"]], format(as.numeric(rv[["pairs"]]), big.mark = ","), rv[["lod_threshold"]], rv[["identical_pairs"]],
-            rv[["identical_pairs_unexpected"]], rv[["first_degree_pairs"]], rv[["replicate_pairs_not_identical"]]))
-if (is.finite(as.numeric(rv[["expected_lod_first_degree"]])) && as.numeric(rv[["expected_lod_first_degree"]]) < as.numeric(rv[["lod_threshold"]])) {
-    cat(sprintf("A true first-degree pair is expected to reach a log10 likelihood ratio of only %s with these SNPs, below the threshold, so most first-degree relatives are missed. Identical pairs are detected reliably. Genotypes from more SNPs (for example a genotyping array) are needed to find relatives.\n\n",
-                rv[["expected_lod_first_degree"]]))
-}
+low_power <- is.finite(as.numeric(rv[["expected_lod_first_degree"]])) && as.numeric(rv[["expected_lod_first_degree"]]) < as.numeric(rv[["lod_threshold"]])
+bullets(c(sprintf("%s pairs of %s arrays, compared at %s autosomal SNPs.", big(as.numeric(rv[["pairs"]])), rv[["arrays"]], rv[["snps"]]),
+          sprintf("Identical pairs: %s, of them %s from different expected donors. First-degree pairs: %s. Replicate pairs that are not identical: %s.",
+                  rv[["identical_pairs"]], rv[["identical_pairs_unexpected"]], rv[["first_degree_pairs"]], rv[["replicate_pairs_not_identical"]]),
+          sprintf("A pair counts as related when its log10 likelihood ratio against unrelated exceeds %s.", rv[["lod_threshold"]]),
+          if (low_power) sprintf("Most first-degree relatives are missed: with these SNPs a true first-degree pair reaches only %s, below the threshold. Identical pairs are found reliably.",
+                                 rv[["expected_lod_first_degree"]])))
 if (nrow(pairs) > 0) {
     pairs[, Relation := factor(relation, levels = c("unrelated", "first-degree", "identical", "too few SNPs"))]
     setorder(pairs, Relation)
@@ -475,7 +637,7 @@ if (nrow(pairs) > 0) {
         geom_point(data = pairs[expected_same_donor == TRUE], shape = 1, size = 3, colour = "black") +
         scale_colour_manual(values = c(unrelated = "#999999", `first-degree` = "#dd8452", identical = "#c44e52", `too few SNPs` = "#cccccc"), drop = FALSE) +
         labs(x = "Mean identity by state (alleles shared per SNP)", y = "Variance of identity by state", colour = "Inferred relation",
-             title = "Relatedness of every pair of arrays", subtitle = "Black circles: pairs expected to be the same donor (replicate_group)"))
+             title = "Relatedness of every pair of arrays", subtitle = "Black circles: pairs expected to be the same donor."))
     shown <- pairs[relation %in% c("identical", "first-degree") | expected_same_donor == TRUE]
     if (nrow(shown) > 0) {
         print(kable(shown[, .(`Array 1` = sample1, `Array 2` = sample2, Relation = relation, `Same donor expected` = ifelse(expected_same_donor, "yes", "no"),
@@ -492,17 +654,18 @@ av <- setNames(as.character(as_summary[["value"]]), as_summary[["metric"]])
 if ("note" %in% names(av)) {
     cat(av[["note"]], "\n\n")
 } else {
-    cat(sprintf("Ancestry components from %s CpG probes with a common SNP and %s rs probes on %s arrays (EpiAnceR+ approach), with the CpG beta values residualised for: %s. The components marked as covariates are added to models with `@ancestry`.\n\n",
-                av[["snp_cpgs"]], av[["rs_snps"]], av[["arrays"]], av[["residualised_for"]]))
+    cat(sprintf("Components from %s CpG probes with a common SNP and %s rs probes (EpiAnceR+), after removing the effect of %s. The components marked as covariates enter models with `@ancestry`.\n\n",
+                av[["snp_cpgs"]], av[["rs_snps"]], av[["residualised_for"]]))
+    panels <- list()
     pcs <- read(find("^ancestry_pcs\\.tsv$"))
     if (all(c("ancestry_pc1", "ancestry_pc2") %in% names(pcs))) {
-        show_plot(ggplot(pcs, aes(ancestry_pc1, ancestry_pc2)) + geom_point(size = 1.5, alpha = 0.7, colour = "#4c72b0") +
-            labs(x = "Ancestry PC1", y = "Ancestry PC2", title = "Arrays on the first two genetic ancestry components", subtitle = "Components from the CpGs with a common SNP and the rs probes (EpiAnceR+ approach); clusters suggest groups of different genetic ancestry."))
+        panels[["PC1 and PC2"]] <- function() show_plot(ggplot(pcs, aes(ancestry_pc1, ancestry_pc2)) + geom_point(size = 1.5, alpha = 0.7, colour = "#4c72b0") +
+            labs(x = "Ancestry PC1", y = "Ancestry PC2", title = "Arrays on the first two genetic ancestry components", subtitle = "Clusters suggest groups of different ancestry."))
     }
     if (has("^ancestry_pcs_variance\\.tsv$")) {
         av_var <- read(find("^ancestry_pcs_variance\\.tsv$"))
         av_var[, pc := factor(sub("ancestry_", "", pc), levels = sub("ancestry_", "", pc))]
-        show_plot(ggplot(av_var, aes(pc, 100 * variance_explained, fill = covariate)) + geom_col() +
+        panels[["Variance"]] <- function() show_plot(ggplot(av_var, aes(pc, 100 * variance_explained, fill = covariate)) + geom_col() +
             scale_fill_manual(values = c(`TRUE` = "#4c72b0", `FALSE` = "#bbbbbb"), labels = c(`TRUE` = "@ancestry covariate", `FALSE` = "not used")) +
             labs(x = NULL, y = "Variance explained (%)", fill = NULL, title = "Variance of each ancestry component"))
     }
@@ -510,143 +673,188 @@ if ("note" %in% names(av)) {
         aa <- read(find("^ancestry_pcs_associations\\.tsv$"))
         if (nrow(aa) > 0) {
             aa[, pc := factor(sub("ancestry_", "", pc), levels = unique(sub("ancestry_", "", pc)))]
-            show_plot(ggplot(aa, aes(pc, variable, fill = r_squared)) + geom_tile(colour = "white") +
+            panels[["What they capture"]] <- function() show_plot(ggplot(aa, aes(pc, variable, fill = r_squared)) + geom_tile(colour = "white") +
                 geom_text(aes(label = sprintf("%.2f", r_squared)), size = 2.6) +
                 scale_fill_gradient(low = "white", high = "#c44e52", limits = c(0, 1)) +
                 labs(x = NULL, y = NULL, fill = "R-squared", title = "What the ancestry components capture",
-                     subtitle = "Technical variables (plate, BeadChip, row) should explain little after the residualisation"))
+                     subtitle = "Plate, BeadChip and row should explain little."))
         }
+    }
+    tabs(panels)
+}
+```
+
+# Probes
+
+```{r attrition, results = "asis", eval = has("_filtered_attrition\\.tsv$")}
+steps <- attrition[step != "start" & !startsWith(step, "report_only_")]
+steps[, step := factor(step_label(step), levels = rev(step_label(step)))]
+heading("Filter steps")
+show_plot(ggplot(steps, aes(removed, step)) + geom_col(fill = "#4c72b0") +
+    geom_text(aes(label = big(removed)), hjust = -0.1, size = 3) +
+    scale_x_continuous(labels = big, expand = expansion(mult = c(0, 0.15))) +
+    labs(x = "Probes removed", y = NULL, title = "Probes removed at each filter step",
+         subtitle = "Steps in the order they are applied; a probe counts at the first step that removes it."), 8, 4.5)
+print(kable(attrition[startsWith(step, "report_only_"), .(Flag = step_label(sub("report_only_", "", step)), `Kept probes with the flag` = n_with_reason)], caption = "Report-only flags: probes kept although flagged"))
+if (has("_filtered_exclusions\\.tsv\\.gz$")) {
+    exclusions <- read(find("_filtered_exclusions\\.tsv\\.gz$")[1])
+    if (nrow(exclusions) > 0) {
+        heading("Reasons for removing probes")
+        several <- sum(grepl(";", exclusions[["reasons"]], fixed = TRUE))
+        cat(sprintf("%s of the %s removed probes fail more than one step.\n\n", big(several), big(nrow(exclusions))))
+        upset <- upset_plot(exclusions[, .(set = step_label(strsplit(reasons, ";", fixed = TRUE)[[1]])), by = .(item = probe_id)],
+                            "Reasons for removing probes", "Probes", "All reasons of every removed probe.")
+        show_plot(upset, 10, upset_height(upset))
     }
 }
 ```
 
-# Probe filtering
-
-```{r attrition, results = "asis", eval = has("_filtered_attrition\\.tsv$")}
-attrition <- read(find("_filtered_attrition\\.tsv$")[1])
-steps <- attrition[step != "start" & !startsWith(step, "report_only_")]
-steps[, step := factor(step, levels = rev(step))]
-cat(sprintf("%s probes at the start, %s kept after filtering.\n\n", format(attrition[step == "start", remaining], big.mark = ","),
-            format(tail(steps[["remaining"]], 1), big.mark = ",")))
-show_plot(ggplot(steps, aes(removed, step)) + geom_col(fill = "#4c72b0") +
-    scale_x_continuous(labels = function(x) format(x, big.mark = ",", scientific = FALSE)) +
-    labs(x = "Probes removed", y = "Filter step", title = "Probes removed at each filter step",
-         subtitle = "Steps in the order they are applied, from top to bottom; a probe is counted at the first step that removes it."), 8, 4.5)
-print(kable(attrition[startsWith(step, "report_only_"), .(Flag = sub("report_only_", "", step), `Kept probes with the flag` = n_with_reason)], caption = "Report-only flags: probes kept although flagged"))
-```
-
 ```{r cells, results = "asis", eval = has("^cell_fractions\\.tsv$")}
-heading("Cell composition")
+part("Cell composition")
 cells <- read(find("^cell_fractions\\.tsv$"))
+heading("Lineage fractions")
 long <- melt(cells[, c("sample", grep("^lineage_", names(cells), value = TRUE)), with = FALSE], id.vars = "sample")
 long[, variable := sub("^lineage_", "", variable)]
 show_plot(ggplot(long, aes(variable, value)) + geom_boxplot(fill = "#dd8452", outlier.size = 0.8) +
-    labs(x = "Cell lineage", y = "Estimated fraction", title = "Blood cell lineage fractions over the arrays", subtitle = "EpiDISH robust partial correlations with the 12-cell-type reference cent12CT, summed into six lineages; boxes show the median and quartiles."))
+    labs(x = "Cell lineage", y = "Estimated fraction", title = "Blood cell lineage fractions over the arrays", subtitle = "EpiDISH with the 12-cell-type reference cent12CT, summed into six lineages."))
 if (has("^cell_fractions_reference_coverage\\.tsv$")) {
     rc <- read(find("^cell_fractions_reference_coverage\\.tsv$"))
     print(kable(rc[, .(Reference = reference, `Reference CpGs` = reference_cpgs, `On sex chromosomes` = sex_chromosome, Found = found,
                        Coverage = coverage, Status = status)], caption = "Reference CpGs found in the data"))
 }
 if (has("^cell_fractions_idol_agreement\\.tsv$") && any(startsWith(names(cells), "idol_"))) {
+    heading("Comparison with the IDOL reference")
     idol_pairs <- c(B = "Bcell", CD4T = "CD4T", CD8T = "CD8T", NK = "NK", Mono = "Mono", Gran = "Neu")
     both <- rbindlist(lapply(names(idol_pairs), function(l) {
         if (!all(c(paste0("lineage_", l), paste0("idol_", idol_pairs[[l]])) %in% names(cells))) return(NULL)
         data.table(lineage = paste(l, "/", idol_pairs[[l]]), cent12 = cells[[paste0("lineage_", l)]], idol = cells[[paste0("idol_", idol_pairs[[l]])]])
     }))
-    cat("\n\nCross-check with the IDOL reference (FlowSorted.Blood.EPIC, Houseman constrained projection): each cent12CT lineage against the matching IDOL cell type. Granulocytes include eosinophils and basophils, IDOL neutrophils do not.\n\n")
     show_plot(ggplot(both, aes(idol, cent12)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
         geom_point(size = 1, alpha = 0.6, colour = "#4c72b0") + facet_wrap(~lineage, scales = "free") +
-        labs(x = "IDOL fraction", y = "EpiDISH cent12CT fraction", title = "Cell fractions from cent12CT against the IDOL reference", subtitle = "One panel per lineage; the dashed line is identity."))
+        labs(x = "IDOL fraction", y = "EpiDISH cent12CT fraction", title = "Cell fractions from cent12CT against IDOL", subtitle = "One panel per lineage; dashed line: equal. Gran includes eosinophils and basophils, IDOL Neu does not."))
     print(kable(read(find("^cell_fractions_idol_agreement\\.tsv$")), caption = "Agreement of the lineages with IDOL (Spearman rho, mean difference)"))
 }
 ```
 
-```{r clocks, results = "asis", eval = has("^clocks\\.tsv$") || has("^dnam_scores_coverage\\.tsv$")}
-heading("Epigenetic clocks and DNA methylation scores")
-if (has("^clocks_coverage\\.tsv$")) {
-    coverage <- read(find("^clocks_coverage\\.tsv$"))
-    print(kable(coverage[, .(Clock = clock, CpGs = cpgs, Present = present, `Share present` = share_present, Note = note)], caption = "Clock coverage"))
-}
-if (has("^clocks\\.tsv$")) {
-    clocks <- read(find("^clocks\\.tsv$"))
-    values <- setdiff(names(clocks), c("sample", "age", grep("^i?eaa_", names(clocks), value = TRUE)))
-    if (sum(!is.na(clocks[["age"]])) >= 3) {
-        agreement <- rbindlist(lapply(values, function(clock) {
-            ok <- !is.na(clocks[[clock]]) & !is.na(clocks[["age"]])
-            if (sum(ok) < 3) return(NULL)
-            data.table(Clock = clock, Arrays = sum(ok), `Pearson r with age` = round(cor(clocks[[clock]][ok], clocks[["age"]][ok]), 3))
-        }))
-        print(kable(agreement, caption = "Agreement of the clocks with the reported age"))
-        main <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "HorvathS2018", "PCGrimAge", "PCPhenoAge"), values)
-        if (length(main) > 0) {
-            long <- melt(clocks[, c("sample", "age", main), with = FALSE], id.vars = c("sample", "age"), variable.name = "clock")[is.finite(value) & is.finite(age)]
-            show_plot(ggplot(long, aes(age, value)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
-                geom_point(size = 0.9, alpha = 0.6, colour = "#4c72b0") + geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "#c44e52", linewidth = 0.6) +
-                facet_wrap(~clock, scales = "free_y") +
-                labs(x = "Reported age", y = "Clock estimate (years)", title = "Age clocks against the reported age", subtitle = "One panel per clock; dashed line: identity; red line: linear fit."))
-        }
+```{r clocks, results = "asis", eval = !is.null(clocks) || has("^dnam_scores_coverage\\.tsv$")}
+part("Clocks and scores")
+if (!is.null(clocks) && nrow(age_agreement) > 0) {
+    heading("Agreement with the reported age")
+    print(kable(age_agreement, caption = "Agreement of the clocks with the reported age"))
+    main <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "HorvathS2018", "PCGrimAge", "PCPhenoAge"), clock_values)
+    if (length(main) > 0) {
+        long <- melt(clocks[, c("sample", "age", main), with = FALSE], id.vars = c("sample", "age"), variable.name = "clock")[is.finite(value) & is.finite(age)]
+        long[, clock := factor(clock_name(clock), levels = clock_name(main))]
+        show_plot(ggplot(long, aes(age, value)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
+            geom_point(size = 0.9, alpha = 0.6, colour = "#4c72b0") + geom_smooth(method = "lm", formula = y ~ x, se = FALSE, colour = "#c44e52", linewidth = 0.6) +
+            facet_wrap(~clock, scales = "free_y") +
+            labs(x = "Reported age", y = "Clock estimate (years)", title = "Age clocks against the reported age", subtitle = "Dashed line: equal; red line: linear fit."))
     }
+}
+if (!is.null(clocks)) {
     accelerations <- grep("^eaa_", names(clocks), value = TRUE)
     if (length(accelerations) > 0) {
+        heading("Age acceleration")
         long <- melt(clocks[, c("sample", accelerations), with = FALSE], id.vars = "sample", variable.name = "clock")[is.finite(value)]
-        long[, clock := factor(sub("^eaa_", "", clock), levels = rev(sub("^eaa_", "", accelerations)))]
+        long[, clock := factor(clock_name(sub("^eaa_", "", clock)), levels = rev(clock_name(sub("^eaa_", "", accelerations))))]
         show_plot(ggplot(long, aes(value, clock)) + geom_vline(xintercept = 0, colour = "grey60") +
             geom_violin(fill = "#4c72b0", colour = NA, alpha = 0.5, scale = "width") + geom_boxplot(width = 0.15, outlier.size = 0.6, fill = "white") +
-            labs(x = "Age acceleration (years; residual of the clock on reported age)", y = "Clock", title = "Epigenetic age acceleration over the arrays", subtitle = "Violins show the distribution, boxes the median and quartiles; 0 means a clock estimate as expected for the reported age."))
+            labs(x = "Age acceleration (years)", y = NULL, title = "Age acceleration over the arrays", subtitle = "Residual of the clock on the reported age; 0 is the value expected for the age."))
     }
-}
-if (has("^dnam_scores_coverage\\.tsv$")) {
-    scores_coverage <- read(find("^dnam_scores_coverage\\.tsv$"))
-    print(kable(scores_coverage[, .(Score = score, CpGs = cpgs, Present = present, `Share present` = share_present, Reference = reference)], caption = "DNA methylation score coverage"))
 }
 if (has("^dnam_scores\\.tsv$")) {
     scores <- read(find("^dnam_scores\\.tsv$"))
     long <- melt(scores, id.vars = "sample", variable.name = "score")[is.finite(value)]
     if (nrow(long) > 0) {
+        heading("DNA methylation scores")
         long[, score := sub("^dnam_", "", score)]
         show_plot(ggplot(long, aes(score, value)) + geom_violin(fill = "#dd8452", colour = NA, alpha = 0.5, scale = "width") +
             geom_boxplot(width = 0.15, outlier.size = 0.6, fill = "white") + facet_wrap(~score, scales = "free", nrow = 1) +
             theme(axis.text.x = element_blank()) +
-            labs(x = NULL, y = "Score", title = "DNA methylation scores over the arrays", subtitle = "Each score on its own scale"))
+            labs(x = NULL, y = "Score", title = "DNA methylation scores over the arrays", subtitle = "Each score on its own scale."))
     }
+}
+heading("CpGs measured")
+if (has("^clocks_coverage\\.tsv$")) {
+    coverage <- read(find("^clocks_coverage\\.tsv$"))
+    print(kable(coverage[, .(Clock = clock, Name = clock_name(clock), CpGs = cpgs, Present = present, `Share present` = share_present,
+                           `With a common SNP` = if ("snp_cpgs" %in% names(coverage)) snp_cpgs else NA, Note = note)], caption = "Clock coverage"))
+}
+if (has("^dnam_scores_coverage\\.tsv$")) {
+    scores_coverage <- read(find("^dnam_scores_coverage\\.tsv$"))
+    print(kable(scores_coverage[, .(Score = score, CpGs = cpgs, Present = present, `Share present` = share_present, Reference = reference)], caption = "DNA methylation score coverage"))
 }
 ```
 
-
 ```{r clock-weights, results = "asis", fig.width = 12, fig.height = 12, eval = has("^clocks_weights\\.tsv$") || has("^dnam_scores_weights\\.tsv$")}
 heading("Clock and score CpGs")
-cat("Standardised weight: the published coefficient of a CpG times the SD of its beta value in these arrays, in the clock's own units per SD of methylation. The largest ones show which CpGs drive each clock in this data. Principal-component clocks and epiTOC2 have no per-CpG weights.\n\n")
 weights <- rbindlist(list(
-    if (has("^clocks_weights\\.tsv$")) read(find("^clocks_weights\\.tsv$"))[, .(set = clock, cpg, gene = as.character(gene), standardised)] else NULL,
-    if (has("^dnam_scores_weights\\.tsv$")) read(find("^dnam_scores_weights\\.tsv$"))[, .(set = paste("score", score), cpg, gene = NA_character_, standardised)] else NULL
+    if (has("^clocks_weights\\.tsv$")) read(find("^clocks_weights\\.tsv$"))[, .(set = clock_name(clock), cpg, gene = as.character(gene), standardised)] else NULL,
+    if (has("^dnam_scores_weights\\.tsv$")) read(find("^dnam_scores_weights\\.tsv$"))[, .(set = paste(score, "score"), cpg, gene = NA_character_, standardised)] else NULL
 ), fill = TRUE)
 weights <- weights[is.finite(standardised)]
+tests <- rbindlist(lapply(find("^ewas_.*_stats\\.tsv\\.gz$"), function(file) {
+    x <- read(file)
+    if (nrow(x) == 0) return(NULL)
+    x[, .(model = model_of(file, "ewas_", "_stats\\.tsv\\.gz"), cpg = sub("_.*", "", cpg_id), hit = !is.na(fdr) & fdr < 0.05)]
+}))
+panels <- list()
 if (nrow(weights) > 0) {
     top <- weights[order(-abs(standardised)), head(.SD, 12), by = set]
     top[, label := paste0(cpg, ifelse(is.na(gene) | gene == "", "", paste0(" (", gene, ")")))]
     top[, key := paste(set, label, sep = "__")]
     top[, key := factor(key, levels = rev(unique(key)))]
-    show_plot(ggplot(top, aes(standardised, key, fill = standardised > 0)) + geom_col() +
+    panels[["Largest weights"]] <- function() show_plot(ggplot(top, aes(standardised, key, fill = standardised > 0)) + geom_col() +
         scale_y_discrete(labels = function(x) sub("^.*__", "", x)) +
         scale_fill_manual(values = c(`TRUE` = "#c44e52", `FALSE` = "#4c72b0"), guide = "none") +
         facet_wrap(~ set, scales = "free", ncol = 3) + theme(axis.text.y = element_text(size = 6)) +
-        labs(x = "Standardised weight (clock units per SD of beta)", y = NULL, title = "The 12 largest standardised weights of each clock and score"))
+        labs(x = "Standardised weight (clock units per SD of beta)", y = NULL, title = "The 12 CpGs with the largest weight in each clock and score",
+             subtitle = "Weight: published coefficient times the SD of the CpG in these arrays. Principal-component clocks and epiTOC2 have no weights per CpG."))
 }
-if (has("^clocks_coverage\\.tsv$")) {
-    coverage <- read(find("^clocks_coverage\\.tsv$"))
-    if ("snp_cpgs" %in% names(coverage) && any(coverage[["cpgs"]] > 0)) {
-        show_plot(ggplot(coverage[cpgs > 0], aes(100 * snp_cpgs / cpgs, reorder(clock, snp_cpgs / cpgs))) + geom_col(fill = "#dd8452") +
-            labs(x = "% of the clock's CpGs with a common SNP at the CpG or extension base", y = NULL, title = "SNPs under the clocks' CpGs"))
+if (nrow(weights) > 0 && uniqueN(weights[["set"]]) > 1) {
+    shared <- unique(weights[, .(item = cpg, set)])
+    in_several <- shared[, .N, by = item][N > 1]
+    upset_shared <- upset_plot(shared, "CpGs shared between the clocks and scores", "CpGs", min_sets = 2)
+    if (!is.null(upset_shared)) panels[["Shared CpGs"]] <- function() {
+        cat(sprintf("%s of the %s CpGs are in more than one clock or score, at most in %d.\n\n", big(nrow(in_several)), big(uniqueN(shared[["item"]])), max(in_several[["N"]])))
+        show_plot(upset_shared, 11, upset_height(upset_shared))
     }
 }
+if (has("^clocks_weights\\.tsv$")) {
+    clock_cpgs <- read(find("^clocks_weights\\.tsv$"))
+    clock_cpgs <- unique(clock_cpgs[, .(clock, cpg, snp = snp %in% TRUE, meqtl = if ("meqtl" %in% names(clock_cpgs)) meqtl %in% TRUE else FALSE)])
+    removed_cpgs <- if (has("_filtered_exclusions\\.tsv\\.gz$")) unique(sub("_.*", "", read(find("_filtered_exclusions\\.tsv\\.gz$")[1])[["probe_id"]])) else character()
+    if (nrow(tests) > 0) removed_cpgs <- setdiff(removed_cpgs, unique(tests[["cpg"]]))
+    flags <- rbind(clock_cpgs[snp == TRUE, .(clock, item = cpg, set = "Common SNP")],
+                   clock_cpgs[meqtl == TRUE, .(clock, item = cpg, set = "cis-meQTL")],
+                   clock_cpgs[cpg %in% removed_cpgs, .(clock, item = cpg, set = "Removed by the probe filter")],
+                   if (nrow(tests) > 0) unique(merge(clock_cpgs[, .(clock, item = cpg)], tests[hit == TRUE, .(item = cpg, set = paste("Hit of model", model))],
+                                                     by = "item", allow.cartesian = TRUE))[, .(clock, item, set)])
+    if (nrow(flags) > 0) {
+        panels[["SNPs, filter and hits"]] <- function() {
+            cat(sprintf("%s of the %s clock CpGs carry a common SNP or cis-meQTL, are removed by the probe filter, or are a hit of a model (FDR < 0.05). The clocks are computed before the probe filter, so removed CpGs still count in them.\n\n",
+                        big(uniqueN(flags[["item"]])), big(uniqueN(clock_cpgs[["cpg"]]))))
+            # a plot only when a CpG has several flags; the table gives the single ones
+            if (any(unique(flags[, .(item, set)])[, .N, by = item][["N"]] > 1)) {
+                upset <- upset_plot(flags, "Clock CpGs with a SNP, removed by the probe filter or associated", "CpGs", "Every CpG counts once, whichever clocks use it.")
+                show_plot(upset, 9, upset_height(upset))
+            }
+            per_clock <- dcast(unique(flags), clock ~ set, value.var = "item", fun.aggregate = length)
+            per_clock <- merge(clock_cpgs[, .(CpGs = uniqueN(cpg)), by = clock], per_clock, by = "clock", all.x = TRUE)
+            for (j in names(per_clock)) if (is.integer(per_clock[[j]])) set(per_clock, which(is.na(per_clock[[j]])), j, 0L)
+            print(kable(setnames(per_clock[, clock := clock_name(clock)], "clock", "Clock"), caption = "Clock CpGs with each flag"))
+        }
+    }
+}
+tabs(panels)
 ```
 
 ```{r meqtl, results = "asis", fig.width = 11, fig.height = 8, eval = has("^meqtl_cpgs_summary\\.tsv$")}
 heading("Genetic influence on the clocks")
 ms <- read(find("^meqtl_cpgs_summary\\.tsv$"))
 mv <- setNames(as.character(ms[["value"]]), ms[["metric"]])
-cat(sprintf("The meQTL table (`--meqtl`) gives %s CpGs with a cis-meQTL (%s associations kept of %s); %s of them are on this array. Clock CpGs whose methylation depends on a nearby genotype carry inherited variation into the clock, and their allele frequencies differ between ancestries (Meeks et al. 2025).\n\n",
-            mv[["cpgs_in_table"]], mv[["rows_kept"]], mv[["rows_read"]], mv[["cpgs_on_array"]]))
+cat(sprintf("The meQTL table gives %s CpGs with a cis-meQTL; %s of them are on this array. Allele frequencies at these CpGs differ between ancestries, and that difference passes into the clock (Meeks et al. 2025).\n\n",
+            mv[["cpgs_in_table"]], mv[["cpgs_on_array"]]))
 if (has("^clocks_weights\\.tsv$")) {
     w <- read(find("^clocks_weights\\.tsv$"))
     if ("meqtl" %in% names(w) && any(!is.na(w[["meqtl"]]))) {
@@ -654,70 +862,78 @@ if (has("^clocks_weights\\.tsv$")) {
         w[, class := ifelse(meqtl %in% TRUE, "cis-meQTL", ifelse(snp %in% TRUE, "SNP in the probe", "neither"))]
         shares <- w[, .(share = sum(abs(standardised))), by = .(clock, class)][, share := 100 * share / sum(share), by = clock]
         shares[, class := factor(class, levels = c("cis-meQTL", "SNP in the probe", "neither"))]
-        show_plot(ggplot(shares, aes(share, clock, fill = class)) + geom_col() +
+        show_plot(ggplot(shares, aes(share, clock_name(clock), fill = class)) + geom_col() +
             scale_fill_manual(values = c(`cis-meQTL` = "#c44e52", `SNP in the probe` = "#dd8452", neither = "#bbbbbb")) +
-            labs(x = "% of the clock's absolute standardised weight", y = "Clock", fill = "CpG class", title = "Clock weight on CpGs under genetic influence"))
+            labs(x = "% of the clock's absolute weight", y = NULL, fill = "CpG class", title = "Clock weight on CpGs under genetic influence"))
     }
 }
-if (has("^clocks_robust\\.tsv$") && has("^clocks\\.tsv$")) {
-    full <- read(find("^clocks\\.tsv$"))
+if (has("^clocks_robust\\.tsv$") && !is.null(clocks)) {
     rob <- read(find("^clocks_robust\\.tsv$"))
-    shown <- intersect(grep("^eaa_", names(full), value = TRUE), names(rob))
+    shown <- intersect(grep("^eaa_", names(clocks), value = TRUE), names(rob))
     value_of <- function(table, columns) melt(table[, c("sample", columns), with = FALSE], id.vars = "sample", variable.name = "clock")
-    if (length(shown) == 0) shown <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "DunedinPACE"), intersect(names(full), names(rob)))
+    if (length(shown) == 0) shown <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "DunedinPACE"), intersect(names(clocks), names(rob)))
     if (length(shown) > 0) {
-        both <- merge(value_of(full, shown), value_of(rob, shown), by = c("sample", "clock"), suffixes = c("_full", "_robust"))
+        both <- merge(value_of(clocks, shown), value_of(rob, shown), by = c("sample", "clock"), suffixes = c("_full", "_robust"))
         both <- both[is.finite(value_full) & is.finite(value_robust)]
         rho <- both[, .(rho = suppressWarnings(cor(value_full, value_robust, method = "spearman"))), by = clock]
         both <- merge(both, rho, by = "clock")
-        both[, panel := sprintf("%s (rho %.2f)", sub("^eaa_", "", clock), rho)]
+        both[, panel := sprintf("%s (rho %.2f)", clock_name(sub("^eaa_", "", clock)), rho)]
         show_plot(ggplot(both, aes(value_full, value_robust)) + geom_abline(slope = 1, intercept = 0, colour = "grey60", linetype = 2) +
             geom_point(size = 0.8, alpha = 0.6, colour = "#4c72b0") + facet_wrap(~panel, scales = "free") +
             labs(x = if (startsWith(shown[1], "eaa_")) "Acceleration, full clock" else "Clock value, full clock",
                  y = "Without SNP and cis-meQTL CpGs", title = "Genotype-robust clocks",
-                 subtitle = "CpGs with a common SNP or a cis-meQTL held at their mean; the phenotype tests of both versions are in the forest plots"))
+                 subtitle = "CpGs with a common SNP or cis-meQTL held at their mean."))
     }
 }
 if (has("^ewas_summary_meqtl\\.tsv$")) {
     em <- read(find("^ewas_summary_meqtl\\.tsv$"))
     if (nrow(em) > 0) print(kable(em[, .(Model = model, Contrast = contrast, `Hits (FDR < 0.05)` = hits_fdr, `Hits with a cis-meQTL` = hits_meqtl,
                                          `Share of hits` = share_hits, `Share of tested CpGs` = share_tested, `Odds ratio` = odds_ratio, P = p_value)],
-                               caption = "Association hits with a cis-meQTL: candidates for genetic confounding, especially without ancestry covariates"))
+                               caption = "Association hits with a cis-meQTL"))
 }
 ```
 
 ```{r biomarkers, results = "asis", fig.width = 11, fig.height = 8, eval = has("^biomarkers_agreement\\.tsv$")}
-heading("Clocks, scores and cell fractions")
+part("Clocks, cells and phenotypes")
 stars <- function(q) ifelse(is.na(q), "", ifelse(q < 0.001, "***", ifelse(q < 0.01, "**", ifelse(q < 0.05, "*", ""))))
-cat("Acceleration: a clock's residual on reported age. Scores are used as they are. Only aggregates are shown.\n\n")
+cat("Clocks enter as age acceleration (residual on the reported age), scores as they are. Stars: q < 0.05, 0.01, 0.001 (Benjamini-Hochberg).\n\n")
 agreement <- read(find("^biomarkers_agreement\\.tsv$"))
 if (nrow(agreement) > 0) {
+    heading("Agreement of the clocks and scores")
     m <- unique(c(agreement[["measure1"]], agreement[["measure2"]]))
     full <- rbind(agreement[, .(a = measure1, b = measure2, rho)], agreement[, .(a = measure2, b = measure1, rho)], data.table(a = m, b = m, rho = 1))
-    show_plot(ggplot(full, aes(factor(a, levels = m), factor(b, levels = rev(m)), fill = rho)) + geom_tile(colour = "white") +
+    show_plot(ggplot(full, aes(factor(measure_name(a), levels = measure_name(m)), factor(measure_name(b), levels = rev(measure_name(m))), fill = rho)) + geom_tile(colour = "white") +
         geom_text(aes(label = sprintf("%.2f", rho)), size = 2.3) + scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-1, 1)) +
-        theme(axis.text.x = element_text(angle = 40, hjust = 1)) + labs(x = NULL, y = NULL, fill = "Spearman rho", title = "Agreement of the accelerations and scores (Spearman)"))
+        theme(axis.text.x = element_text(angle = 40, hjust = 1)) + labs(x = NULL, y = NULL, fill = "Spearman rho", title = "Agreement of the clocks and scores (Spearman)"))
 }
+panels <- list()
 if (has("^biomarkers_cells_measures\\.tsv$")) {
     cm <- read(find("^biomarkers_cells_measures\\.tsv$"))
-    if (nrow(cm) > 0) show_plot(ggplot(cm, aes(measure, cell, fill = rho)) + geom_tile(colour = "white") +
+    if (nrow(cm) > 0) panels[["Clocks and scores"]] <- function() show_plot(ggplot(cm, aes(measure_name(measure), cell, fill = rho)) + geom_tile(colour = "white") +
         geom_text(aes(label = paste0(sprintf("%.2f", rho), stars(q))), size = 2.4) + scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-1, 1)) +
         theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
-        labs(x = NULL, y = "Cell lineage", fill = "Spearman rho", title = "Cell fractions against the accelerations and scores (Spearman)", subtitle = "Stars: q < 0.05, 0.01, 0.001 (Benjamini-Hochberg)."))
+        labs(x = NULL, y = "Cell lineage", fill = "Spearman rho", title = "Cell fractions against the clocks and scores (Spearman)"))
 }
 if (has("^biomarkers_cells_phenotypes\\.tsv$")) {
     cp <- read(find("^biomarkers_cells_phenotypes\\.tsv$"))
-    if (nrow(cp) > 0) show_plot(ggplot(cp, aes(trait, cell, fill = estimate)) + geom_tile(colour = "white") +
+    if (nrow(cp) > 0) panels[["Age, sex and phenotypes"]] <- function() show_plot(ggplot(cp, aes(cell, factor(trait, levels = rev(unique(trait))), fill = estimate)) + geom_tile(colour = "white") +
         geom_text(aes(label = paste0(sprintf("%.2f", estimate), stars(q))), size = 2.6) +
         scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.8, 0.8), oob = scales::squish) +
-        theme(axis.text.x = element_text(angle = 40, hjust = 1)) +
-        labs(x = NULL, y = "Cell lineage", fill = "Effect (SD)", title = "Blood cell fractions against age, sex and the phenotypes",
-             subtitle = "SD of the fraction per SD of a continuous trait, or with a binary one; age and sex held. Stars: q < 0.05, 0.01, 0.001"))
+        labs(x = "Cell lineage", y = NULL, fill = "Effect (SD)", title = "Blood cell fractions against age, sex and the phenotypes",
+             subtitle = "SD of the fraction per SD of a continuous trait, or between the groups of a binary one; age and sex held."),
+        9, max(4, 1.5 + 0.24 * uniqueN(cp[["trait"]])))
+}
+if (length(panels) > 0) {
+    heading("Cell fractions")
+    tabs(panels)
 }
 if (has("^biomarkers_batch\\.tsv$")) {
     batch <- read(find("^biomarkers_batch\\.tsv$"))
-    if (nrow(batch) > 0) print(kable(dcast(batch, measure ~ batch, value.var = "p", fun.aggregate = function(x) signif(x[1], 2)),
-                                     caption = "Accelerations and scores against the technical batches: F-test P (a small P means the batch explains part of the measure)"))
+    if (nrow(batch) > 0) {
+        heading("Batches")
+        print(kable(dcast(batch, measure ~ batch, value.var = "p", fun.aggregate = function(x) signif(x[1], 2))[, measure := measure_name(measure)],
+                    caption = "Clocks and scores against plate, BeadChip and row: F-test P"))
+    }
 }
 ```
 
@@ -725,19 +941,69 @@ if (has("^biomarkers_batch\\.tsv$")) {
 pt <- read(find("^biomarkers_phenotypes\\.tsv$"))
 pt <- pt[trait != "Age"]
 if (nrow(pt) > 0) {
-    heading("Clocks and scores against the phenotypes")
-    cat("Continuous phenotypes: Spearman correlation with the acceleration or score. Binary phenotypes: difference in SD of the acceleration or score between the two groups. With cells held: also adjusted for the blood cell lineages. Stars: q < 0.05, 0.01, 0.001 over the measures.\n\n")
-    show_plot(ggplot(pt[version == "plain"], aes(trait, measure, fill = estimate)) + geom_tile(colour = "white") +
+    heading("Phenotypes")
+    show_plot(ggplot(pt[version == "plain"], aes(measure_name(measure), factor(trait, levels = rev(unique(trait))), fill = estimate)) + geom_tile(colour = "white") +
         geom_text(aes(label = paste0(sprintf("%.2f", estimate), stars(q))), size = 2.4) +
         scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.6, 0.6), oob = scales::squish) +
-        theme(axis.text.x = element_text(angle = 40, hjust = 1)) + labs(x = NULL, y = NULL, fill = "Estimate", title = "Every acceleration and score against the phenotypes", subtitle = "Continuous phenotypes: Spearman rho; binary phenotypes: difference between the groups in SD. Stars: q < 0.05, 0.01, 0.001."))
-    for (t in unique(pt[type == "binary", trait])) {
-        show_plot(ggplot(pt[trait == t], aes(estimate, measure, colour = version, shape = q < 0.05)) + geom_vline(xintercept = 0, colour = "grey60") +
-            geom_point(size = 2.6, position = position_dodge(width = 0.6)) +
-            scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), labels = c(`TRUE` = "q < 0.05", `FALSE` = "q >= 0.05")) +
-            scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `ancestry held` = "#8172b3", `genotype-robust` = "#937860", `low contamination` = "#55a868")) +
-            labs(x = "Difference between the groups (SD)", y = NULL, colour = "Adjustment", shape = "Significance", title = paste0(t, ": every acceleration and score"), subtitle = "Each point is one acceleration or score in one version of the test; filled points are significant at q < 0.05."))
+        theme(axis.text.x = element_text(angle = 40, hjust = 1)) + labs(x = NULL, y = NULL, fill = "Estimate", title = "Clocks and scores against the phenotypes", subtitle = "Continuous phenotype: Spearman rho. Binary phenotype: difference between the groups in SD."),
+        max(9, 3.5 + 0.55 * uniqueN(pt[["measure"]])), max(5, 2.5 + 0.25 * uniqueN(pt[["trait"]])))
+    binary <- unique(pt[type == "binary", trait])
+    if (length(binary) > 0) {
+        cat("\n\nBinary phenotypes, one tab each:\n\n")
+        tabs(setNames(lapply(binary, function(t) function() {
+            show_plot(ggplot(pt[trait == t], aes(estimate, measure_name(measure), colour = version, shape = q < 0.05)) + geom_vline(xintercept = 0, colour = "grey60") +
+                geom_point(size = 2.6, position = position_dodge(width = 0.6)) +
+                scale_shape_manual(values = c(`TRUE` = 16, `FALSE` = 1), labels = c(`TRUE` = "q < 0.05", `FALSE` = "q >= 0.05")) +
+                scale_colour_manual(values = c(plain = "#4c72b0", `cells held` = "#dd8452", `ancestry held` = "#8172b3", `genotype-robust` = "#937860", `low contamination` = "#55a868")) +
+                labs(x = "Difference between the groups (SD)", y = NULL, colour = "Adjustment", shape = "Significance", title = paste0(t, ": clocks and scores"), subtitle = "Filled points: q < 0.05."))
+        }), binary))
     }
+}
+```
+
+```{r quartiles, results = "asis", fig.width = 14, fig.height = 12, eval = has("^biomarkers_quartiles\\.tsv$")}
+qt <- read(find("^biomarkers_quartiles\\.tsv$"))
+if (nrow(qt) > 0) {
+    heading("Quartile groups of acceleration")
+    cat("Low: bottom quarter of the acceleration; mid: middle half; high: top quarter. Numbers: medians, or percentages of a binary trait. Trend: Kendall's tau across the groups.\n\n")
+    qt[, group := factor(group, levels = c("decelerated", "normal", "accelerated"), labels = c("low", "mid", "high"))]
+    qt[, measure := clock_name(sub(" acceleration$", "", measure))]
+    # the stars sit in their own column inside each panel, so they never run into the next panel
+    groups <- c("low", "mid", "high", "trend")
+    qt[, group := factor(as.character(group), levels = groups)]
+    lab <- unique(qt[, .(measure, trait, star = stars(q))])
+    lab[, group := factor("trend", levels = groups)]
+    n_measures <- uniqueN(qt[["measure"]])
+    columns <- min(4, n_measures)
+    # many phenotypes are split over several figures, each at most about 30 inches high
+    rows <- ceiling(n_measures / columns)
+    per_part <- min(24, max(5, floor((30 / rows - 0.8) / 0.26)))
+    traits <- unique(qt[["trait"]])
+    parts <- split(traits, ceiling(seq_along(traits) / per_part))
+    tabs(setNames(lapply(seq_along(parts), function(i) function() {
+        part <- qt[trait %in% parts[[i]]]
+        show_plot(ggplot(part, aes(group, trait)) + geom_tile(aes(fill = mean_z), colour = "white") + geom_text(aes(label = signif(value, 3)), size = 2.4) +
+            geom_text(data = lab[trait %in% parts[[i]]], aes(x = group, y = trait, label = star), colour = "#b2182b", size = 3.4, fontface = "bold") +
+            scale_x_discrete(drop = FALSE) + facet_wrap(~ measure, ncol = columns) +
+            scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.8, 0.8), oob = scales::squish) +
+            theme(panel.spacing.x = unit(1.5, "lines"), panel.spacing.y = unit(1, "lines"), panel.grid = element_blank(),
+                  legend.position = "bottom", legend.key.width = unit(2.5, "cm"), legend.title = element_text(vjust = 0.8),
+                  legend.margin = margin(t = 10)) +
+            labs(x = NULL, y = NULL, fill = "Mean z of the trait in the group",
+                 title = paste0("Characteristics by quartile group of acceleration", if (length(parts) > 1) sprintf(" (part %d of %d)", i, length(parts)))),
+            4 * columns, 1.5 + rows * (0.8 + 0.26 * length(parts[[i]])))
+    }), paste("Part", seq_along(parts))))
+}
+```
+
+```{r missing-phenotypes, results = "asis", eval = has("^biomarkers_missing\\.tsv$")}
+absent <- read(find("^biomarkers_missing\\.tsv$"))
+if (nrow(absent) > 0) {
+    heading("Missing phenotypes")
+    complete <- sum(absent[is.na(missing) | missing == "", arrays])
+    cat(sprintf("%d of %d arrays have every phenotype. Each test uses the arrays that have its own phenotype.\n\n", complete, sum(absent[["arrays"]])))
+    upset <- upset_plot(missing_members(absent), "Arrays with missing phenotypes", "Arrays", "Only phenotypes with a missing value are listed.", top = 20)
+    if (!is.null(upset)) show_plot(upset, 9, upset_height(upset))
 }
 ```
 
@@ -745,12 +1011,12 @@ if (nrow(pt) > 0) {
 ba <- read(find("^biomarkers_ancestry\\.tsv$"))
 if (nrow(ba) > 0) {
     heading("Ancestry and the ageing measures")
-    cat("Spearman correlation of each acceleration and score with the genetic ancestry components. Clocks predict age less accurately in admixed individuals and in some ancestries (Cruz-Gonzalez et al. 2026), so a difference in acceleration between ancestry groups can be calibration error rather than biology. The phenotype associations with the ancestry components held are the 'ancestry held' version in the forest plots above and in `biomarkers_phenotypes.tsv`.\n\n")
+    cat("Clocks predict age less accurately in some ancestries (Cruz-Gonzalez et al. 2026), so a difference between ancestry groups can be calibration error. The phenotype tests with the ancestry components held are the version 'ancestry held' above.\n\n")
     ba[, pc := factor(sub("ancestry_", "", pc), levels = unique(sub("ancestry_", "", pc)))]
-    show_plot(ggplot(ba, aes(pc, measure, fill = rho)) + geom_tile(colour = "white") +
+    show_plot(ggplot(ba, aes(pc, measure_name(measure), fill = rho)) + geom_tile(colour = "white") +
         geom_text(aes(label = paste0(sprintf("%.2f", rho), stars(q))), size = 2.6) +
         scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.6, 0.6), oob = scales::squish) +
-        labs(x = "Ancestry component", y = NULL, fill = "Spearman rho", title = "Accelerations and scores against the ancestry components"))
+        labs(x = "Ancestry component", y = NULL, fill = "Spearman rho", title = "Clocks and scores against the ancestry components"))
 }
 ```
 
@@ -760,15 +1026,16 @@ if (nrow(ct) > 0) {
     heading("Contamination and the ageing measures")
     cutoff <- ct[["cutoff"]][1]
     threshold <- suppressWarnings(as.numeric(param("snp_outlier_threshold")))
-    cat(sprintf("DNA from another person pulls beta values towards the middle and can bias clocks. Arrays with a SNP outlier score above %s fail QC; among the analysed arrays, %d lie above the robust cutoff of %.2f (median plus three MADs). The phenotype associations without them are the 'low contamination' version in the tables and forest plots above. Correlations of the score with the measures at q < 0.05: %d of %d.\n\n",
-                param("snp_outlier_threshold"), ct[["arrays_above_cutoff"]][1], cutoff, sum(ct[["q"]] < 0.05, na.rm = TRUE), nrow(ct)))
-    print(kable(ct[, .(Measure = measure, `Spearman rho` = rho, q = signif(q, 3), Arrays = n)], caption = "SNP outlier score against the accelerations and scores"))
-    if (has("^clocks\\.tsv$")) {
-        cl <- read(find("^clocks\\.tsv$"))
-        main <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "PCGrimAge", "DunedinPACE"), names(cl))
+    bullets(c(sprintf("Arrays above a SNP outlier score of %s fail QC. Of the analysed arrays, %d lie above the robust cutoff of %.2f (median plus three MADs).",
+                      param("snp_outlier_threshold"), ct[["arrays_above_cutoff"]][1], cutoff),
+              sprintf("%d of %d clocks and scores correlate with the score at q < 0.05.", sum(ct[["q"]] < 0.05, na.rm = TRUE), nrow(ct)),
+              "The phenotype tests without the arrays above the cutoff are the version 'low contamination' above."))
+    print(kable(ct[, .(Measure = measure_name(measure), `Spearman rho` = rho, q = signif(q, 3), Arrays = n)], caption = "SNP outlier score against the clocks and scores"))
+    if (!is.null(clocks)) {
+        main <- intersect(c("HorvathS2013", "HannumG2013", "LevineM2018", "PCGrimAge", "DunedinPACE"), names(clocks))
         long <- rbindlist(lapply(main, function(k) {
-            column <- if (paste0("eaa_", k) %in% names(cl)) paste0("eaa_", k) else k
-            data.table(sample = cl[["sample"]], panel = if (column == k) k else paste(k, "acceleration"), value = as.numeric(cl[[column]]))
+            column <- if (paste0("eaa_", k) %in% names(clocks)) paste0("eaa_", k) else k
+            data.table(sample = clocks[["sample"]], panel = if (column == k) clock_name(k) else paste(clock_name(k), "acceleration"), value = as.numeric(clocks[[column]]))
         }))
         long <- merge(long, qc[, .(sample, snp_outlier, status)], by = "sample")[is.finite(value) & is.finite(snp_outlier)]
         if (nrow(long) > 0) {
@@ -778,49 +1045,23 @@ if (nrow(ct) > 0) {
                 geom_vline(xintercept = cutoff, linetype = 2, colour = "#dd8452") +
                 geom_vline(xintercept = threshold, linetype = 2, colour = "#c44e52") +
                 facet_wrap(~label, scales = "free_y") +
-                labs(x = "SNP outlier score (higher = more likely contaminated)", y = NULL, colour = "QC status",
-                     title = "Contamination against the main clocks", subtitle = "Orange line: robust cutoff of the analysed arrays; red line: FAIL threshold"))
+                labs(x = "SNP outlier score (higher: more likely contaminated)", y = NULL, colour = "QC status",
+                     title = "Contamination against the main clocks", subtitle = "Orange line: robust cutoff; red line: QC threshold."))
         }
     }
 }
 ```
 
-```{r quartiles, results = "asis", fig.width = 14, fig.height = 12, eval = has("^biomarkers_quartiles\\.tsv$")}
-qt <- read(find("^biomarkers_quartiles\\.tsv$"))
-if (nrow(qt) > 0) {
-    heading("Quartile groups of acceleration")
-    cat("For each clock: the bottom quarter of acceleration (low, decelerated), the middle half (mid) and the top quarter (high, accelerated). Numbers: medians, or percentages for binary traits. Colour: mean z of the trait in the group. Stars in the trend column: trend across the groups (Kendall's tau), q < 0.05, 0.01, 0.001 over the traits.\n\n")
-    qt[, group := factor(group, levels = c("decelerated", "normal", "accelerated"), labels = c("low", "mid", "high"))]
-    qt[, measure := sub(" acceleration$", "", measure)]
-    # the stars sit in their own column inside each panel, so they never run into the next panel
-    groups <- c("low", "mid", "high", "trend")
-    qt[, group := factor(as.character(group), levels = groups)]
-    lab <- unique(qt[, .(measure, trait, star = stars(q))])
-    lab[, group := factor("trend", levels = groups)]
-    n_measures <- uniqueN(qt[["measure"]])
-    n_traits <- uniqueN(qt[["trait"]])
-    columns <- min(4, n_measures)
-    show_plot(ggplot(qt, aes(group, trait)) + geom_tile(aes(fill = mean_z), colour = "white") + geom_text(aes(label = signif(value, 3)), size = 2.4) +
-        geom_text(data = lab, aes(x = group, y = trait, label = star), colour = "#b2182b", size = 3.4, fontface = "bold") +
-        scale_x_discrete(drop = FALSE) + facet_wrap(~ measure, ncol = columns) +
-        scale_fill_gradient2(low = "#4c72b0", high = "#c44e52", limits = c(-0.8, 0.8), oob = scales::squish) +
-        theme(panel.spacing.x = unit(1.5, "lines"), panel.spacing.y = unit(1, "lines"), panel.grid = element_blank(),
-              legend.position = "bottom", legend.key.width = unit(2.5, "cm"), legend.title = element_text(vjust = 0.8),
-              legend.margin = margin(t = 10)) +
-        labs(x = NULL, y = NULL, fill = "Mean z of the trait in the group", title = "Characteristics by quartile group of acceleration",
-             subtitle = "Columns: low (bottom quarter), mid (middle half) and high (top quarter) of the acceleration; trend: stars for the trend across the groups (Kendall's tau), q < 0.05, 0.01, 0.001."),
-        4 * columns, 1.5 + ceiling(n_measures / columns) * (0.8 + 0.26 * n_traits))
-}
-```
-
 ```{r pca, results = "asis", fig.width = 11, fig.height = 10, eval = has("^pca_variance\\.tsv$")}
-heading("Exploratory analysis")
+part("Sources of variation")
+heading("Principal components")
 variance <- read(find("^pca_variance\\.tsv$"))
-show_plot(ggplot(variance, aes(factor(pc, levels = pc), variance_explained, fill = tested)) + geom_col() +
+panels <- list()
+panels[["Variance"]] <- function() show_plot(ggplot(variance, aes(factor(pc, levels = pc), variance_explained, fill = tested)) + geom_col() +
     scale_fill_manual(values = c(`TRUE` = "#4c72b0", `FALSE` = "#bbbbbb")) +
-    labs(x = "Principal component", y = "Share of variance", fill = "Tested for\nassociations", title = "Variance explained by the principal components of the most variable CpGs"))
+    labs(x = "Principal component", y = "Share of variance", fill = "Tested for\nassociations", title = "Variance explained by the principal components of the most variable CpGs"), 11, 5)
 associations <- read(find("^pca_associations\\.tsv$"))
-if (nrow(associations) > 0) {
+if (nrow(associations) > 0) panels[["What they follow"]] <- function() {
     shares <- setNames(variance[["variance_explained"]], variance[["pc"]])
     pcs <- unique(associations[["pc"]])
     pcs <- pcs[order(as.integer(sub("^PC", "", pcs)))]
@@ -832,13 +1073,13 @@ if (nrow(associations) > 0) {
         scale_x_discrete(labels = function(x) sprintf("%s (%.1f%%)", x, 100 * shares[x])) +
         facet_grid(group ~ ., scales = "free_y", space = "free_y") +
         theme(strip.text.y = element_text(angle = 0), axis.text.y = element_text(size = 9), axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 9)) +
-        labs(x = NULL, y = NULL, fill = "Adjusted\nR-squared", title = "What the main axes of methylation variation follow",
-             subtitle = "Adjusted R-squared of each variable for each principal component (corrected for the number of levels); numbers where P < 0.001. Under each PC: its share of the variance."),
+        labs(x = NULL, y = NULL, fill = "Adjusted\nR-squared", title = "What the principal components follow",
+             subtitle = "Adjusted R-squared of each variable; numbers where P < 0.001. In brackets: share of the variance of the component."),
         12, max(5, 1.6 + 0.24 * uniqueN(associations[["variable"]])))
 }
 if (has("^pca_scores\\.tsv$")) {
     pc_scores <- read(find("^pca_scores\\.tsv$"))
-    if (all(c("PC1", "PC2") %in% names(pc_scores))) {
+    if (all(c("PC1", "PC2") %in% names(pc_scores))) panels[["PC1 and PC2"]] <- function() {
         sex_column <- if (is.null(qc)) character() else head(intersect(c("predicted_sex_ewastools", "predicted_sex_minfi", "reported_sex"), names(qc)), 1)
         pc_scores[, group := "all arrays"]
         if (length(sex_column) == 1) {
@@ -854,43 +1095,49 @@ if (has("^pca_scores\\.tsv$")) {
         show_plot(ggplot(pc_scores, aes(PC1, PC2, colour = group, shape = outlier)) + geom_point(size = 1.6, alpha = 0.8) +
             scale_shape_manual(values = c(`FALSE` = 16, `TRUE` = 4), labels = c(`FALSE` = "no", `TRUE` = "yes")) +
             labs(x = axis_label("PC1"), y = axis_label("PC2"), colour = if (length(sex_column) == 1) "Sex" else NULL, shape = "PCA outlier",
-                 title = "Arrays on the first two principal components"))
+                 title = "Arrays on the first two principal components"), 9, 6)
     }
 }
+tabs(panels)
 if (has("^pca_outliers\\.tsv$")) {
     outliers <- read(find("^pca_outliers\\.tsv$"))
     flagged <- outliers[pca_outlier %in% TRUE]
-    cat("\n\nOutliers on PC1 and PC2 (robust Mahalanobis distance above the chi-square 0.999 quantile; reported, not removed): ",
-        if (nrow(flagged) > 0) paste(flagged[["sample"]], collapse = ", ") else "none", ".\n\n", sep = "")
+    cat("\n\nOutliers on PC1 and PC2 (reported, not removed): ", if (nrow(flagged) > 0) paste(flagged[["sample"]], collapse = ", ") else "none",
+        ". An outlier has a robust Mahalanobis distance above the chi-square 0.999 quantile.\n\n", sep = "")
 }
 ```
 
 ```{r variance-partition, results = "asis", fig.width = 10, fig.height = 5.5, eval = has("^variance_partition_summary\\.tsv$")}
+part("Sources of variation")
 vs <- read(find("^variance_partition_summary\\.tsv$"))
 heading("Variance partition")
 if ("note" %in% names(vs) && any(!is.na(vs[["note"]]) & vs[["note"]] != "")) {
     cat(vs[["note"]][1], "\n\n")
 } else {
-    cat(sprintf("Share of the variance of the %s most variable CpGs explained by each variable, from one linear mixed model per CpG (variancePartition) on %s arrays: %s. Technical variables with large shares belong in the association models as covariates.\n\n",
-                format(vs[["cpgs"]][1], big.mark = ","), vs[["arrays"]][1], vs[["formula"]][1]))
+    cat(sprintf("One linear mixed model per CpG (variancePartition) for the %s most variable CpGs on %s arrays: %s. A technical variable with a large share belongs in the association models.\n\n",
+                big(vs[["cpgs"]][1]), vs[["arrays"]][1], vs[["formula"]][1]))
     if (has("^variance_partition\\.tsv\\.gz$")) {
         vp <- read(find("^variance_partition\\.tsv\\.gz$"))
         long <- melt(vp, id.vars = "cpg_id", variable.name = "variable", value.name = "share")
         long[, variable := factor(variable, levels = vs[order(-mean), variable])]
         show_plot(ggplot(long, aes(variable, share)) + geom_violin(fill = "#4c72b0", colour = NA, alpha = 0.6, scale = "width") +
             geom_boxplot(width = 0.08, outlier.shape = NA, fill = "white") +
-            labs(x = "Variable", y = "% of variance explained", title = "Variance partition of the most variable CpGs", subtitle = "One linear mixed model per CpG (variancePartition); violins show the distribution over CpGs, boxes the median and quartiles.") +
+            labs(x = NULL, y = "% of variance explained", title = "Variance partition of the most variable CpGs", subtitle = "Violins: distribution over the CpGs; boxes: median and quartiles.") +
             theme(axis.text.x = element_text(angle = 30, hjust = 1)))
     }
     print(kable(vs[, .(Variable = variable, Effect = type, `Median %` = median, `Mean %` = mean, `90th percentile %` = q90, `CpGs above 10%` = cpgs_over_10)], caption = "Variance explained per variable over the CpGs"))
 }
 ```
 
-```{r ewas-summary, results = "asis", eval = has("^ewas_summary\\.tsv$")}
-heading("Association models")
-ewas <- read(find("^ewas_summary\\.tsv$"))
+```{r ewas-summary, results = "asis", eval = !is.null(ewas)}
+part("Association models")
+heading("Overview")
 columns <- intersect(c("model", "contrast", "status", "n", "lambda", "bacon_inflation", "bacon_bias", "hits_fdr", "hits_higher", "hits_lower", "hits_epigenome_wide", "hits_suggestive", "hits_study_wide", "top_cpg", "top_p"), names(ewas))
 print(kable(ewas[, ..columns], caption = "Results of every model contrast"))
+if ("meff" %in% names(ewas) && any(!is.na(ewas[["meff"]]))) {
+    cat("\n\nStudy-wide threshold: P < ", ewas[["p_study_wide"]][!is.na(ewas[["p_study_wide"]])][1], ", for ", ewas[["meff"]][!is.na(ewas[["meff"]])][1],
+        " independent tests over the models (Galwey 2009).\n\n", sep = "")
+}
 checks <- rbindlist(lapply(find("^ewas_.*_design_check\\.tsv$"), function(file) {
     if (file.info(file)[["size"]] == 0) return(NULL)
     d <- read(file)
@@ -898,19 +1145,19 @@ checks <- rbindlist(lapply(find("^ewas_.*_design_check\\.tsv$"), function(file) 
     d[, model := model_of(file, "ewas_", "_design_check\\.tsv")]
 }), fill = TRUE)
 if (nrow(checks) > 0) {
+    heading("Design checks")
     flagged <- checks[!is.na(flag) & nzchar(flag)]
-    cat("\n\nDesign checks: the trait against the DNA plate and Sentrix row (Kruskal-Wallis or Fisher P; flagged as confounded at P < 0.01), the variance inflation factor of every design column (flagged as collinear above 10), and every numeric covariate against the trait (Spearman rho for a continuous trait, R-squared otherwise). Methylation-derived covariates (cell fractions, control-probe and ancestry PCs, DNA methylation scores, PCs) that follow the trait at P < 0.001 are flagged: adjusting for an axis that the trait itself drives can absorb the association (Uddin et al. 2022). A confounded or collinear term makes its own coefficient unstable and can absorb or create part of the trait effect. ",
-        if (nrow(flagged) == 0) "No check was flagged.\n\n" else sprintf("Flagged checks: %d.\n\n", nrow(flagged)), sep = "")
+    cat(if (nrow(flagged) == 0) "No check was flagged." else sprintf("Flagged checks: %d.", nrow(flagged)), "The checks are:\n\n")
+    bullets(c("Confounded: the trait differs between DNA plates or Sentrix rows (P < 0.01).",
+              "Collinear: variance inflation factor above 10.",
+              "Follows the trait: a covariate derived from the methylation data is associated with the trait at P < 0.001. Adjusting for it can absorb the association (Uddin et al. 2022)."))
     if (nrow(flagged) > 0) print(kable(flagged[, .(Model = model, Check = check, Value = value, P = signif(p_value, 3), Flag = flag)], caption = "Flagged design checks"))
-}
-if ("meff" %in% names(ewas) && any(!is.na(ewas[["meff"]]))) {
-    cat("\n\nEffective number of independent tests across the models (Meff, Galwey 2009): ", ewas[["meff"]][!is.na(ewas[["meff"]])][1],
-        "; study-wide threshold P < ", ewas[["p_study_wide"]][!is.na(ewas[["p_study_wide"]])][1], " (hits_study_wide).\n\n", sep = "")
 }
 if (has("^ewas_summary_comparison\\.tsv$")) {
     comparison <- read(find("^ewas_summary_comparison\\.tsv$"))
     if (nrow(comparison) > 0) {
-        cat("\n\nComparison of the model contrasts (Uddin et al. 2022): shared hits against chance, and the correlation of the t statistics over all CpGs and over the hits of either contrast. A correlation that is low over all CpGs but high over the hits means the contrasts share a specific signal rather than a genome-wide one.\n\n")
+        heading("Comparison of the models")
+        cat("A correlation of the t statistics that is low over all CpGs but high over the hits means that two contrasts share a specific signal.\n\n")
         print(kable(comparison[, .(`Contrast A` = contrast_a, `Contrast B` = contrast_b, `Hits A` = hits_a, `Hits B` = hits_b, Shared = shared,
                                    `Share of A` = share_of_a, `Same direction` = same_direction, `Odds ratio` = odds_ratio, `P (overlap)` = p_overlap,
                                    `r (all CpGs)` = r_all, `r (hits)` = r_hits)], caption = "Overlap and agreement of every pair of model contrasts"))
@@ -921,6 +1168,11 @@ if (has("^ewas_summary_comparison\\.tsv$")) {
             if (nrow(x) == 0) return(NULL)
             x[, .(key = paste(model_of(f, "ewas_", "_stats\\.tsv\\.gz"), contrast, sep = " | "), cpg_id, t, hit = !is.na(fdr) & fdr < 0.05)]
         }))
+        hits <- unique(all_stats[hit == TRUE, .(item = cpg_id, set = key)])
+        if (uniqueN(hits[["set"]]) > 1) {
+            upset <- upset_plot(hits, "Hits shared between the model contrasts", "CpGs", "Hits at FDR < 0.05.")
+            show_plot(upset, 9, upset_height(upset))
+        }
         scatter <- rbindlist(lapply(seq_len(nrow(pairs)), function(i) {
             a <- all_stats[key == pairs[["contrast_a"]][i], .(cpg_id, t_a = t, hit_a = hit)]
             b <- all_stats[key == pairs[["contrast_b"]][i], .(cpg_id, t_b = t, hit_b = hit)]
@@ -937,44 +1189,43 @@ if (has("^ewas_summary_comparison\\.tsv$")) {
                       guides(colour = guide_legend(override.aes = list(size = 2.5))) + theme(legend.position = "bottom") +
                       labs(x = "t statistic, first contrast", y = "t statistic, second contrast", colour = NULL,
                            title = "t statistics of every pair of model contrasts",
-                           subtitle = "Each point is a CpG; hits are CpGs at FDR < 0.05. Points along the diagonal agree in direction and strength."),
+                           subtitle = "Each point is a CpG; hits are CpGs at FDR < 0.05."),
                       9, 3 + 3 * ceiling(nrow(pairs) / 3))
         }
     }
 }
 ```
 
-```{r ewas-models, results = "asis", eval = has("^ewas_.*_stats\\.tsv\\.gz$")}
-for (file in find("^ewas_.*_stats\\.tsv\\.gz$")) {
-    model <- model_of(file, "ewas_", "_stats\\.tsv\\.gz")
-    stats <- read(file)
-    if (nrow(stats) == 0) next
-    cat("\n\n## Model", model, "\n\n")
-    characteristics_file <- sub("_stats\\.tsv\\.gz$", "_characteristics.tsv", file)
+```{r model-parts}
+# The parts of a model's section; each returns without output when the model has none
+model_arrays <- function(model) {
+    characteristics_file <- file.path(inputs, paste0("ewas_", model, "_characteristics.tsv"))
     if (file.exists(characteristics_file) && file.info(characteristics_file)[["size"]] > 0) {
         characteristics <- read(characteristics_file)
         if (nrow(characteristics) > 0) {
             setnames(characteristics, c("variable", "level", "p_value"), c("Variable", "Level", "P"), skip_absent = TRUE)
-            print(kable(characteristics, caption = paste0(model, ": characteristics of the arrays in the model (aggregates; counts below 5 shown as <5; P: Kruskal-Wallis or Fisher's exact test between the groups)")))
+            print(kable(characteristics, caption = paste0(model, ": characteristics of the arrays in the model (counts below 5 as <5; P between the groups)")))
         }
     }
-    for (k in unique(stats[["contrast"]])) {
-        s <- stats[contrast == k & !is.na(p_value)]
-        n <- nrow(s)
-        label <- paste0(model, " (", k, ")")
-        qq <- data.table(expected = -log10(ppoints(n)), observed = -log10(sort(s[["p_value"]])), corrected = -log10(sort(s[["p_bacon"]])))
-        qq <- qq[expected > 2 | seq_len(.N) %% 50 == 0]
-        qq <- melt(qq, id.vars = "expected", variable.name = "version", value.name = "value")
-        qq[, version := factor(version, levels = c("observed", "corrected"), labels = c("Before bacon", "After bacon"))]
-        lambda <- median(qchisq(s[["p_value"]], 1, lower.tail = FALSE), na.rm = TRUE) / qchisq(0.5, 1)
-        show_plot(ggplot(qq, aes(expected, value, colour = version)) + geom_abline(linetype = 2, colour = "grey40") + geom_point(size = 0.7) +
-                  scale_colour_manual(values = c(`Before bacon` = "#4c72b0", `After bacon` = "#dd8452")) +
-                  labs(x = expression("Expected" ~ -log[10](italic(P))), y = expression("Observed" ~ -log[10](italic(P))), colour = NULL,
-                       title = paste0(label, ": quantile-quantile plot of the CpG P-values"),
-                       subtitle = sprintf("Genomic inflation lambda = %.2f before bacon. The dashed line is the expectation without any association; bacon (van Iterson et al. 2017) corrects the test statistics for bias and inflation.", lambda)),
-                  7, 4.5)
-        points <- manhattan_points(s, "t")
-        if (nrow(points) > 0) {
+    missing_file <- file.path(inputs, paste0("ewas_", model, "_missing.tsv"))
+    if (file.exists(missing_file) && file.info(missing_file)[["size"]] > 0) {
+        absent <- read(missing_file)
+        lost <- if (nrow(absent) > 0) sum(absent[!is.na(missing) & missing != "", arrays]) else 0
+        if (lost > 0) {
+            cat(sprintf("\n\n%d of %d arrays are left out because a variable of the model is missing.\n\n", lost, sum(absent[["arrays"]])))
+            upset <- upset_plot(missing_members(absent), paste0(model, ": arrays left out, by missing variable"), "Arrays", top = 20)
+            show_plot(upset, 8, upset_height(upset))
+        }
+    }
+}
+model_association <- function(s, label) {
+    n <- nrow(s)
+    print(kable(direction_summary(s, "delta_beta"), caption = paste0(label, ": CpGs at FDR < 0.05 with higher and lower methylation (binomial test of the balance)")))
+    points <- manhattan_points(s, "t")
+    panels <- list()
+    if (nrow(points) > 0) {
+        panels[["Manhattan by direction"]] <- function() show_plot(directional_genome(points, threshold_lines(s), paste0(label, ": CpGs with higher and lower methylation")), 10, 5.2)
+        panels[["Manhattan"]] <- function() {
             ends <- points[, .(end = max(pos)), by = chromosome][order(chromosome)]
             ends[, offset := c(0, head(cumsum(as.numeric(end) + 5e6), -1))]
             m <- merge(points, ends[, .(chromosome, offset)], by = "chromosome")
@@ -986,69 +1237,76 @@ for (file in find("^ewas_.*_stats\\.tsv\\.gz$")) {
                       scale_x_continuous(breaks = centres[["x"]], labels = as.character(centres[["chromosome"]]), expand = expansion(mult = 0.01)) +
                       theme(panel.grid.major.x = element_blank(), axis.text.x = element_text(size = 8)) +
                       labs(x = "Chromosome", y = expression(-log[10](italic(P))), title = paste0(label, ": Manhattan plot"),
-                           subtitle = paste0("Each point is a CpG at its genomic position; the line marks P = ", param("p_epigenome_wide"), " (epigenome-wide). CpGs with P >= 0.01 are thinned to every 20th.")),
+                           subtitle = paste0("Line: P = ", param("p_epigenome_wide"), " (epigenome-wide). Of the CpGs with P >= 0.01, every 20th is drawn.")),
                       10, 4.2)
-            show_plot(directional_genome(points, threshold_lines(s), paste0(label, ": CpGs with higher and lower methylation")), 10, 5.2)
-        }
-        print(kable(direction_summary(s, "delta_beta"), caption = paste0(label, ": CpGs at FDR < 0.05 with higher and with lower methylation; the binomial test asks whether one direction dominates")))
-        show_plot(volcano_plot(s, "delta_beta", "Difference in methylation (beta) per unit of the trait or between the groups", paste0(label, ": volcano plot")), 8, 5.5)
-        if (sum(!is.na(s[["fdr"]]) & s[["fdr"]] < 0.05) >= 5) {
-            context <- context_enrichment(s, "delta_beta")
-            if (nrow(context) > 0) {
-                context_figure <- context_plot(context, paste0(label, ": genomic context of the CpGs at FDR < 0.05"))
-                if (!is.null(context_figure)) {
-                    if (!schematic_shown) {
-                        show_plot(context_schematic(), 12, 4.6)
-                        schematic_shown <- TRUE
-                    }
-                    show_plot(context_figure, 9, 6)
-                }
-                print(kable(context[, .(Annotation = group, Category = category, Hits = query, `Hits in category` = hits_in, `Share of hits` = round(share_hits, 3),
-                                        `Share of tested` = round(share_tested, 3), `Odds ratio` = odds_ratio, P = p_value)],
-                            caption = paste0(label, ": genomic context of the hits against all tested CpGs (Fisher's exact test)")))
-            }
-            level <- level_plot(s, "delta_beta", paste0(label, ": methylation level of the CpGs at FDR < 0.05"))
-            if (!is.null(level)) show_plot(level, 8, 3.6)
-        }
-        top_by_direction(s, "t", c(CpG = "cpg_id", Chr = "chr", Position = "pos", Gene = "gene", `Gene feature` = "gene_group", `CpG island` = "cgi_relation",
-                                   `Delta beta` = "delta_beta", t = "t", P = "p_value", FDR = "fdr", `P (bacon)` = "p_bacon"), label)
-    }
-    cells_file <- sub("_stats\\.tsv\\.gz$", "_cells.tsv.gz", file)
-    if (file.exists(cells_file) && file.info(cells_file)[["size"]] > 100) {
-        cells_stats <- read(cells_file)
-        if (nrow(cells_stats) > 0) {
-            cat("\n\n### ", model, ": cell types\n\n", sep = "")
-            cat("Cell-type-specific association (the CellDMC design of EpiDISH, Zheng et al. 2018): beta values on the six blood cell lineages, the trait times each lineage and the other covariates of the model. Each interaction tests whether the trait changes methylation within one lineage; the estimate is the change in beta within that lineage per unit of the trait (or between the groups). FDR within each lineage. Lineages with a median fraction below 5% or a genomic lambda above 1.3 are marked unreliable and get no plots or tables: with small fractions the interaction estimate is unstable and can give thousands of false hits. An estimate can only be as good as the cell fractions.\n\n")
-            counts <- cells_stats[, .(`Hits (FDR < 0.05)` = sum(fdr < 0.05, na.rm = TRUE), Higher = sum(fdr < 0.05 & estimate > 0, na.rm = TRUE),
-                                      Lower = sum(fdr < 0.05 & estimate < 0, na.rm = TRUE),
-                                      Lambda = round(median(qchisq(p_value, 1, lower.tail = FALSE), na.rm = TRUE) / qchisq(0.5, 1), 3),
-                                      `Top CpG` = cpg_id[which.min(p_value)], `Top P` = min(p_value, na.rm = TRUE),
-                                      Status = if ("lineage_status" %in% names(cells_stats)) lineage_status[1] else "ok"), by = .(Lineage = cell)]
-            print(kable(counts, caption = paste0(model, ": cell-type-specific hits per lineage")))
-            for (lineage in unique(cells_stats[["cell"]])) {
-                part <- cells_stats[cell == lineage]
-                if ("lineage_status" %in% names(part) && part[["lineage_status"]][1] != "ok") next
-                points <- manhattan_points(part, "estimate")
-                if (nrow(points) > 0) {
-                    show_plot(directional_genome(points, threshold_lines(part), paste0(model, ", ", lineage, " lineage: CpGs with higher and lower methylation within the lineage")),
-                              10, 5.2, description = paste0("Cell-type-specific association (CellDMC design); FDR within the ", lineage, " lineage."))
-                }
-                top_by_direction(part, "estimate", c(CpG = "cpg_id", Chr = "chr", Position = "pos", Gene = "gene", Estimate = "estimate", SE = "se",
-                                                     P = "p_value", FDR = "fdr"), paste0(model, ", ", lineage, " lineage"))
-            }
         }
     }
+    panels[["Volcano"]] <- function() show_plot(volcano_plot(s, "delta_beta", "Difference in methylation (beta) per unit of the trait or between the groups", paste0(label, ": volcano plot")), 8, 5.5)
+    panels[["QQ"]] <- function() {
+        qq <- data.table(expected = -log10(ppoints(n)), observed = -log10(sort(s[["p_value"]])), corrected = -log10(sort(s[["p_bacon"]])))
+        qq <- qq[expected > 2 | seq_len(.N) %% 50 == 0]
+        qq <- melt(qq, id.vars = "expected", variable.name = "version", value.name = "value")
+        qq[, version := factor(version, levels = c("observed", "corrected"), labels = c("Before bacon", "After bacon"))]
+        lambda <- median(qchisq(s[["p_value"]], 1, lower.tail = FALSE), na.rm = TRUE) / qchisq(0.5, 1)
+        show_plot(ggplot(qq, aes(expected, value, colour = version)) + geom_abline(linetype = 2, colour = "grey40") + geom_point(size = 0.7) +
+                  scale_colour_manual(values = c(`Before bacon` = "#4c72b0", `After bacon` = "#dd8452")) +
+                  labs(x = expression("Expected" ~ -log[10](italic(P))), y = expression("Observed" ~ -log[10](italic(P))), colour = NULL,
+                       title = paste0(label, ": quantile-quantile plot"),
+                       subtitle = sprintf("Lambda = %.2f before bacon (van Iterson et al. 2017). Dashed line: no association.", lambda)),
+                  7, 4.5)
+    }
+    tabs(panels)
+    top_by_direction(s, "t", c(CpG = "cpg_id", Chr = "chr", Position = "pos", Gene = "gene", `Gene feature` = "gene_group", `CpG island` = "cgi_relation",
+                               `Delta beta` = "delta_beta", t = "t", P = "p_value", FDR = "fdr", `P (bacon)` = "p_bacon"), label)
 }
-```
-
-```{r dmr, results = "asis", eval = has("^dmr_.*_consensus\\.tsv$")}
-heading("Differentially methylated regions")
-for (file in find("^dmr_.*_consensus\\.tsv$")) {
-    model <- model_of(file, "dmr_", "_consensus\\.tsv")
+model_context <- function(s, label) {
+    if (sum(!is.na(s[["fdr"]]) & s[["fdr"]] < 0.05) < 5) return(invisible(NULL))
+    subheading("Genomic context of the hits")
+    panels <- list()
+    context <- context_enrichment(s, "delta_beta")
+    context_figure <- if (nrow(context) > 0) context_plot(context, paste0(label, ": genomic context of the CpGs at FDR < 0.05")) else NULL
+    if (!is.null(context_figure)) panels[["Enrichment"]] <- function() show_plot(context_figure, 9, 6)
+    level <- level_plot(s, "delta_beta", paste0(label, ": methylation level of the CpGs at FDR < 0.05"))
+    if (!is.null(level)) panels[["Methylation level"]] <- function() show_plot(level, 8, 3.6)
+    if (!is.null(context_figure) && !schematic_shown) {
+        panels[["How to read the categories"]] <- function() show_plot(context_schematic(), 12, 4.6)
+        schematic_shown <<- TRUE
+    }
+    tabs(panels)
+    if (nrow(context) > 0) print(kable(context[, .(Annotation = group, Category = category, Hits = query, `Hits in category` = hits_in, `Share of hits` = round(share_hits, 3),
+                                                   `Share of tested` = round(share_tested, 3), `Odds ratio` = odds_ratio, P = p_value)],
+                                       caption = paste0(label, ": genomic context of the hits against all tested CpGs (Fisher's exact test)")))
+}
+model_cells <- function(model) {
+    cells_file <- file.path(inputs, paste0("ewas_", model, "_cells.tsv.gz"))
+    if (!file.exists(cells_file) || file.info(cells_file)[["size"]] <= 100) return(invisible(NULL))
+    cells_stats <- read(cells_file)
+    if (nrow(cells_stats) == 0) return(invisible(NULL))
+    subheading("Cell types")
+    cat("Interaction of the trait with each blood cell lineage (CellDMC design, Zheng et al. 2018); the estimate is the change in beta within the lineage, FDR within each lineage. Lineages with a median fraction below 5% or a lambda above 1.3 are unreliable and are not shown.\n\n")
+    counts <- cells_stats[, .(`Hits (FDR < 0.05)` = sum(fdr < 0.05, na.rm = TRUE), Higher = sum(fdr < 0.05 & estimate > 0, na.rm = TRUE),
+                              Lower = sum(fdr < 0.05 & estimate < 0, na.rm = TRUE),
+                              Lambda = round(median(qchisq(p_value, 1, lower.tail = FALSE), na.rm = TRUE) / qchisq(0.5, 1), 3),
+                              `Top CpG` = cpg_id[which.min(p_value)], `Top P` = min(p_value, na.rm = TRUE),
+                              Status = if ("lineage_status" %in% names(cells_stats)) lineage_status[1] else "ok"), by = .(Lineage = cell)]
+    print(kable(counts, caption = paste0(model, ": cell-type-specific hits per lineage")))
+    reliable <- counts[Status == "ok", Lineage]
+    tabs(setNames(lapply(reliable, function(lineage) function() {
+        part <- cells_stats[cell == lineage]
+        points <- manhattan_points(part, "estimate")
+        if (nrow(points) > 0) show_plot(directional_genome(points, threshold_lines(part), paste0(model, ", ", lineage, ": CpGs with higher and lower methylation within the lineage")), 10, 5.2)
+        top_by_direction(part, "estimate", c(CpG = "cpg_id", Chr = "chr", Position = "pos", Gene = "gene", Estimate = "estimate", SE = "se",
+                                             P = "p_value", FDR = "fdr"), paste0(model, ", ", lineage, " lineage"))
+    }), reliable))
+}
+model_regions <- function(model) {
+    file <- file.path(inputs, paste0("dmr_", model, "_consensus.tsv"))
+    if (!file.exists(file)) return(invisible(NULL))
+    subheading("Differentially methylated regions")
     summary_file <- sub("_consensus\\.tsv$", "_summary.json", file)
     if (file.exists(summary_file)) {
         s <- fromJSON(summary_file, simplifyVector = FALSE)
-        cat("\n\n**", model, "**: ", s[["status"]], "\n\n", sep = "")
+        if (!identical(s[["status"]], "run")) cat("\n\n", s[["status"]], "\n\n", sep = "")
         if (length(s[["contrasts"]]) > 0) {
             counts <- rbindlist(lapply(names(s[["contrasts"]]), function(k) {
                 x <- s[["contrasts"]][[k]]
@@ -1058,23 +1316,21 @@ for (file in find("^dmr_.*_consensus\\.tsv$")) {
             print(kable(counts, caption = paste0(model, ": regions per method")))
         }
     }
-    if (file.info(file)[["size"]] == 0) next
+    if (file.info(file)[["size"]] == 0) return(invisible(NULL))
     regions <- read(file)
-    if (nrow(regions) == 0) next
+    if (nrow(regions) == 0) return(invisible(NULL))
     regions[, genes := ifelse(nchar(genes) > 40, paste0(substr(genes, 1, 37), "..."), genes)]
     print(kable(head(regions[order(dmrff_p_adjusted), .(Contrast = contrast, Chr = chr, Start = start, End = end, `DMRcate mean difference` = signif(dmrcate_meandiff, 3),
                                                        `DMRcate FDR` = signif(dmrcate_min_smoothed_fdr, 3), `dmrff estimate` = signif(dmrff_estimate, 3),
                                                        `dmrff P (adjusted)` = signif(dmrff_p_adjusted, 3), Genes = genes)], 20),
                 caption = paste0(model, ": consensus regions of DMRcate and dmrff, by dmrff P")))
 }
-```
-
-```{r enrichment, results = "asis", fig.width = 12, fig.height = 10, eval = has("^enrichment_.*\\.tsv$")}
-heading("Gene set enrichment")
-for (file in setdiff(find("^enrichment_.*\\.tsv$"), find("_summary"))) {
-    model <- model_of(file, "enrichment_", "\\.tsv")
+model_gene_sets <- function(model) {
+    file <- file.path(inputs, paste0("enrichment_", model, ".tsv"))
+    if (!file.exists(file) || file.info(file)[["size"]] == 0) return(invisible(NULL))
     table <- read(file)
-    if (nrow(table) == 0) next
+    if (nrow(table) == 0) return(invisible(NULL))
+    subheading("Gene set enrichment")
     top <- table[order(p_value), head(.SD, 12), by = .(collection, contrast)]
     top[, label := substr(ifelse(is.na(term) | term == "", set, term), 1, 60)]
     top[, key := paste(collection, contrast, label, sep = "__")]
@@ -1083,25 +1339,24 @@ for (file in setdiff(find("^enrichment_.*\\.tsv$"), find("_summary"))) {
         scale_y_discrete(labels = function(x) sub("^.*__", "", x)) +
         scale_colour_manual(values = c(`TRUE` = "#c44e52", `FALSE` = "grey60"), labels = c(`TRUE` = "FDR < 0.05", `FALSE` = "FDR >= 0.05")) +
         facet_wrap(~ paste(collection, contrast, sep = ": "), scales = "free_y", ncol = 2) + theme(axis.text.y = element_text(size = 7)) +
-        labs(x = "-log10 FDR", y = NULL, size = "Genes with a hit", colour = "Significance", title = paste0(model, ": the 12 gene sets with the smallest P per collection"), subtitle = "missMethyl gometh and gsameth, corrected for the number of CpGs per gene; one panel per collection and contrast."))
-    for (coll in unique(table[["collection"]])) {
-        part <- table[table[["collection"]] == coll]
-        top <- head(part[order(p_value)], 10)
-        print(kable(top[, .(Contrast = contrast, Set = set, Term = term, Genes = n, Hits = round(de, 1), P = signif(p_value, 3), FDR = signif(fdr, 3))],
+        labs(x = "-log10 FDR", y = NULL, size = "Genes with a hit", colour = "Significance", title = paste0(model, ": the 12 gene sets with the smallest P per collection"),
+             subtitle = "missMethyl, corrected for the number of CpGs per gene."), 12, 10)
+    collections <- unique(table[["collection"]])
+    for (coll in collections) {
+        part <- head(table[table[["collection"]] == coll][order(p_value)], 10)
+        print(kable(part[, .(Contrast = contrast, Set = set, Term = term, Genes = n, Hits = round(de, 1), P = signif(p_value, 3), FDR = signif(fdr, 3))],
                     caption = paste0(model, ": ", coll, ", top 10")))
     }
 }
-```
-
-```{r kycg, results = "asis", fig.width = 12, fig.height = 8, eval = has("^kycg_.*\\.tsv$")}
-heading("Genomic context enrichment")
-cat("KnowYourCG: are the significant CpGs (all, and those with higher or lower methylation) over-represented in chromatin states, transcription factor binding sites, histone marks and other genomic features, against all tested CpGs? Fisher's exact test; log2 odds ratio; FDR within each knowledgebase.\n\n")
-for (file in setdiff(find("^kycg_.*\\.tsv$"), find("_summary"))) {
-    model <- model_of(file, "kycg_", "\\.tsv")
+model_kycg <- function(model) {
+    file <- file.path(inputs, paste0("kycg_", model, ".tsv"))
+    if (!file.exists(file) || file.info(file)[["size"]] == 0) return(invisible(NULL))
     table <- read(file)
-    if (nrow(table) == 0) next
+    if (nrow(table) == 0) return(invisible(NULL))
     top <- table[log2_or > 0][order(p_value), head(.SD, 8), by = .(contrast, query)]
-    if (nrow(top) == 0) next
+    if (nrow(top) == 0) return(invisible(NULL))
+    subheading("Genomic context enrichment")
+    cat("KnowYourCG: chromatin states, transcription factor binding sites, histone marks and other features of the hits against all tested CpGs. FDR within each knowledgebase.\n\n")
     top[, key := factor(paste(contrast, query, database, set, sep = "__"), levels = rev(unique(paste(contrast, query, database, set, sep = "__"))))]
     top[, shown := pmin(log2_or, 8)]
     show_plot(ggplot(top, aes(shown, key, size = overlap, colour = -log10(pmax(fdr, 1e-300)))) + geom_point() +
@@ -1109,20 +1364,49 @@ for (file in setdiff(find("^kycg_.*\\.tsv$"), find("_summary"))) {
         scale_colour_gradient(low = "grey60", high = "#c44e52") +
         facet_wrap(~ paste(contrast, query, sep = ": "), scales = "free_y", ncol = 3) + theme(axis.text.y = element_text(size = 7)) +
         labs(x = "log2 odds ratio (capped at 8)", y = NULL, size = "Overlap", colour = "-log10 FDR",
-             title = paste0(model, ": the 8 most enriched sets per query")))
+             title = paste0(model, ": the 8 most enriched sets per query")), 12, 8)
     print(kable(head(table[fdr < 0.05 & log2_or > 0][order(p_value), .(Contrast = contrast, Query = query, Database = database, Set = set,
                                                                      `Log2 OR` = round(log2_or, 2), Overlap = overlap, FDR = signif(fdr, 3))], 15),
                 caption = paste0(model, ": enriched sets at FDR < 0.05")))
 }
 ```
 
+```{r ewas-models, results = "asis", eval = has("^ewas_.*_stats\\.tsv\\.gz$") || has("^dmr_.*_consensus\\.tsv$")}
+part("Association models")
+models <- unique(c(if (!is.null(ewas)) ewas[["model"]], model_of(find("^ewas_.*_stats\\.tsv\\.gz$"), "ewas_", "_stats\\.tsv\\.gz"),
+                   model_of(find("^dmr_.*_consensus\\.tsv$"), "dmr_", "_consensus\\.tsv"), model_of(setdiff(find("^enrichment_.*\\.tsv$"), find("_summary")), "enrichment_", "\\.tsv"),
+                   model_of(setdiff(find("^kycg_.*\\.tsv$"), find("_summary")), "kycg_", "\\.tsv")))
+for (model in models) {
+    cat("\n\n## Model ", model, " {#", model_id(model), "}\n\n", sep = "")
+    file <- file.path(inputs, paste0("ewas_", model, "_stats.tsv.gz"))
+    stats <- if (file.exists(file)) read(file) else data.table()
+    if (!is.null(ewas) && nrow(stats) == 0 && model %in% ewas[["model"]]) cat(ewas[["status"]][match(model, ewas[["model"]])], "\n\n", sep = "")
+    model_arrays(model)
+    for (k in unique(stats[["contrast"]])) {
+        s <- stats[contrast == k & !is.na(p_value)]
+        label <- paste0(model, " (", k, ")")
+        subheading(if (uniqueN(stats[["contrast"]]) > 1) paste("Associations:", k) else "Associations")
+        model_association(s, label)
+        model_context(s, label)
+    }
+    model_cells(model)
+    model_regions(model)
+    model_gene_sets(model)
+    model_kycg(model)
+}
+```
+
 # Methods
+
+## Steps and references
 
 ```{r methods, results = "asis", eval = has("^methods_description_mqc\\.yaml$")}
 text <- readLines(find("^methods_description_mqc\\.yaml$"))
 start <- grep("^data: \\|", text)
 if (length(start) == 1) cat(sub("^  ", "", text[(start + 1):length(text)]), sep = "\n")
 ```
+
+## Software versions
 
 ```{r versions, eval = has("software_mqc_versions\\.yml$")}
 lines <- readLines(find("software_mqc_versions\\.yml$")[1])
@@ -1135,9 +1419,9 @@ for (line in lines) {
 kable(unique(rbindlist(versions)[, .(Tool, Version)])[order(Tool)], caption = "Software versions")
 ```
 
-# Limitations
+## Limitations
 
-- Region-level P-values (DMRcate, dmrff) are known to be optimistic; regions found by both methods are the more reliable result.
-- Clocks and scores were trained on 450K or EPIC v1 data; CpGs that EPIC v2 does not measure take reference means (clocks) or are left out of the sum (scores), as reported in the coverage tables.
-- Cell composition is estimated from a blood reference and is only meaningful for blood samples.
-- KEGG enrichment needs network access at run time; when unavailable it is reported as not run.
+- Regions: P values of DMRcate and dmrff are optimistic; prefer regions found by both.
+- Clocks and scores were trained on 450K or EPIC v1. CpGs missing on EPIC v2 take reference means (clocks) or drop out of the sum (scores).
+- Cell fractions are only meaningful for blood.
+- KEGG enrichment needs network access; without it, it is reported as not run.

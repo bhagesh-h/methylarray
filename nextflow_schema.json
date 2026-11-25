@@ -259,6 +259,19 @@
                     "help_text": "Annotated as `illumina_mapping_inaccuracy` and counted in the attrition table, not removed, like `--illumina_flagged_probes`.",
                     "fa_icon": "fas fa-map-marker-alt"
                 },
+                "illumina_filter": {
+                    "type": "boolean",
+                    "description": "Remove the probes of `--illumina_flagged_probes` and `--illumina_mapping_inaccuracy`.",
+                    "help_text": "By default these probes are annotated and counted, not removed. With this option they are removed, each list as its own step of the attrition table. Without the lists nothing is removed for them.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "exclude_probes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional list of probes or CpGs to remove (URL or path).",
+                    "help_text": "A text, CSV or TSV file (also gzipped) with probe IDs (`cg00000029_TC21`) or CpG names (`cg00000029`) in the first column; a header and quotes are ignored. A CpG name removes every replicate probe of the CpG. Counted as `exclusion_list` in the attrition table.",
+                    "fa_icon": "fas fa-ban"
+                },
                 "keep_sex_chr": {
                     "type": "boolean",
                     "description": "Keep probes on chrX and chrY (removed by default for autosomal analyses).",
@@ -267,10 +280,18 @@
                 "replicate_probe_strategy": {
                     "type": "string",
                     "default": "mean",
-                    "enum": ["mean", "none"],
+                    "enum": ["mean", "best", "none"],
                     "description": "How replicate probes of one CpG are combined in the analysis matrix.",
-                    "help_text": "`mean`: the mean beta value of the replicate probes, so each CpG appears once with its `cg########` ID. `none`: keep every probe. The uncollapsed output always has one row per probe.",
+                    "help_text": "`mean`: the mean beta value of the replicate probes, so each CpG appears once with its `cg########` ID. `best`: one probe per CpG, the others are removed as a step of the attrition table: the replicate that Peters et al. 2024 call superior, best in precision or best in sensitivity, then the one detected in most arrays. `none`: keep every probe, one row per probe ID; cell fractions use the mean per CpG, regions one probe per position. The uncollapsed output always has one row per probe.",
                     "fa_icon": "fas fa-compress"
+                },
+                "probe_filters": {
+                    "type": "string",
+                    "default": "all",
+                    "pattern": "^(all|none|(non_cg|no_position|sex_chromosome|detection|bead_or_quality_mask|snp|zhou_general_mask|cross_hybridisation)(,(non_cg|no_position|sex_chromosome|detection|bead_or_quality_mask|snp|zhou_general_mask|cross_hybridisation))*)$",
+                    "description": "Probe filter steps to apply: `all`, `none` or a comma-separated list.",
+                    "help_text": "Steps: `non_cg`, `no_position`, `sex_chromosome`, `detection`, `bead_or_quality_mask`, `snp`, `zhou_general_mask`, `cross_hybridisation`. Probes of the other steps are kept and counted as report-only in the attrition table. Genotyping (rs), somatic variant (nv) and control probes are always removed. For example, `--probe_filters sex_chromosome` removes only chrX and chrY. Single values that fail detection or the bead count stay `NA`.",
+                    "fa_icon": "fas fa-tasks"
                 }
             }
         },
@@ -467,6 +488,22 @@
                     "maximum": 1,
                     "description": "Suggestive significance threshold.",
                     "fa_icon": "fas fa-less-than"
+                },
+                "ewas_cells": {
+                    "type": "string",
+                    "default": "cent12ct",
+                    "enum": ["cent12ct", "idol"],
+                    "description": "Cell fractions of `@cells` in the association models and of the cell-type-specific association.",
+                    "help_text": "`cent12ct`: the lineages of the 12-cell-type reference (EpiDISH). `idol`: the six IDOL cell types (Houseman projection; not with `--skip_idol`), with neutrophils in the place of granulocytes.",
+                    "fa_icon": "fas fa-tint"
+                },
+                "ewas_outlier_iqr": {
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Set M-values further than this many interquartile ranges from the quartiles of their CpG to missing before testing (0: off).",
+                    "help_text": "Tukey fences over the arrays of the model; 3 removes extreme values only. The number of values and CpGs is in the model's summary JSON.",
+                    "fa_icon": "fas fa-cut"
                 },
                 "skip_cell_ewas": {
                     "type": "boolean",

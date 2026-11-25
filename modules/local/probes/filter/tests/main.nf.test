@@ -27,7 +27,8 @@ nextflow_process {
                     [ id: 'test' ],
                     file("$moduleTestDir/test_se", checkIfExists: true),
                     file("$moduleTestDir/retained.txt", checkIfExists: true),
-                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true)
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    []
                 ]
                 """
             }
@@ -65,6 +66,117 @@ nextflow_process {
         }
     }
 
+    test("exclusion list and Illumina lists removed") {
+
+        tag "fast"
+
+        when {
+            params {
+                replicate_probe_strategy = 'mean'
+                illumina_filter          = true
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    file("$moduleTestDir/exclude.csv", checkIfExists: true)
+                ]
+                """
+            }
+        }
+
+        then {
+            def removed = path(process.out.attrition[0][1]).readLines().drop(1).collectEntries { line ->
+                def f = line.split('\t'); [ f[0], f[1] as int ]
+            }
+            assertAll(
+                { assert process.success },
+                // one flagged probe is left for the Illumina step (the other fails the Zhou mask) and is no longer report-only
+                { assert removed.illumina_flagged == 1 && !removed.containsKey('report_only_illumina_flagged') },
+                // a CpG name removes both replicates, a probe ID one probe; the header and the rs entry of the list do not count
+                { assert removed.exclusion_list == 3 },
+                { assert path(process.out.multiqc[0][1]).text.contains('16 probes at the start, 2 kept') }
+            )
+        }
+    }
+
+    test("only the sex chromosomes removed, replicate probes kept") {
+
+        tag "fast"
+
+        when {
+            params {
+                replicate_probe_strategy = 'none'
+                probe_filters            = 'sex_chromosome'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def rows = path(process.out.attrition[0][1]).readLines().drop(1).collect { line -> line.split('\t') as List }
+            def removed = rows.findAll { r -> !r[0].startsWith('report_only') }.collectEntries { r -> [ r[0], r[1] as int ] }
+            def flagged = rows.findAll { r -> r[0].startsWith('report_only') }.collectEntries { r -> [ r[0] - 'report_only_', r[3] as int ] }
+            assertAll(
+                { assert process.success },
+                // the genotyping probe is always removed
+                { assert removed == [ start: 0, probe_type: 1, sex_chromosome: 2 ] },
+                // probes of the other steps are kept and counted
+                { assert flagged.subMap(['non_cg', 'no_position', 'detection', 'snp', 'zhou_general_mask', 'cross_hybridisation']).values().every { n -> n == 1 } },
+                { assert path(process.out.multiqc[0][1]).text.contains('16 probes at the start, 13 kept; 13 rows, one per probe') }
+            )
+        }
+    }
+
+    test("only duplicate probes removed") {
+
+        tag "fast"
+
+        when {
+            params {
+                replicate_probe_strategy = 'best'
+                probe_filters            = 'none'
+            }
+            process {
+                """
+                input[0] = [
+                    [ id: 'test' ],
+                    file("$moduleTestDir/test_se", checkIfExists: true),
+                    file("$moduleTestDir/retained.txt", checkIfExists: true),
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    []
+                ]
+                """
+            }
+        }
+
+        then {
+            def removed = path(process.out.attrition[0][1]).readLines().drop(1).findAll { line -> !line.startsWith('report_only') }.collectEntries { line ->
+                def f = line.split('\t'); [ f[0], f[1] as int ]
+            }
+            def exclusions = path(process.out.exclusions[0][1]).linesGzip.drop(1).collectEntries { line -> def f = line.split('\t'); [ f[0], f[1] ] }
+            assertAll(
+                { assert process.success },
+                { assert removed == [ start: 0, probe_type: 1, replicate_probe: 1 ] },
+                // equal detection: the first probe ID stays
+                { assert exclusions == [ 'rs00000003_TC11': 'probe_type', 'cg00000002_TC12': 'replicate_probe' ] },
+                { assert path(process.out.multiqc[0][1]).text.contains('14 CpGs, one probe each') }
+            )
+        }
+    }
+
     test("replicate probes kept") {
 
         tag "fast"
@@ -79,7 +191,8 @@ nextflow_process {
                     [ id: 'test' ],
                     file("$moduleTestDir/test_se", checkIfExists: true),
                     file("$moduleTestDir/retained.txt", checkIfExists: true),
-                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true)
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    []
                 ]
                 """
             }
@@ -109,7 +222,8 @@ nextflow_process {
                     [ id: 'test' ],
                     file("$moduleTestDir/test_se", checkIfExists: true),
                     file("$moduleTestDir/retained.txt", checkIfExists: true),
-                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true)
+                    file("$moduleTestDir/annotation.tsv.gz", checkIfExists: true),
+                    []
                 ]
                 """
             }

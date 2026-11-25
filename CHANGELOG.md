@@ -3,6 +3,32 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## v1.1.0 - [2026-11-25]
+
+### `Added`
+
+- `-profile qi`: the sample QC and probe rules of Qi et al. 2025, with the EPIC v2 counterparts of their EPIC v1 probe lists.
+- `--exclude_probes`: a list of probes or CpGs to remove, counted as its own step of the probe attrition.
+- `--illumina_filter`: remove the probes of the Illumina lists (`--illumina_flagged_probes`, `--illumina_mapping_inaccuracy`) instead of only counting them.
+- `--ewas_outlier_iqr`: set extreme M-values of a CpG to missing before the association tests (off by default).
+- HTML report: UpSet plots of the reasons probes are removed for, the CpGs that clocks and scores share, the clock CpGs with a SNP, a cis-meQTL, a removed probe or an association, the missing phenotypes and model variables, and the hits that model contrasts share.
+- `biomarkers_missing.tsv` and `ewas_<model>_missing.tsv`: the arrays per combination of missing phenotypes and of missing model variables.
+- `--probe_filters`: apply only the named probe filter steps (or none); the others are counted as report-only.
+- `--replicate_probe_strategy best`: keep one probe per CpG, with the others as their own step of the probe attrition.
+- `--ewas_cells idol`: the IDOL cell fractions as the cell covariates of the association models.
+
+### `Changed`
+
+- Workflow diagram: the probe filter is a station of its own, with the probe lists as its input.
+- HTML report: nine numbered parts with a contents list that opens for the part being read, a summary with links, one section per association model, tabs for figures that belong together, buttons to open or close all tables, and clocks under the names they are known by. Explanations are shorter, and the phenotype heatmaps have one row per phenotype.
+
+### `Fixed`
+
+- Cell fractions: reference CpGs on chrX and chrY are left out also when the data keep them (`--keep_sex_chr`, or `--probe_filters` without `sex_chromosome`). Before, they changed the 7-type and 12-type fractions and with them the intrinsic age acceleration.
+- `--replicate_probe_strategy none`: cell fractions, gene sets, KnowYourCG, meQTL counts and regions now accept one row per probe.
+- Association summary: a run in which no model has enough arrays no longer stops, and the model comparison is in a fixed order.
+- HTML report: a phenotype table with many columns no longer stops the report. The quartile-group figure is split into parts, the phenotype heatmaps widen with the number of phenotypes, and no figure grows above the 50 inch limit of ggsave.
+
 ## v1.0.2 - [2026-11-24]
 
 Fixes the bacon-corrected P values of the association models; no other result changes.
@@ -17,7 +43,7 @@ Report readability release: no change to any result.
 
 ### `Added`
 
-- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.1: [10.5281/zenodo.24458958](https://doi.org/10.5281/zenodo.24458958); 1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
+- Zenodo archive of each release, with DOI [10.5281/zenodo.24399752](https://doi.org/10.5281/zenodo.24399752) for all versions (1.0.2: [10.5281/zenodo.24516701](https://doi.org/10.5281/zenodo.24516701); 1.0.1: [10.5281/zenodo.24458958](https://doi.org/10.5281/zenodo.24458958); 1.0.0: [10.5281/zenodo.24399753](https://doi.org/10.5281/zenodo.24399753)); README badge and `CITATION.cff`.
 - Zenodo DOI in the reports: the pipeline manifest carries the concept DOI, so the methods text of the MultiQC and the HTML report cites it, and the HTML report names it with the pipeline version.
 - HTML report: a search box above the contents that highlights every match, steps through them and opens the tables that hold one.
 - HTML report: a template of a gene and its CpG island (island, shore, shelf, open sea; TSS1500, TSS200, 5' and 3' UTR, first and other exons, introns, intergenic) before the first genomic context figure, to read those figures by.
