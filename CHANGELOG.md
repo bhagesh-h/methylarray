@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--ewas_outlier_iqr`: set extreme M-values of a CpG to missing before the association tests (off by default).
 - HTML report: UpSet plots of the reasons probes are removed for, the CpGs that clocks and scores share, the clock CpGs with a SNP, a cis-meQTL, a removed probe or an association, the missing phenotypes and model variables, and the hits that model contrasts share.
 - `biomarkers_missing.tsv` and `ewas_<model>_missing.tsv`: the arrays per combination of missing phenotypes and of missing model variables.
+- `--probe_filters`: apply only the named probe filter steps (or none); the others are counted as report-only.
+- `--replicate_probe_strategy best`: keep one probe per CpG, with the others as their own step of the probe attrition.
 - `--ewas_cells idol`: the IDOL cell fractions as the cell covariates of the association models.
 
 ### `Changed`
@@ -21,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
+- `--replicate_probe_strategy none`: cell fractions, gene sets, KnowYourCG, meQTL counts and regions now accept one row per probe.
 - Association summary: a run in which no model has enough arrays no longer stops, and the model comparison is in a fixed order.
 - HTML report: a phenotype table with many columns no longer stops the report. The quartile-group figure is split into parts, the phenotype heatmaps widen with the number of phenotypes, and no figure grows above the 50 inch limit of ggsave.
 

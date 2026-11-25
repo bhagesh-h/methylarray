@@ -56,7 +56,16 @@ set.seed(1)
 se <- loadHDF5SummarizedExperiment(se_dir)
 beta <- as.matrix(assay(se, "beta_unmasked"))
 row_data <- rowData(se)
-legacy <- function(column) if (column %in% names(row_data)) as.character(row_data[[column]]) else rep(NA_character_, nrow(se))
+# One row per probe (--replicate_probe_strategy none): mean of the replicate probes of each CpG
+cpg <- if ("cpg_id" %in% names(row_data)) as.character(row_data[["cpg_id"]]) else rownames(se)
+if (!identical(cpg, rownames(se))) {
+    present <- rowsum((!is.na(beta)) * 1, cpg, reorder = FALSE)
+    beta[is.na(beta)] <- 0
+    beta <- rowsum(beta, cpg, reorder = FALSE) / present
+    beta[!is.finite(beta)] <- NA
+    row_data <- row_data[match(rownames(beta), cpg), , drop = FALSE]
+}
+legacy <- function(column) if (column %in% names(row_data)) as.character(row_data[[column]]) else rep(NA_character_, nrow(beta))
 epicv1_id <- legacy("epicv1_id")
 hm450_id <- legacy("hm450_id")
 
@@ -64,7 +73,7 @@ hm450_id <- legacy("hm450_id")
 match_reference <- function(ids) {
     by_epicv1 <- match(ids, epicv1_id)
     by_hm450 <- match(ids, hm450_id)
-    by_cpg <- match(ids, rownames(se))
+    by_cpg <- match(ids, rownames(beta))
     row <- ifelse(!is.na(by_epicv1), by_epicv1, ifelse(!is.na(by_hm450), by_hm450, by_cpg))
     list(row = row, legacy_only = !is.na(row) & is.na(by_cpg))
 }

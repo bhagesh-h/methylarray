@@ -303,7 +303,7 @@ upset_height <- function(plot) if (is.null(plot)) 4 else 2.9 + 0.3 * length(uniq
 step_names <- c(probe_type = "Not a CpG probe (rs, nv, control)", non_cg = "Non-CG (ch) probe", no_position = "No hg38 position", sex_chromosome = "Sex chromosome",
                 detection = "Detection", bead_or_quality_mask = "Beads or quality mask", snp = "SNP", zhou_general_mask = "Zhou general mask",
                 cross_hybridisation = "Cross-hybridisation", illumina_flagged = "Flagged by Illumina", illumina_mapping_inaccuracy = "Illumina mapping inaccuracy",
-                exclusion_list = "Exclusion list", mismatch_pos = "Manifest position mismatch", zhou_uncorr_titration = "Poor titration (Zhou)")
+                exclusion_list = "Exclusion list", replicate_probe = "Replicate probe", mismatch_pos = "Manifest position mismatch", zhou_uncorr_titration = "Poor titration (Zhou)")
 step_label <- function(step) ifelse(step %in% names(step_names), unname(step_names[step]), step)
 # Combinations of missing values (missing: names separated by semicolons) as items of sets
 missing_members <- function(table) {

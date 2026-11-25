@@ -79,6 +79,9 @@ if (isTRUE(model[["skip_enrichment"]]) || nrow(stats) == 0) {
     quit(save = "no", status = 0)
 }
 
+# One row per probe (--replicate_probe_strategy none): a CpG is a hit when one of its probes is
+stats[, cpg_id := sub("_[TB][CO][0-9]+\$", "", cpg_id)]
+
 # Annotation of every tested CpG in the form missMethyl expects
 genes <- unique(stats[, .(cpg_id, gene, gene_group)], by = "cpg_id")
 anno <- data.frame(Name = genes[["cpg_id"]],

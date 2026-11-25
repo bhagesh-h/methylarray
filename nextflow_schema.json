@@ -280,10 +280,18 @@
                 "replicate_probe_strategy": {
                     "type": "string",
                     "default": "mean",
-                    "enum": ["mean", "none"],
+                    "enum": ["mean", "best", "none"],
                     "description": "How replicate probes of one CpG are combined in the analysis matrix.",
-                    "help_text": "`mean`: the mean beta value of the replicate probes, so each CpG appears once with its `cg########` ID. `none`: keep every probe. The uncollapsed output always has one row per probe.",
+                    "help_text": "`mean`: the mean beta value of the replicate probes, so each CpG appears once with its `cg########` ID. `best`: one probe per CpG, the others are removed as a step of the attrition table: the replicate that Peters et al. 2024 call superior, best in precision or best in sensitivity, then the one detected in most arrays. `none`: keep every probe, one row per probe ID; cell fractions use the mean per CpG, regions one probe per position. The uncollapsed output always has one row per probe.",
                     "fa_icon": "fas fa-compress"
+                },
+                "probe_filters": {
+                    "type": "string",
+                    "default": "all",
+                    "pattern": "^(all|none|(non_cg|no_position|sex_chromosome|detection|bead_or_quality_mask|snp|zhou_general_mask|cross_hybridisation)(,(non_cg|no_position|sex_chromosome|detection|bead_or_quality_mask|snp|zhou_general_mask|cross_hybridisation))*)$",
+                    "description": "Probe filter steps to apply: `all`, `none` or a comma-separated list.",
+                    "help_text": "Steps: `non_cg`, `no_position`, `sex_chromosome`, `detection`, `bead_or_quality_mask`, `snp`, `zhou_general_mask`, `cross_hybridisation`. Probes of the other steps are kept and counted as report-only in the attrition table. Genotyping (rs), somatic variant (nv) and control probes are always removed. For example, `--probe_filters sex_chromosome` removes only chrX and chrY. Single values that fail detection or the bead count stay `NA`.",
+                    "fa_icon": "fas fa-tasks"
                 }
             }
         },

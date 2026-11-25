@@ -406,10 +406,16 @@ def toolCitationText() {
         : "Control-probe metrics, normalised X and Y intensities and SNP probe genotypes were computed with ewastools (Heiss and Just 2018). Arrays with more than ${String.format("%.1f", (params.max_undetected_fraction as double) * 100)}% undetected probes, a predicted sex that contradicted the reported sex or a SNP outlier score above ${params.snp_outlier_threshold} failed quality control; arrays with control metrics below Illumina's thresholds or genotype conflicts with the expected donors were flagged."
     def crosshyb = [ wgbs: "cross-hybridising probes with WGBS evidence of off-target binding (Peters et al. 2024)", blat: "probes with a predicted off-target BLAT hit (Peters et al. 2024)", none: null ][params.crosshyb_filter]
     def snp = params.snp_mask == 'none' ? null : "probes with a SNP (${params.snp_mask.startsWith('common') ? 'global minor allele frequency of at least ' + params.snp_mask.replace('common_', '').replace('pt', '%') : 'allele frequency of at least 1% in the ' + params.snp_mask.toUpperCase() + ' population'}) in the probe body, at the CpG or at the extension base"
-    def removed = [ "non-CG and genotyping probes", "probes without an hg38 position", params.keep_sex_chr ? null : "probes on the sex chromosomes",
-        "probes that failed detection in more than ${String.format('%.0f', (params.probe_fail_fraction as double) * 100)}% or other masks in more than ${String.format('%.0f', (params.bead_fail_fraction as double) * 100)}% of arrays",
-        snp, "probes in the general mask of Zhou et al. (2017)", crosshyb,
+    def filter_steps = ['non_cg', 'no_position', 'sex_chromosome', 'detection', 'bead_or_quality_mask', 'snp', 'zhou_general_mask', 'cross_hybridisation']
+    def applied = params.probe_filters == 'all' ? filter_steps : params.probe_filters.tokenize(',')
+    def failed = [ 'detection' in applied ? "detection in more than ${String.format('%.0f', (params.probe_fail_fraction as double) * 100)}%" : null,
+        'bead_or_quality_mask' in applied ? "other masks in more than ${String.format('%.0f', (params.bead_fail_fraction as double) * 100)}%" : null ].findAll { item -> item }
+    def removed = [ 'non_cg' in applied ? "non-CG and genotyping probes" : "genotyping probes", 'no_position' in applied ? "probes without an hg38 position" : null,
+        params.keep_sex_chr || !('sex_chromosome' in applied) ? null : "probes on the sex chromosomes",
+        failed ? "probes that failed ${failed.join(' or ')} of arrays" : null,
+        'snp' in applied ? snp : null, 'zhou_general_mask' in applied ? "probes in the general mask of Zhou et al. (2017)" : null, 'cross_hybridisation' in applied ? crosshyb : null,
         params.illumina_filter && (params.illumina_flagged_probes || params.illumina_mapping_inaccuracy) ? "probes that Illumina flagged or lists with mapping inaccuracies" : null,
+        params.replicate_probe_strategy == 'best' ? "all but one replicate probe of each CpG (the best of Peters et al. 2024, then the one detected in most arrays)" : null,
         params.exclude_probes ? "probes of the list ${params.exclude_probes.tokenize('/').last()}" : null ].findAll { item -> item }
     def probe_filter = "Probes were annotated with the extended EPIC v2 manifest (Peters et al. 2024) and the InfiniumAnnotation masks (Zhou et al. 2017). The following were removed: ${removed.join('; ')}.${params.replicate_probe_strategy == 'mean' ? ' Replicate probes were averaged per CpG.' : ''} Association tests use M-values."
     def cells = params.tissue == 'blood' ? "Leukocyte fractions were estimated with EpiDISH robust partial correlations (Teschendorff et al. 2017) using the 12-cell-type reference of Luo et al. (2023)." : ''

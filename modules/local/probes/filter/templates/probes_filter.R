@@ -17,10 +17,14 @@
 #  10. with --illumina_filter true: Illumina's flagged probes and probes with
 #      mapping inaccuracies, when their lists are in the annotation
 #  11. probes of the exclusion list (probe IDs or CpG names), when one is given
+#  12. with --replicate_probe_strategy best: the replicate probes of a CpG but
+#      one: the best of Peters et al. 2024, then the best detected
+# --probe_filters applies only the named steps of 2 to 9 (all: every one, none:
+# no one); probes of the other steps are kept and counted as report-only.
 # Report-only flags (counted among the kept probes, never removed): manifest
 # position mismatches (MismatchPos) and poor titration (Zhou).
 # Remaining individual failures stay NA. Replicate probes are collapsed to the
-# CpG (--replicate_probe_strategy mean, or none) and M-values are computed from
+# CpG (--replicate_probe_strategy mean; best keeps one, none keeps all) and M-values are computed from
 # betas clipped to [1e-4, 1 - 1e-4].
 # The uncollapsed output skips step 9, so that DMR callers can remap
 # cross-hybridising probes to their off-target locus.
@@ -34,7 +38,7 @@ exclude_file <- "${exclude_probes}"
 
 defaults <- list(detection_pval = "0.05", probe_fail_fraction = "0.1", bead_fail_fraction = "0.05",
                  crosshyb_filter = "wgbs", snp_mask = "common_1pt", keep_sex_chr = "false",
-                 replicate_probe_strategy = "mean", illumina_filter = "false")
+                 replicate_probe_strategy = "mean", illumina_filter = "false", probe_filters = "all")
 parse_args <- function(x, defaults) {
     tokens <- strsplit(trimws(x), "[[:space:]]+")[[1]]
     tokens <- tokens[nzchar(tokens)]
@@ -55,7 +59,11 @@ crosshyb_filter <- match.arg(opts[["crosshyb_filter"]], c("wgbs", "blat", "none"
 snp_mask <- match.arg(opts[["snp_mask"]], c("common_1pt", "common_5pt", "afr", "amr", "eas", "eur", "sas", "none"))
 keep_sex_chr <- tolower(opts[["keep_sex_chr"]]) == "true"
 illumina_filter <- tolower(opts[["illumina_filter"]]) == "true"
-replicate_strategy <- match.arg(opts[["replicate_probe_strategy"]], c("mean", "none"))
+replicate_strategy <- match.arg(opts[["replicate_probe_strategy"]], c("mean", "best", "none"))
+selectable <- c("non_cg", "no_position", "sex_chromosome", "detection", "bead_or_quality_mask", "snp", "zhou_general_mask", "cross_hybridisation")
+probe_filters <- switch(opts[["probe_filters"]], all = selectable, none = character(), strsplit(opts[["probe_filters"]], ",", fixed = TRUE)[[1]])
+unknown <- setdiff(probe_filters, selectable)
+if (length(unknown) > 0) stop("Unknown step in --probe_filters: ", paste(unknown, collapse = ", "), " (known: ", paste(selectable, collapse = ", "), ")")
 
 Sys.setenv(HOME = getwd())
 suppressPackageStartupMessages({
@@ -98,6 +106,9 @@ reasons <- list(
     zhou_general_mask = anno[["zhou_general"]],
     cross_hybridisation = crosshyb
 )
+# Steps that were not chosen: probes kept, counted as report-only
+not_applied <- reasons[setdiff(selectable, probe_filters)]
+reasons <- reasons[setdiff(names(reasons), names(not_applied))]
 illumina_lists <- c("illumina_flagged", "illumina_mapping_inaccuracy")
 illumina_lists <- illumina_lists[vapply(illumina_lists, function(flag) flag %in% names(anno) && any(anno[[flag]] %in% TRUE), logical(1))]
 if (illumina_filter && length(illumina_lists) > 0) {
@@ -115,6 +126,17 @@ report_only <- list(mismatch_pos = anno[["mismatch_pos"]], zhou_uncorr_titration
 # Illumina's flagged and mapping-inaccuracy probes, when their lists were supplied
 if (!illumina_filter) {
     for (flag in illumina_lists) report_only[[flag]] <- anno[[flag]] %in% TRUE
+}
+
+report_only <- c(report_only, lapply(not_applied, function(flag) flag %in% TRUE))
+# Replicate probes: of the probes that pass every other step, one per CpG
+if (replicate_strategy == "best") {
+    choice <- c(`Superior probe` = 1, `Superior by WGBS` = 1, `Best precision` = 2, `Best sensitivity` = 3, `Inferior probe` = 5, `Inferior by WGBS` = 5)
+    rank <- if ("replicate_choice" %in% names(anno)) unname(choice[anno[["replicate_choice"]]]) else rep(NA_real_, nrow(anno))
+    rank[is.na(rank)] <- 4
+    passing <- which(rowSums(do.call(cbind, reasons)) == 0)
+    passing <- passing[order(rank[passing], undetected[passing], rowMeans(detp[passing, , drop = FALSE], na.rm = TRUE), probes[passing])]
+    reasons[["replicate_probe"]] <- seq_along(probes) %in% passing[duplicated(anno[["cpg_id"]][passing])]
 }
 
 reason_matrix <- do.call(cbind, reasons)
@@ -152,6 +174,7 @@ meta <- c(metadata(se), list(
                         bead_fail_fraction = bead_fail_fraction, crosshyb_filter = crosshyb_filter,
                         snp_mask = snp_mask, keep_sex_chr = keep_sex_chr,
                         replicate_probe_strategy = replicate_strategy, illumina_filter = illumina_filter,
+                        probe_filters = paste(probe_filters, collapse = ","),
                         exclude_probes = if (nzchar(exclude_file)) basename(exclude_file) else NA_character_)
 ))
 row_columns <- c("probe_id", "cpg_id", "chr", "pos", "strand", "design_type", "replicate_group_size", "replicate_choice",
@@ -167,8 +190,8 @@ save_se <- function(assays, row_data, dir) {
     unlink(scratch)
 }
 
-# Uncollapsed: every filter except cross-hybridisation, for DMR callers that remap those probes
-keep_uncollapsed <- rowSums(reason_matrix[, setdiff(colnames(reason_matrix), "cross_hybridisation"), drop = FALSE]) == 0
+# Uncollapsed: every filter except cross-hybridisation, for DMR callers that remap those probes, and all replicate probes
+keep_uncollapsed <- rowSums(reason_matrix[, setdiff(colnames(reason_matrix), c("cross_hybridisation", "replicate_probe")), drop = FALSE]) == 0
 save_se(
     list(beta = beta[keep_uncollapsed, , drop = FALSE], beta_unmasked = beta_unmasked[keep_uncollapsed, , drop = FALSE]),
     DataFrame(as.data.frame(anno[keep_uncollapsed, ..row_columns]), row.names = probes[keep_uncollapsed]),
@@ -196,7 +219,8 @@ if (replicate_strategy == "mean") {
     beta_out <- beta[kept, , drop = FALSE]
     unmasked_out <- beta_unmasked[kept, , drop = FALSE]
     row_anno <- anno[kept][, n_probes := 1L]
-    row_ids <- probes[kept]
+    row_ids <- if (replicate_strategy == "best") anno[["cpg_id"]][kept] else probes[kept]
+    rownames(beta_out) <- rownames(unmasked_out) <- row_ids
 }
 mvalue <- log2(clip(beta_out) / (1 - clip(beta_out)))
 collapsed_columns <- c(setdiff(row_columns, c("probe_id", "replicate_choice")), "n_probes")
@@ -212,7 +236,8 @@ writeLines(c(
     "# id: 'probe_attrition'",
     "# section_name: 'Probe filtering'",
     paste0("# description: 'Probes removed at each filter step, in order (", nrow(anno), " probes at the start, ",
-           remaining, " kept; ", nrow(beta_out), " CpGs after collapsing replicate probes). Probes are counted at the first step that removes them.'"),
+           remaining, " kept; ", nrow(beta_out), switch(replicate_strategy, none = " rows, one per probe", best = " CpGs, one probe each", " CpGs after collapsing replicate probes"),
+           "). Probes are counted at the first step that removes them.'"),
     "# plot_type: 'bargraph'",
     "# pconfig:",
     "#     id: 'probe_attrition_plot'",

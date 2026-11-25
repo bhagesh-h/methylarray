@@ -97,7 +97,7 @@ How the status is set:
 ### Probe filtering
 
 - `probe_filter/`
-  - `<method>_filtered_se/`: the arrays with QC status `PASS` or `FLAG` and the probes that passed every filter, as an HDF5-backed SummarizedExperiment. With the default `--replicate_probe_strategy mean`, rows are CpGs (`cg########`, the mean of the replicate probes; `rowData` column `n_probes`). Assays: `beta` (failed values `NA`), `mvalue` (log2 of beta / (1 - beta), with beta clipped to [1e-4, 1 - 1e-4]) and `beta_unmasked`. `rowData` has the position, design, gene and CpG island context and the EPIC v1 and 450K IDs.
+  - `<method>_filtered_se/`: the arrays with QC status `PASS` or `FLAG` and the probes that passed every filter, as an HDF5-backed SummarizedExperiment. With the default `--replicate_probe_strategy mean`, rows are CpGs (`cg########`, the mean of the replicate probes; `rowData` column `n_probes`); with `best` the same with one probe per CpG, with `none` rows are probe IDs. Assays: `beta` (failed values `NA`), `mvalue` (log2 of beta / (1 - beta), with beta clipped to [1e-4, 1 - 1e-4]) and `beta_unmasked`. `rowData` has the position, design, gene and CpG island context and the EPIC v1 and 450K IDs.
   - `<method>_filtered_attrition.tsv`: probes removed at each step (`removed`), probes left (`remaining`), and probes carrying each reason in any order (`n_with_reason`). The `report_only_*` rows count flagged probes that were kept.
   - `<method>_filtered_exclusions.tsv.gz`: every removed probe with the step that removed it (`first_reason`), all reasons that apply, and its undetected and masked fractions.
 

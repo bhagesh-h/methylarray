@@ -19,6 +19,8 @@ All developer commands go through `dev/nfdev`, which starts the devkit image wit
    NFDEV_OUT_ROOT=/absolute/path/to/methylarray-dev
    # Optional: folders mounted read-only, for example local IDAT files
    NFDEV_DATA_DIRS=/absolute/path/to/idats
+   # Optional: further output folders, separated by colons
+   # NFDEV_RUN_DIRS=/absolute/path/to/another/output
    ```
 
    Further settings, all optional, are listed in the header of `dev/nfdev`. `NFDEV_TASK_MEMORY_GB` (default 28) caps the memory of all tasks of a run together; with the Nextflow JVM on top, a run stays under 32 GB.
