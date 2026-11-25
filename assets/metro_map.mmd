@@ -3,11 +3,12 @@
 %%metro file: samplesheet_in | CSV | Samplesheet
 %%metro files: idat_in | IDAT
 %%metro file: models_in | YAML | Models
+%%metro file: lists_in | CSV | Probe lists
 %%metro file: matrices_out | HDF5 | Betas
 %%metro file: ewas_out | TSV | EWAS
 %%metro file: multiqc_out | HTML | MultiQC
 %%metro file: report_out | HTML | Report
-%%metro off_track: idat_in, models_in, matrices_out, ewas_out
+%%metro off_track: idat_in, lists_in, models_in, matrices_out, ewas_out
 %%metro line: minfi | minfi (default) | #0072B2
 %%metro line: sesame | SeSAMe | #009E73
 %%metro line: enmix | ENmix | #E69F00
@@ -44,11 +45,15 @@ graph LR
         ewastools[ewastools]
         manifest[EPICv2manifest]
         masks[InfiniumAnnotation]
+        pfilter[Filter]
+        lists_in[ ]
         matrices_out[ ]
 
         ewastools -->|minfi,sesame,enmix,combined| manifest
         manifest -->|minfi,sesame,enmix,combined| masks
-        masks -->|minfi,sesame,enmix,combined| matrices_out
+        lists_in -->|minfi,sesame,enmix,combined| pfilter
+        masks -->|minfi,sesame,enmix,combined| pfilter
+        pfilter -->|minfi,sesame,enmix,combined| matrices_out
     end
 
     subgraph biology [Cells, clocks and PCA]
@@ -111,7 +116,7 @@ graph LR
     minfi -->|minfi| ewastools
     sesame -->|sesame| ewastools
     enmix -->|enmix,combined| ewastools
-    masks -->|minfi,sesame,enmix,combined| epidish
+    pfilter -->|minfi,sesame,enmix,combined| epidish
     ancestry -->|minfi,sesame,enmix,combined| limma
     bacon -->|minfi,sesame,enmix,combined| dmrcate
     kycg -->|minfi,sesame,enmix,combined| multiqc
