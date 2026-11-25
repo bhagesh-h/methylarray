@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `biomarkers_missing.tsv` and `ewas_<model>_missing.tsv`: the arrays per combination of missing phenotypes and of missing model variables.
 - `--ewas_cells idol`: the IDOL cell fractions as the cell covariates of the association models.
 
+### `Changed`
+
+- HTML report: nine numbered parts with a contents list that opens for the part being read, a summary with links, one section per association model, tabs for figures that belong together, buttons to open or close all tables, and clocks under the names they are known by. Explanations are shorter, and the phenotype heatmaps have one row per phenotype.
+
 ### `Fixed`
 
 - Association summary: a run in which no model has enough arrays no longer stops, and the model comparison is in a fixed order.
