@@ -218,6 +218,8 @@ The arrays with QC status `PASS` or `FLAG` go on to probe filtering. Every remov
 | `--bead_fail_fraction`       | `0.05`       | Remove probes masked for another reason (bead count, quality mask) in more than this fraction of arrays     |
 | `--snp_mask`                 | `common_1pt` | SNP mask: `common_1pt`, `common_5pt`, `afr`, `amr`, `eas`, `eur`, `sas` or `none`                           |
 | `--crosshyb_filter`          | `wgbs`       | Cross-hybridising probes to remove: `wgbs` (WGBS evidence), `blat` (any predicted off-target hit) or `none` |
+| `--illumina_filter`          | `false`      | Remove the probes of the two Illumina lists (see below) instead of only counting them                       |
+| `--exclude_probes`           |              | List of probe IDs or CpG names to remove (URL or path; first column of a text, CSV or TSV file)             |
 | `--keep_sex_chr`             | `false`      | Keep chrX and chrY probes                                                                                   |
 | `--replicate_probe_strategy` | `mean`       | `mean`: one row per CpG, the mean of its replicate probes; `none`: one row per probe                        |
 | `--probe_annotation`         |              | Saved `probe_annotation.tsv.gz`, used instead of building it                                                |
@@ -226,7 +228,36 @@ The probe annotation comes from two pinned sources: the Peters et al. 2024 exten
 
 Probes with manifest position mismatches (Peters et al. 2024 `MismatchPos`) and probes with poor titration (Zhou) are report-only: they are annotated and counted in the attrition table (`report_only_*` rows), never removed.
 
-Illumina lists about 49,000 EPIC v2 probes that did not meet its performance expectations and about 190 probes with mapping inaccuracies, as files on the EPIC v2 product files page of its support site. They may not be redistributed, so the pipeline does not include them. Download them and pass `--illumina_flagged_probes` and `--illumina_mapping_inaccuracy` (Illumina's CSV files with an `IlmnID` or `Name` column, or one probe ID or CpG name per line): the probes are annotated (`illumina_flagged`, `illumina_mapping_inaccuracy`) and counted as report-only rows, not removed. They apply when the annotation is built, so not together with `--probe_annotation` from a run without them.
+Illumina lists about 49,000 EPIC v2 probes that did not meet its performance expectations and about 190 probes with mapping inaccuracies, as files on the EPIC v2 product files page of its support site. They may not be redistributed, so the pipeline does not include them. Download them and pass `--illumina_flagged_probes` and `--illumina_mapping_inaccuracy` (Illumina's CSV files with an `IlmnID` or `Name` column, or one probe ID or CpG name per line): the probes are annotated (`illumina_flagged`, `illumina_mapping_inaccuracy`) and counted as report-only rows, not removed. With `--illumina_filter` they are removed, each list as its own step of the attrition table. They apply when the annotation is built, so not together with `--probe_annotation` from a run without them.
+
+### Rules of Qi et al. 2025 (`-profile qi`)
+
+`-profile qi` sets the sample QC and probe rules of Qi et al. 2025 and of their published script. The script is for EPIC v1; on EPIC v2 its probe lists cover few probes, so the profile uses their EPIC v2 counterparts. Combine it with a container profile (`-profile qi,docker`). Every value can be overridden on the command line; with `test`, name `qi` last.
+
+| Rule of Qi et al.                                                                | In the profile                                                                                                                        |
+| -------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Arrays with a call rate of at most 96% (detection P 0.01) removed                | `--detection_pval 0.01 --max_undetected_fraction 0.04`                                                                                |
+| Arrays with mismatched sex removed                                               | Sample QC, always on                                                                                                                  |
+| Sample mix-ups by the correlation of the SNP probes                              | Genotype agreement of every pair of arrays (ewastools)                                                                                |
+| Probes with detection P above 0.01 in 10% of the arrays removed                  | `--detection_pval 0.01 --probe_fail_fraction 0.1`                                                                                     |
+| Probes with fewer than 3 beads in 10% of the arrays removed                      | `--min_beads 3 --bead_fail_fraction 0.1`                                                                                              |
+| Cross-reactive probes of Pidsley et al. 2016 removed                             | The same list (`--exclude_probes`, for probes shared with EPIC v1) and the BLAT hits of Peters et al. 2024 (`--crosshyb_filter blat`) |
+| Probes of the Zhou masks `MASK_general_EUR` and `MASK_snp5_EUR` removed          | The EPIC v2 general mask and `--snp_mask eur`                                                                                         |
+| Illumina's flagged and mapping-inaccuracy probes removed (their EPIC v2 studies) | `--illumina_filter`, with `--illumina_flagged_probes` and `--illumina_mapping_inaccuracy` from Illumina's support page                |
+| Sex chromosomes removed                                                          | Default                                                                                                                               |
+| Noob values (last step of the script)                                            | `--minfi_norm noob`; their article names stratified quantile normalisation (`--minfi_norm quantile`)                                  |
+| IDOL cell fractions as covariates                                                | `--ewas_cells idol`                                                                                                                   |
+| M-values beyond 3 interquartile ranges set to missing                            | `--ewas_outlier_iqr 3`                                                                                                                |
+
+Differences that remain:
+
+- Single values that fail detection or the bead count are set to missing; the script keeps them when the probe passes.
+- Probes are filtered after Noob, not before, which changes the betas only marginally.
+- The script estimates the cell fractions from the unfiltered arrays, the pipeline from the filtered data. With the Illumina lists removed, slightly fewer than 90% of the reference CpGs remain, so the profile sets `--min_reference_coverage 0.85`.
+- The bisulfite conversion score (GCT above 1.5) of the script is not computed; the control-probe metrics of ewastools flag arrays instead.
+- The probe lists and the settings file that the script reads are not published, so the probes cannot be matched one by one.
+- The association models are limma models. The script fits robust regressions of the trait on methylation and mixed models over repeated samples.
+- The Illumina lists may not be redistributed. Without them, the profile warns and removes no probe for them.
 
 ## Cell composition
 
@@ -281,7 +312,7 @@ Arrays far from the others on PC1 and PC2 are flagged in `pca_outliers.tsv` and 
 
 Each model of `--models` is tested at every CpG of the filtered data with limma: a linear model on M-values with the trait and the covariates, moderated with `eBayes(trend = TRUE, robust = TRUE)`, and `duplicateCorrelation` when `block` is set (its consensus correlation is one value per model, estimated on a fixed random set of 50,000 CpGs). The same model on beta values gives the effect as a difference in beta (`delta_beta`). Test statistics are corrected for bias and inflation with bacon, and the genomic lambda is reported before and after.
 
-- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference), `@ctrlpcs` the kept control-probe PCs, `@ancestry` the genetic ancestry components, `@technical` plate and Sentrix row, `@sex` the predicted sex, `@smoking` the DNA methylation smoking score (`dnam_smoking`).
+- Covariate tokens: `@cells` adds five cell lineages (CD4 T, CD8 T, B, NK cells and monocytes; granulocytes are the reference; with `--ewas_cells idol` the IDOL fractions, neutrophils being the reference), `@ctrlpcs` the kept control-probe PCs, `@ancestry` the genetic ancestry components, `@technical` plate and Sentrix row, `@sex` the predicted sex, `@smoking` the DNA methylation smoking score (`dnam_smoking`).
 - Arrays with a missing trait or covariate are left out of that model and listed with their reason. A model with fewer complete cases than its `min_n` is reported as not tested.
 - Before testing, the trait is checked for association with plate and Sentrix row, every covariate for collinearity (VIF), and every numeric covariate against the trait. Confounding is flagged in `ewas_<model>_design_check.tsv`. A methylation-derived covariate (cell fractions, control-probe or ancestry PCs, a DNA methylation score) that follows the trait is flagged too: Uddin et al. (2022) showed that adjusting for methylation PCs that the trait drives can hide its whole association. Consider leaving such a covariate out, or compare the model with and without it.
 - Thresholds: FDR < 0.05, `--p_epigenome_wide` (default 9e-8, the EPIC threshold of Mansell et al. 2019) and `--p_suggestive` (default 1e-5).

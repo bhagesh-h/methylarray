@@ -39,6 +39,11 @@ input:
         pattern: "*.tsv.gz"
         ontologies:
           - edam: http://edamontology.org/format_3475
+    - exclude_probes:
+        type: file
+        description: Optional list of probe IDs or CpG names to remove, in the first column of a text, CSV or TSV file
+        pattern: "*.{txt,csv,tsv,gz}"
+        ontologies: []
 output:
   se:
     - - meta:

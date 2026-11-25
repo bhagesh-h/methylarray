@@ -84,6 +84,14 @@ This file is the single reference list for the pipeline. The README, the documen
 
   > Bioconductor annotation packages for the EPIC v2 array (hg38).
 
+- [EPIC v1 cross-reactive probes (`-profile qi`)](https://doi.org/10.1186/s13059-016-1066-1)
+
+  > Pidsley R, Zotenko E, Peters TJ, et al. Critical evaluation of the Illumina MethylationEPIC BeadChip microarray for whole-genome DNA methylation profiling. Genome Biol. 2016;17:208.
+
+- [Quality control and probe rules of `-profile qi`](https://doi.org/10.1186/s13059-025-03611-9)
+
+  > Qi C, Liu Z, Kilic G, et al. Long-term DNA methylation changes mediate heterologous cytokine responses after BCG vaccination. Genome Biol. 2025;26:180. Script: [BCG_methylation_project](https://github.com/CiiM-Bioinformatics-group/BCG_methylation_project).
+
 ## Preprocessing and quality control
 
 - [SeSAMe](https://doi.org/10.1093/nar/gky691)
@@ -365,10 +373,6 @@ These informed the design or are candidates for later versions. The pipeline doe
 - EPIC v2 validation
 
   > Noguera-Castells A, García-Prieto CA, Álvarez-Errico D, Esteller M. Validation of the new EPIC DNA methylation microarray (900K EPIC v2) for high-throughput profiling of the human DNA methylome. Epigenetics. 2023;18(1):2185742.
-
-- [EPIC v1 probe evaluation](https://doi.org/10.1186/s13059-016-1066-1)
-
-  > Pidsley R, Zotenko E, Peters TJ, et al. Critical evaluation of the Illumina MethylationEPIC BeadChip microarray for whole-genome DNA methylation profiling. Genome Biol. 2016;17:208.
 
 - [EPIC v1 polymorphic and off-target probes](https://doi.org/10.1016/j.gdata.2016.05.012)
 

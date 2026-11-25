@@ -5,8 +5,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### `Added`
+
+- `-profile qi`: the sample QC and probe rules of Qi et al. 2025, with the EPIC v2 counterparts of their EPIC v1 probe lists.
+- `--exclude_probes`: a list of probes or CpGs to remove, counted as its own step of the probe attrition.
+- `--illumina_filter`: remove the probes of the Illumina lists (`--illumina_flagged_probes`, `--illumina_mapping_inaccuracy`) instead of only counting them.
+- `--ewas_outlier_iqr`: set extreme M-values of a CpG to missing before the association tests (off by default).
+- `--ewas_cells idol`: the IDOL cell fractions as the cell covariates of the association models.
+
 ### `Fixed`
 
+- Association summary: a run in which no model has enough arrays no longer stops, and the model comparison is in a fixed order.
 - HTML report: a phenotype table with many columns no longer stops the report. The quartile-group figure is split into parts, the phenotype heatmaps widen with the number of phenotypes, and no figure grows above the 50 inch limit of ggsave.
 
 ## v1.0.2 - [2026-11-24]

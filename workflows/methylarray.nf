@@ -90,7 +90,7 @@ workflow METHYLARRAY {
     // SUBWORKFLOW: Probe annotation and filtering
     //
     PROBE_FILTER(ch_route_se, SAMPLE_QC.out.retained, params.probe_annotation, params.probe_manifest_source, params.probe_mask_source, params.platform,
-        params.illumina_flagged_probes, params.illumina_mapping_inaccuracy)
+        params.illumina_flagged_probes, params.illumina_mapping_inaccuracy, params.exclude_probes)
     ch_multiqc_files = ch_multiqc_files.mix(PROBE_FILTER.out.multiqc.map { _meta, table -> table })
     ch_report_files = ch_report_files.mix(PROBE_FILTER.out.attrition.map { _meta, table -> table })
 

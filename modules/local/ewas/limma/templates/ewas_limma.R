@@ -37,7 +37,7 @@ ctrl_file <- "${ctrl_pcs}"
 ancestry_file <- "${ancestry_pcs}"
 scores_file <- "${dnam_scores}"
 
-defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000", cell_ewas = "true", min_cell_fraction = "0.05", max_cell_lambda = "1.3")
+defaults <- list(p_epigenome_wide = "9e-8", p_suggestive = "1e-5", fdr = "0.05", n_top = "1000", block_cpgs = "50000", cell_ewas = "true", min_cell_fraction = "0.05", max_cell_lambda = "1.3", cells = "cent12ct", outlier_iqr = "0")
 parse_args <- function(x, defaults) {
     tokens <- strsplit(trimws(x), "[[:space:]]+")[[1]]
     tokens <- tokens[nzchar(tokens)]
@@ -91,6 +91,12 @@ sex_column <- grep("^predicted_sex_", names(sample_qc), value = TRUE)[1]
 if (!is.na(sex_column)) join(data.table(sample = sample_qc[["sample"]], predicted_sex = sample_qc[[sex_column]]))
 if (nzchar(cells_file)) {
     cells <- read_table(cells_file)
+    if (match.arg(opts[["cells"]], c("cent12ct", "idol")) == "idol") {
+        # the six IDOL fractions under the lineage names the models and the cell-type-specific test use
+        idol <- c(B = "Bcell", CD4T = "CD4T", CD8T = "CD8T", NK = "NK", Mono = "Mono", Gran = "Neu")
+        if (!all(paste0("idol_", idol) %in% names(cells))) stop("--ewas_cells idol needs the IDOL fractions (not with --skip_idol)")
+        cells <- setnames(cells[, c("sample", paste0("idol_", idol)), with = FALSE], paste0("idol_", idol), paste0("lineage_", names(idol)))
+    }
     lineages <- grep("^lineage_", names(cells), value = TRUE)
     join(setnames(cells[, c("sample", lineages), with = FALSE], lineages, sub("^lineage_", "cc_", lineages)))
 }
@@ -299,6 +305,18 @@ report[["design_flags"]] <- if (nrow(flagged) > 0) paste(paste0(flagged[["check"
 # limma on M-values, with the coefficients or contrasts of the trait
 mvalue <- as.matrix(assay(se, "mvalue")[, rownames(data), drop = FALSE])
 beta <- as.matrix(assay(se, "beta")[, rownames(data), drop = FALSE])
+# Outliers of each CpG (Tukey fences on the M-values) set to missing
+outlier_iqr <- as.numeric(opts[["outlier_iqr"]])
+if (outlier_iqr > 0) {
+    quartiles <- matrixStats::rowQuantiles(mvalue, probs = c(0.25, 0.75), na.rm = TRUE)
+    fence <- outlier_iqr * (quartiles[, 2] - quartiles[, 1])
+    outliers <- which(mvalue < quartiles[, 1] - fence | mvalue > quartiles[, 2] + fence)
+    report[["outlier_values"]] <- length(outliers)
+    report[["outlier_cpgs"]] <- length(unique((outliers - 1) %% nrow(mvalue)))
+    mvalue[outliers] <- NA
+    beta[outliers] <- NA
+    rm(quartiles, fence, outliers)
+}
 correlation <- NULL
 if (!is.null(block)) {
     # The consensus correlation is one trimmed mean over CpGs, so a fixed random

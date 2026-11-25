@@ -259,6 +259,19 @@
                     "help_text": "Annotated as `illumina_mapping_inaccuracy` and counted in the attrition table, not removed, like `--illumina_flagged_probes`.",
                     "fa_icon": "fas fa-map-marker-alt"
                 },
+                "illumina_filter": {
+                    "type": "boolean",
+                    "description": "Remove the probes of `--illumina_flagged_probes` and `--illumina_mapping_inaccuracy`.",
+                    "help_text": "By default these probes are annotated and counted, not removed. With this option they are removed, each list as its own step of the attrition table. Without the lists nothing is removed for them.",
+                    "fa_icon": "fas fa-filter"
+                },
+                "exclude_probes": {
+                    "type": "string",
+                    "format": "file-path",
+                    "description": "Optional list of probes or CpGs to remove (URL or path).",
+                    "help_text": "A text, CSV or TSV file (also gzipped) with probe IDs (`cg00000029_TC21`) or CpG names (`cg00000029`) in the first column; a header and quotes are ignored. A CpG name removes every replicate probe of the CpG. Counted as `exclusion_list` in the attrition table.",
+                    "fa_icon": "fas fa-ban"
+                },
                 "keep_sex_chr": {
                     "type": "boolean",
                     "description": "Keep probes on chrX and chrY (removed by default for autosomal analyses).",
@@ -467,6 +480,22 @@
                     "maximum": 1,
                     "description": "Suggestive significance threshold.",
                     "fa_icon": "fas fa-less-than"
+                },
+                "ewas_cells": {
+                    "type": "string",
+                    "default": "cent12ct",
+                    "enum": ["cent12ct", "idol"],
+                    "description": "Cell fractions of `@cells` in the association models and of the cell-type-specific association.",
+                    "help_text": "`cent12ct`: the lineages of the 12-cell-type reference (EpiDISH). `idol`: the six IDOL cell types (Houseman projection; not with `--skip_idol`), with neutrophils in the place of granulocytes.",
+                    "fa_icon": "fas fa-tint"
+                },
+                "ewas_outlier_iqr": {
+                    "type": "number",
+                    "default": 0,
+                    "minimum": 0,
+                    "description": "Set M-values further than this many interquartile ranges from the quartiles of their CpG to missing before testing (0: off).",
+                    "help_text": "Tukey fences over the arrays of the model; 3 removes extreme values only. The number of values and CpGs is in the model's summary JSON.",
+                    "fa_icon": "fas fa-cut"
                 },
                 "skip_cell_ewas": {
                     "type": "boolean",

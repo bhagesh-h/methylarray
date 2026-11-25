@@ -1,0 +1,38 @@
+nextflow_pipeline {
+
+    name "Test pipeline - rules of Qi et al. 2025"
+    script "../main.nf"
+    tag "pipeline"
+    tag "pipeline_qi"
+    // the profile of nextflow.config loads this file; --profile on the command line replaces a profile named here
+    config "../conf/qi.config"
+
+    // Stub run: the profile's parameters and the staging of the exclusion list.
+    // The module tests cover the filter steps and the outlier rule.
+    test("-profile test,qi - stub") {
+
+        tag "fast"
+
+        options "-stub"
+
+        when {
+            params {
+                outdir         = "$outputDir"
+                models         = "${projectDir}/tests/data/models_test.yml"
+                exclude_probes = "${projectDir}/modules/local/probes/filter/tests/exclude.csv"
+            }
+        }
+
+        then {
+            def used = new groovy.json.JsonSlurper().parse(path("$outputDir/pipeline_info").list().find { f -> f.fileName.toString().startsWith('params_') }.toFile())
+            assertAll(
+                { assert workflow.success },
+                { assert used.detection_pval == 0.01 && used.max_undetected_fraction == 0.04 && used.bead_fail_fraction == 0.1 },
+                { assert used.snp_mask == 'eur' && used.crosshyb_filter == 'blat' && used.illumina_filter && used.minfi_norm == 'noob' && used.min_reference_coverage == 0.85 },
+                { assert used.ewas_cells == 'idol' && used.ewas_outlier_iqr == 3 },
+                { assert path("$outputDir/probe_filter/minfi_filtered_se").exists() && path("$outputDir/ewas").exists() },
+                { assert snapshot(removeNextflowVersion("$outputDir/pipeline_info/methylarray_software_mqc_versions.yml")).match() }
+            )
+        }
+    }
+}
