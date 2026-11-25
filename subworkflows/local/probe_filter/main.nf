@@ -17,6 +17,7 @@ workflow PROBE_FILTER {
     platform          // string: array platform
     illumina_flagged  // string: Illumina flagged-probe list (path), or null
     illumina_mapping  // string: Illumina mapping-inaccuracy list (path), or null
+    exclude_probes    // string: list of probes or CpGs to remove (URL or path), or null
 
     main:
     def ch_annotation = channel.empty()
@@ -37,7 +38,7 @@ workflow PROBE_FILTER {
         ch_se
             .combine(ch_retained.map { _meta, retained -> retained })
             .combine(ch_annotation)
-            .map { meta, se, retained, annotation -> [ meta, se, retained, annotation ] }
+            .map { meta, se, retained, annotation -> [ meta, se, retained, annotation, exclude_probes ? file(exclude_probes, checkIfExists: true) : [] ] }
     )
 
     emit:

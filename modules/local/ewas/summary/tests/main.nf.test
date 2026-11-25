@@ -59,6 +59,33 @@ nextflow_process {
         }
     }
 
+    test("no model tested") {
+
+        tag "fast"
+
+        when {
+            process {
+                """
+                def empty = file("$outputDir/empty/ewas_small_stats.tsv.gz")
+                empty.parent.mkdirs()
+                new java.util.zip.GZIPOutputStream(new FileOutputStream(empty.toFile())).close()
+                input[0] = [ file("$moduleTestDir/ewas_small_summary.json", checkIfExists: true) ]
+                input[1] = [ empty ]
+                input[2] = []
+                """
+            }
+        }
+
+        then {
+            def table = path(process.out.summary[0]).readLines().collect { line -> line.split('\t', -1) as List }
+            assertAll(
+                { assert process.success },
+                { assert table.size() == 2 && table[1][table[0].indexOf('status')].startsWith('not tested') },
+                { assert path(process.out.comparison[0]).readLines().size() == 1 }
+            )
+        }
+    }
+
     test("three models - stub") {
 
         tag "fast"
