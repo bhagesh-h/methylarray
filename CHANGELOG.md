@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Fixed`
 
+- Cell fractions: reference CpGs on chrX and chrY are left out also when the data keep them (`--keep_sex_chr`, or `--probe_filters` without `sex_chromosome`). Before, they changed the 7-type and 12-type fractions and with them the intrinsic age acceleration.
 - `--replicate_probe_strategy none`: cell fractions, gene sets, KnowYourCG, meQTL counts and regions now accept one row per probe.
 - Association summary: a run in which no model has enough arrays no longer stops, and the model comparison is in a fixed order.
 - HTML report: a phenotype table with many columns no longer stops the report. The quartile-group figure is split into parts, the phenotype heatmaps widen with the number of phenotypes, and no figure grows above the 50 inch limit of ggsave.
