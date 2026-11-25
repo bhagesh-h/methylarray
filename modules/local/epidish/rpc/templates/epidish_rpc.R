@@ -15,10 +15,10 @@
 # Reference CpGs are matched through the EPIC v1 and 450K IDs of the probe
 # annotation first, then by CpG ID, so that CpGs renamed on EPIC v2 are found.
 # Coverage is computed on the autosomal reference CpGs: sex-chromosome CpGs are
-# left out on purpose (X inactivation in women can mimic a cell-type signal).
-# Every missing reference CpG is counted as on a sex chromosome, not on the
-# array, or removed by the probe filter. Missing values are set to the CpG
-# median over the arrays and counted.
+# left out on purpose, also when the data keep chrX and chrY (X inactivation in
+# women can mimic a cell-type signal). Every reference CpG left out is counted
+# as on a sex chromosome, not on the array, or removed by the probe filter.
+# Missing values are set to the CpG median over the arrays and counted.
 #
 
 prefix <- "${prefix}"
@@ -108,9 +108,9 @@ fractions <- list()
 for (name in names(references)) {
     ref <- references[[name]]
     matched <- match_reference(rownames(ref))
-    found <- !is.na(matched[["row"]])
     placed <- array_chr(rownames(ref))
-    sex_chr <- !found & placed[["chr"]] %in% c("chrX", "chrY")
+    sex_chr <- placed[["chr"]] %in% c("chrX", "chrY")
+    found <- !is.na(matched[["row"]]) & !sex_chr
     not_on_array <- !found & !sex_chr & !placed[["on_array"]]
     filtered <- !found & !sex_chr & placed[["on_array"]]
     ref_beta <- beta[matched[["row"]][found], , drop = FALSE]
@@ -125,7 +125,7 @@ for (name in names(references)) {
     coverage[[name]] <- data.table(
         reference = name, reference_cpgs = nrow(ref), sex_chromosome = sum(sex_chr),
         not_on_array = sum(not_on_array), removed_by_filter = sum(filtered), found = sum(found),
-        found_by_legacy_id = sum(matched[["legacy_only"]]), coverage = round(share, 4),
+        found_by_legacy_id = sum(matched[["legacy_only"]] & found), coverage = round(share, 4),
         imputed_values = missing_values,
         status = if (share < min_coverage) "fail" else if (share < warn_coverage) "warn" else "ok"
     )
