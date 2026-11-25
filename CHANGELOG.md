@@ -3,7 +3,7 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## v1.1.0 - [2026-11-25]
 
 ### `Added`
 
@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Changed`
 
+- Workflow diagram: the probe filter is a station of its own, with the probe lists as its input.
 - HTML report: nine numbered parts with a contents list that opens for the part being read, a summary with links, one section per association model, tabs for figures that belong together, buttons to open or close all tables, and clocks under the names they are known by. Explanations are shorter, and the phenotype heatmaps have one row per phenotype.
 
 ### `Fixed`
