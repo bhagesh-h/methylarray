@@ -125,7 +125,7 @@ workflow METHYLARRAY {
     def ch_clocks = channel.value([])
     def ch_clocks_robust = channel.value([])
     if (!params.skip_clocks) {
-        CLOCKS(ch_arrays, ch_route_se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation, ch_cell_fractions, ch_meqtl_cpgs,
+        CLOCKS(ch_arrays, PROBE_FILTER.out.se, SAMPLE_QC.out.retained, PROBE_FILTER.out.annotation, ch_cell_fractions, ch_meqtl_cpgs,
             params.dnamethyage_source, params.dunedinpace_source)
         ch_clocks = CLOCKS.out.clocks.map { _meta, f -> f }
         if (params.meqtl) {

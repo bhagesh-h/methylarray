@@ -3,9 +3,10 @@
 # Epigenetic clocks on the arrays that passed sample QC:
 #   - dnaMethyAge (Wang et al. 2024) clocks, selected with --clocks
 #   - DunedinPACE (Belsky et al. 2022) with PACEProjector
-# Input: the detection-masked beta values of the preprocessing route, collapsed
-# to CpGs by mean. The analysis probe filter is not applied, because each clock
-# was trained on its own CpG set.
+# Input: the detection-masked beta values after the probe filter (the steps of
+# --probe_filters), collapsed to CpGs. Clock CpGs removed by the filter are
+# treated like CpGs that EPIC v2 does not measure: dnaMethyAge gives them its
+# reference means. --probe_filters none keeps them in the clocks.
 # Clock CpGs are matched through the EPIC v1 and 450K IDs of the probe annotation
 # as well as the CpG ID: CpGs renamed on EPIC v2 are added under their old name.
 # Missing values are set to the CpG's mean over the other arrays before the
@@ -259,7 +260,7 @@ fwrite(coverage, paste0(prefix, "_coverage.tsv"), sep = "\\t", na = "")
 writeLines(c(
     "# id: 'clock_coverage'",
     "# section_name: 'Epigenetic clocks'",
-    "# description: 'CpGs of each clock in the data (EPIC v2 does not measure every CpG of clocks trained on 450K or EPIC v1). Missing CpGs take the reference means of dnaMethyAge; values that failed detection take the CpG mean over the other arrays. SNP CpGs: clock CpGs with a common SNP at the CpG or extension base.'",
+    "# description: 'CpGs of each clock in the data after the probe filter (EPIC v2 does not measure every CpG of clocks trained on 450K or EPIC v1, and the filter removes some). Missing CpGs take the reference means of dnaMethyAge; values that failed detection take the CpG mean over the other arrays. SNP CpGs: clock CpGs with a common SNP at the CpG or extension base.'",
     "# plot_type: 'table'"
 ), paste0(prefix, "_coverage_mqc.tsv"))
 write.table(data.frame(Clock = coverage[["clock"]], CpGs = coverage[["cpgs"]], Present = coverage[["present"]],

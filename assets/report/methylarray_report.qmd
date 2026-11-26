@@ -374,13 +374,38 @@ top_by_direction <- function(d, effect, columns, caption, n = 20) {
 significant_direction <- function(d, effect) {
     ifelse(!is.na(d[["fdr"]]) & d[["fdr"]] < 0.05, ifelse(d[[effect]] > 0, "higher", "lower"), "not significant")
 }
+# Labels of the volcano plot: the n CpGs at FDR < 0.05 with the smallest P in each
+# direction, in a column beside the points (lower methylation left, higher right).
+# Within a column the labels keep the order of their points and are evenly spaced,
+# so they never overlap, without a label-repelling package.
+volcano_labels <- function(d, effect, n = 10) {
+    d <- d[!is.na(p_value) & !is.na(get(effect)) & !is.na(fdr) & fdr < 0.05 & get(effect) != 0]
+    if (nrow(d) == 0) return(NULL)
+    d[, y := -log10(pmax(p_value, 1e-300))]
+    gene_name <- if ("gene" %in% names(d)) sub(";.*", "", d[["gene"]]) else rep(NA_character_, nrow(d))
+    d[, label := ifelse(is.na(gene_name) | gene_name == "", cpg_id, paste0(cpg_id, " (", gene_name, ")"))]
+    pick <- rbind(head(d[get(effect) < 0][order(p_value)], n)[, side := "lower"],
+                  head(d[get(effect) > 0][order(p_value)], n)[, side := "higher"])
+    x_range <- range(d[[effect]], 0)
+    width <- diff(x_range)
+    y_top <- max(d[["y"]])
+    pick[, x := get(effect)]
+    pick[, label_x := ifelse(side == "lower", x_range[1] - 0.06 * width, x_range[2] + 0.06 * width)]
+    pick[, label_y := {
+        slots <- seq(min(y), max(y_top, min(y) + 0.06 * y_top * .N), length.out = .N)
+        slots[rank(y, ties.method = "first")]
+    }, by = side]
+    pick[, hjust := ifelse(side == "lower", 1, 0)]
+    pick[]
+}
 volcano_plot <- function(d, effect, effect_label, title) {
     d <- d[!is.na(p_value) & !is.na(get(effect))]
+    labelled <- volcano_labels(d, effect)
     d[, class := factor(significant_direction(d, effect), levels = c("higher", "lower", "not significant"))]
     d <- d[class != "not significant" | p_value < 0.01 | seq_len(.N) %% 10 == 0][order(-as.integer(class))]
     lines <- data.table(y = -log10(as.numeric(param("p_epigenome_wide"))), line = paste0("P = ", param("p_epigenome_wide"), " (epigenome-wide)"))
     if (any(d[["class"]] != "not significant")) lines <- rbind(lines, data.table(y = -log10(max(d[class != "not significant", p_value])), line = "FDR = 0.05"))
-    ggplot(d, aes(get(effect), -log10(pmax(p_value, 1e-300)), colour = class)) + geom_point(size = 0.7, show.legend = c(colour = TRUE, linetype = FALSE)) +
+    plot <- ggplot(d, aes(get(effect), -log10(pmax(p_value, 1e-300)), colour = class)) + geom_point(size = 0.7, show.legend = c(colour = TRUE, linetype = FALSE)) +
         geom_vline(xintercept = 0, colour = "grey40", linewidth = 0.3) +
         geom_hline(data = lines, aes(yintercept = y, linetype = line), colour = "grey20", linewidth = 0.4, inherit.aes = FALSE) +
         scale_colour_manual(values = c(higher = "#b2182b", lower = "#2166ac", `not significant` = "grey70"), drop = FALSE,
@@ -389,7 +414,13 @@ volcano_plot <- function(d, effect, effect_label, title) {
         guides(colour = guide_legend(override.aes = list(size = 2.5))) +
         theme(legend.position = "bottom", legend.box = "vertical") +
         labs(x = effect_label, y = expression(-log[10](italic(P))), colour = NULL, linetype = NULL, title = title,
-             subtitle = "Of the CpGs with P >= 0.01, every 10th is drawn.")
+             subtitle = paste0("Of the CpGs with P >= 0.01, every 10th is drawn.",
+                               if (!is.null(labelled)) " Labelled: in each direction, the 10 CpGs at FDR < 0.05 with the smallest P." else ""))
+    if (is.null(labelled)) return(plot)
+    plot + geom_segment(data = labelled, aes(x = x, y = y, xend = label_x, yend = label_y), colour = "grey45", linewidth = 0.25, inherit.aes = FALSE) +
+        geom_point(data = labelled, aes(x, y), shape = 21, size = 1.6, colour = "black", fill = NA, inherit.aes = FALSE) +
+        geom_text(data = labelled, aes(label_x, label_y, label = label, hjust = hjust), size = 2.3, inherit.aes = FALSE) +
+        scale_x_continuous(expand = expansion(mult = 0.35))
 }
 # I3: hits by direction, with a binomial test of the balance
 direction_summary <- function(d, effect) {
@@ -633,9 +664,10 @@ if (nrow(pairs) > 0) {
     pairs[, Relation := factor(relation, levels = c("unrelated", "first-degree", "identical", "too few SNPs"))]
     setorder(pairs, Relation)
     show_plot(ggplot(pairs, aes(ibs_mean, ibs_var, colour = Relation)) +
-        geom_point(size = 0.8, alpha = 0.6) +
+        geom_point(size = 0.8, alpha = 0.6, show.legend = TRUE) +
         geom_point(data = pairs[expected_same_donor == TRUE], shape = 1, size = 3, colour = "black") +
         scale_colour_manual(values = c(unrelated = "#999999", `first-degree` = "#dd8452", identical = "#c44e52", `too few SNPs` = "#cccccc"), drop = FALSE) +
+        guides(colour = guide_legend(override.aes = list(size = 2.5, alpha = 1))) +
         labs(x = "Mean identity by state (alleles shared per SNP)", y = "Variance of identity by state", colour = "Inferred relation",
              title = "Relatedness of every pair of arrays", subtitle = "Black circles: pairs expected to be the same donor."))
     shown <- pairs[relation %in% c("identical", "first-degree") | expected_same_donor == TRUE]
@@ -806,8 +838,8 @@ if (nrow(weights) > 0) {
     top[, key := factor(key, levels = rev(unique(key)))]
     panels[["Largest weights"]] <- function() show_plot(ggplot(top, aes(standardised, key, fill = standardised > 0)) + geom_col() +
         scale_y_discrete(labels = function(x) sub("^.*__", "", x)) +
-        scale_fill_manual(values = c(`TRUE` = "#c44e52", `FALSE` = "#4c72b0"), guide = "none") +
-        facet_wrap(~ set, scales = "free", ncol = 3) + theme(axis.text.y = element_text(size = 6)) +
+        scale_fill_manual(values = c(`TRUE` = "#c44e52", `FALSE` = "#4c72b0"), labels = c(`TRUE` = "Positive weight", `FALSE` = "Negative weight"), name = NULL) +
+        facet_wrap(~ set, scales = "free", ncol = 3) + theme(axis.text.y = element_text(size = 6), legend.position = "bottom") +
         labs(x = "Standardised weight (clock units per SD of beta)", y = NULL, title = "The 12 CpGs with the largest weight in each clock and score",
              subtitle = "Weight: published coefficient times the SD of the CpG in these arrays. Principal-component clocks and epiTOC2 have no weights per CpG."))
 }
@@ -832,7 +864,7 @@ if (has("^clocks_weights\\.tsv$")) {
                                                      by = "item", allow.cartesian = TRUE))[, .(clock, item, set)])
     if (nrow(flags) > 0) {
         panels[["SNPs, filter and hits"]] <- function() {
-            cat(sprintf("%s of the %s clock CpGs carry a common SNP or cis-meQTL, are removed by the probe filter, or are a hit of a model (FDR < 0.05). The clocks are computed before the probe filter, so removed CpGs still count in them.\n\n",
+            cat(sprintf("%s of the %s clock CpGs carry a common SNP or cis-meQTL, are removed by the probe filter, or are a hit of a model (FDR < 0.05). The clocks are computed after the probe filter, so removed CpGs take the reference mean of the clock.\n\n",
                         big(uniqueN(flags[["item"]])), big(uniqueN(clock_cpgs[["cpg"]]))))
             # a plot only when a CpG has several flags; the table gives the single ones
             if (any(unique(flags[, .(item, set)])[, .N, by = item][["N"]] > 1)) {
