@@ -84,7 +84,7 @@
                     "variancePartition": "stub"
                 },
                 "Workflow": {
-                    "bhagesh-h/methylarray": "v1.1.0"
+                    "bhagesh-h/methylarray": "v1.1.1"
                 }
             }
         ],
