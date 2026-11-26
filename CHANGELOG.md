@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### `Changed`
 
 - Epigenetic clocks are computed after the probe filter, as in Qi et al. 2025 and the studies that use their procedure, for every preprocessing route and profile. Clock CpGs removed by the filter take the reference means of dnaMethyAge, like CpGs that EPIC v2 does not measure. `--probe_filters none` keeps them. Clock values and accelerations change slightly (`clocks.tsv`, `clocks_coverage.tsv`, `clocks_weights.tsv` and the biomarker tables built on them).
+- HTML report: the volcano plot labels, in each direction, the 10 CpGs at FDR < 0.05 with the smallest P, in a column beside the points so that the labels do not overlap. The figure of the largest clock weights has a legend for the sign of the weight.
+
+### `Fixed`
+
+- HTML report: the relatedness figure shows the colour of every inferred relation in its legend, also of relations without pairs (before, only the relations present had a colour key).
 
 ## v1.1.0 - [2026-11-25]
 
