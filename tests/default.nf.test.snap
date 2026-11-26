@@ -217,9 +217,9 @@
                 "cell_fractions.tsv:md5,d0188d19fdbf34de8cdbd27fffca7700",
                 "cell_fractions_idol_agreement.tsv:md5,5950e4dde11d8ad04bdae6a2de86b941",
                 "cell_fractions_reference_coverage.tsv:md5,d5ae040a39b70c8f936d5be847eeafd6",
-                "clocks.tsv:md5,a70c87fd0874e9f8b2cbd1460cbe08ce",
-                "clocks_coverage.tsv:md5,589c3f6d6d7b095348f98f0736ae4927",
-                "clocks_weights.tsv:md5,dffd811d1dd26cd05ac6cc8abb5f58f3",
+                "clocks.tsv:md5,1b78b880a0a4586c4b9c6dd270c965d4",
+                "clocks_coverage.tsv:md5,42b44a375126c3645b3810bccfd972cc",
+                "clocks_weights.tsv:md5,ec62263e93dcf61f218ba6fa42f01dad",
                 "dnam_scores.tsv:md5,ef022be2e40df8c4fb2ba7b5bdf288ca",
                 "dnam_scores_coverage.tsv:md5,689f98a395ada5a353a679a4bcfe5da2",
                 "dnam_scores_weights.tsv:md5,696c95995fb5add9a8fdefc85914d266",
@@ -238,8 +238,8 @@
                 "multiqc_cell_fractions_idol.txt:md5,e7ae11dc114c2be41f6bfe6beeacae23",
                 "multiqc_cell_fractions_plot.txt:md5,0ae9e09b8bb2126f4aafa3a7619cee9f",
                 "multiqc_citations.txt:md5,4c806e63a283ec1b7e78cdae3a923d4f",
-                "multiqc_clock_coverage.txt:md5,b0e84236a9fb9a73cfc9f0aeb38b26f1",
-                "multiqc_clock_values.txt:md5,bcf2bb77c333510432ac95f7b6b8ea45",
+                "multiqc_clock_coverage.txt:md5,d4728051619214be909fd1dd96d93382",
+                "multiqc_clock_values.txt:md5,31601ec498537bda6dadf66aa9bcdd2b",
                 "multiqc_dnam_score_values.txt:md5,741ccd1707aa4420333a27212afa2df0",
                 "multiqc_dnam_scores_coverage.txt:md5,89f2bee3f5f4ec6f2029d43f3bc3d067",
                 "multiqc_general_stats.txt:md5,4d2448c93dd797b6dcd62dd199ef2ad6",
@@ -265,7 +265,7 @@
                 "sample_qc_retained.txt:md5,5e266b5938a12ea35879d5e5bbee3065"
             ]
         ],
-        "timestamp": "2026-11-25T14:12:13.673394963",
+        "timestamp": "2026-11-26T09:44:50.689625971",
         "meta": {
             "nf-test": "0.9.5",
             "nextflow": "26.10.6"

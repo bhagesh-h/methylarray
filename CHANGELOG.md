@@ -3,6 +3,12 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### `Changed`
+
+- Epigenetic clocks are computed after the probe filter, as in Qi et al. 2025 and the studies that use their procedure, for every preprocessing route and profile. Clock CpGs removed by the filter take the reference means of dnaMethyAge, like CpGs that EPIC v2 does not measure. `--probe_filters none` keeps them. Clock values and accelerations change slightly (`clocks.tsv`, `clocks_coverage.tsv`, `clocks_weights.tsv` and the biomarker tables built on them).
+
 ## v1.1.0 - [2026-11-25]
 
 ### `Added`

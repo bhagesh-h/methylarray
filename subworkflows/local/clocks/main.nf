@@ -1,6 +1,6 @@
 //
-// Epigenetic clocks (dnaMethyAge, DunedinPACE) on the detection-masked betas of
-// the preprocessing route, for the arrays that passed sample QC
+// Epigenetic clocks (dnaMethyAge, DunedinPACE) on the probe-filtered betas of the
+// arrays that passed sample QC, as in Qi et al. 2025 and the studies that follow it
 //
 
 include { CLOCKS_COMPUTE } from '../../../modules/local/clocks/compute'
@@ -10,7 +10,7 @@ workflow CLOCKS {
 
     take:
     ch_arrays          // channel: [ meta, idat_red, idat_grn ] of the processed arrays
-    ch_se              // channel: [ meta, SummarizedExperiment directory ] of the preprocessing route
+    ch_se              // channel: [ meta, SummarizedExperiment directory ] after the probe filter, collapsed to CpGs
     ch_retained        // channel: [ meta, list of the arrays that passed sample QC ]
     ch_annotation      // channel: probe annotation table
     ch_cell_fractions  // channel: cell fraction table, or [] without cell composition

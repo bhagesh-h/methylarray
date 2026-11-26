@@ -146,7 +146,7 @@ SeSAMe processes each array on its own, so its results do not change when arrays
 | `--min_beads`        | `3`      | Values measured by fewer beads are set to `NA`                                                                        |
 | `--minfi_chunk_size` | `40`     | Hidden. Minimum number of arrays read and corrected together by the minfi-based methods; lower values use less memory |
 
-The masked beta values are used for association testing, clocks and DNA methylation scores. The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution. No array or probe is removed during preprocessing; ENmix quality flags are reported in the QC table (`enmix_low_quality`) instead of being applied.
+The masked beta values are used for association testing, clocks and DNA methylation scores (association testing and clocks after the probe filter). The unmasked beta values are kept as a separate assay for steps that need complete data, such as cell-type deconvolution. No array or probe is removed during preprocessing; ENmix quality flags are reported in the QC table (`enmix_low_quality`) instead of being applied.
 
 ### Offline runs
 
@@ -275,7 +275,7 @@ With `--tissue blood` (default), leukocyte fractions are estimated with EpiDISH 
 
 ## Epigenetic clocks
 
-Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked beta values of the arrays that passed QC, averaged per CpG. The probe filter for association testing is not applied here, because each clock was trained on its own set of CpGs. Values that failed detection are set to the CpG's mean over the other arrays. CpGs that EPIC v2 does not measure take the reference means of dnaMethyAge, and DunedinPACE returns NA when less than `--dunedinpace_min_probes` of its CpGs are present. `clocks/clocks_coverage.tsv` reports the coverage of every clock.
+Clocks are computed with dnaMethyAge and DunedinPACE on the detection-masked beta values of the arrays that passed QC, after the probe filter, averaged per CpG, as in Qi et al. (2025) and the studies that use their procedure. Clock CpGs removed by the filter are treated like CpGs that EPIC v2 does not measure. The reference means are the same for every array, so a removed CpG no longer separates people: age acceleration changes little, while the level of a clock can shift. To compute the clocks on every CpG, run with `--probe_filters none`, which also leaves the association tests unfiltered. Values that failed detection are set to the CpG's mean over the other arrays. CpGs that EPIC v2 does not measure take the reference means of dnaMethyAge, and DunedinPACE returns NA when less than `--dunedinpace_min_probes` of its CpGs are present. `clocks/clocks_coverage.tsv` reports the coverage of every clock.
 
 | Parameter                  | Default                  | Meaning                                                   |
 | -------------------------- | ------------------------ | --------------------------------------------------------- |

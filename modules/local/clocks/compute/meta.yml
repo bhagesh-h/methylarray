@@ -1,5 +1,5 @@
 name: clocks_compute
-description: Epigenetic clocks with dnaMethyAge and DunedinPACE on the detection-masked, CpG-level betas of the arrays that passed QC, with EPIC v2 coverage per clock and age acceleration
+description: Epigenetic clocks with dnaMethyAge and DunedinPACE on the detection-masked, probe-filtered, CpG-level betas of the arrays that passed QC, with EPIC v2 coverage per clock and age acceleration
 keywords:
   - dna methylation
   - methylation array
@@ -28,7 +28,7 @@ input:
           e.g. [ id:'minfi' ]
     - se:
         type: directory
-        description: SummarizedExperiment of the preprocessing route (assay beta, detection-masked)
+        description: SummarizedExperiment after the probe filter, collapsed to CpGs (assay beta, detection-masked)
     - retained:
         type: file
         description: Arrays that passed sample QC, one name per line

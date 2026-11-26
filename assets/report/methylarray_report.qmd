@@ -832,7 +832,7 @@ if (has("^clocks_weights\\.tsv$")) {
                                                      by = "item", allow.cartesian = TRUE))[, .(clock, item, set)])
     if (nrow(flags) > 0) {
         panels[["SNPs, filter and hits"]] <- function() {
-            cat(sprintf("%s of the %s clock CpGs carry a common SNP or cis-meQTL, are removed by the probe filter, or are a hit of a model (FDR < 0.05). The clocks are computed before the probe filter, so removed CpGs still count in them.\n\n",
+            cat(sprintf("%s of the %s clock CpGs carry a common SNP or cis-meQTL, are removed by the probe filter, or are a hit of a model (FDR < 0.05). The clocks are computed after the probe filter, so removed CpGs take the reference mean of the clock.\n\n",
                         big(uniqueN(flags[["item"]])), big(uniqueN(clock_cpgs[["cpg"]]))))
             # a plot only when a CpG has several flags; the table gives the single ones
             if (any(unique(flags[, .(item, set)])[, .N, by = item][["N"]] > 1)) {
